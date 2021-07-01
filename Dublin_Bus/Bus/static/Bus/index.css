@@ -1,0 +1,20 @@
+#map {
+    position: relative;
+}
+#map-row{
+    height: 100vh;
+    overflow-y: hidden;
+    position:center;
+    width: 100%;
+    margin-left:auto;
+    margin-right:auto;
+}
+.content-row{
+    height: 300px;
+}
+html,body{
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    width: 100%;
+}
