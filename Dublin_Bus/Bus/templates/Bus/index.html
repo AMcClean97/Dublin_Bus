@@ -13,9 +13,9 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-   <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
 
   {% load static %}
   <link href="{% static 'Bus/index.css' %}" rel="stylesheet">
@@ -25,13 +25,13 @@
 <body>
 <h1>Dublin Bus</h1>
   <!-- Map Div -->
- <div class="row shadow" id="map-row">
-        <!--The div element for the map -->
-        <div id="map"></div>
-    </div>
+  <div class="row shadow" id="map-row">
+    <!--The div element for the map -->
+    <div id="map"></div>
+  </div>
 
   {% load static %}
-  <script  src="{% static '/Bus/index.js' %}" ></script>
+  <script src="{% static '/Bus/index.js' %}" ></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBCjP_NacWRLfOdJrfjaEZjY6YVw4-jONo&callback=initMap&libraries=&v=weekly" async defer></script>
 </body>
 </html>
