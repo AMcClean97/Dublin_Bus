@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from requests import get
+from .models import BusStops
+from django.core import serializers
+import json
 ## from config.config import APIKeys
 ## To be implemented to allow all keys to be hidden!
 
@@ -10,8 +13,16 @@ api_key = "4c249f84329a6c214486be5cdf2e5612"
 # Create your views here.
 def index(request):
     current_weather()
+    bus_stops_dict = static_bus()
     ##MAP_KEY = APIKeys.MAP_API_KEY
-    return render(request, 'Bus/index.html')
+    return render(request, 'Bus/index.html', bus_stops_dict)
+
+
+def static_bus():
+    bus_stops = serializers.serialize("json", BusStops.objects.all())
+    bus_stops_dict = {}
+    bus_stops_dict['bus_stops'] = bus_stops
+    return bus_stops_dict
 
 ## Need to come back to ------
 def current_weather():
