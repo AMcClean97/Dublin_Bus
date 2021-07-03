@@ -20,10 +20,11 @@
   {% load static %}
   <link href="{% static 'Bus/index.css' %}" rel="stylesheet">
 
+
 </head>
 
 <body>
-<h1>Dublin Bus</h1>
+{% include 'Bus/navbar.html' %}
   <!-- Map Div -->
   <div class="row shadow" id="map-row">
     <!--The div element for the map -->
@@ -33,5 +34,8 @@
   {% load static %}
   <script src="{% static '/Bus/index.js' %}" ></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBCjP_NacWRLfOdJrfjaEZjY6YVw4-jONo&callback=initMap&libraries=&v=weekly" async defer></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>
