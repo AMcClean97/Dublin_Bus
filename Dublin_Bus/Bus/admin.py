@@ -1,4 +1,10 @@
 from django.contrib import admin
-from .models import BusStops
+from .models import Stop, Route, Calendar, CalendarDate, Shape, Trip, StopTime
 # Register your models here.
-admin.site.register(BusStops)
+admin.site.register(Stop)
+admin.site.register(Route)
+admin.site.register(Calendar)
+admin.site.register(CalendarDate)
+admin.site.register(Shape)
+admin.site.register(Trip)
+admin.site.register(StopTime)

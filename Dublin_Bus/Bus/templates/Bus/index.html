@@ -24,6 +24,7 @@
 
 <body>
 <h1>Dublin Bus</h1>
+<h2 id="test"></h2>
   <!-- Map Div -->
  <div class="row shadow" id="map-row">
         <!--The div element for the map -->
@@ -33,5 +34,13 @@
   {% load static %}
   <script  src="{% static '/Bus/index.js' %}" ></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBCjP_NacWRLfOdJrfjaEZjY6YVw4-jONo&callback=initMap&libraries=&v=weekly" async defer></script>
+<script>
+
+window.onpageshow = function () {
+addMarkers(JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"')));
+};
+
+
+</script>
 </body>
 </html>
