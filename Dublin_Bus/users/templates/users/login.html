@@ -3,6 +3,24 @@
 {% block content %}
 <h3>Login</h3>
 
+<form method="POST" action="">
+    {% csrf_token %}
+    <div class="input-group mb-3">
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+        </div>
+        <input type="text" name="username" class="form-control input_user" value="" placeholder="Username">
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-key"></i></span>
+        </div>
+        <input type="text" name="password" class="form-control input_user" value="" placeholder="Password">
+    </div>
+
+    <input type="submit" name="Create User">
+</form>
+
 <p>Don't have an account? Sign in <a href="{% url 'register' %}">Here</a></p>
 
 {% for message in messages %}

@@ -1,24 +1,32 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h3>Register</h3>
+<h3>Create an Account</h3>
 
 <form method="POST" action="">
     {% csrf_token %}
     <div class="input-group mb-3">
-        <label for="id_username" class ="form-label"><i class="fas fa-user"></i></label>
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+        </div>
         {{form.username}}
     </div>
     <div class="input-group mb-3">
-        <label for="id_email" class ="form-label"><i class="fas fa-envelope"></i></label>
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+        </div>
         {{form.email}}
     </div>
     <div class="input-group mb-3">
-        <label for="id_password1" class ="form-label"><i class="fas fa-key"></i></label>
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-key"></i></span>
+        </div>
         {{form.password1}}
     </div>
     <div class="input-group mb-3">
-        <label for="id_password2" class ="form-label"><i class="fas fa-key"></i></label>
+        <div class="input-group-append">
+            <span class="input-group-text"><i class="fas fa-key"></i></span>
+        </div>
         {{form.password2}}
     </div>
     <input type="submit" name="Create User">
