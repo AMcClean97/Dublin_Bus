@@ -57,7 +57,7 @@ def get_arrivals(stop_pk):
     today_str = today_date.strftime("%Y%m%d")
 
 
-    #This can definitely be neater/cleaner - look into refactoring?
+    #This can definitely be neater/cleaner/faster - look into refactoring?
     #ALSO NEED TO TAKE INTO ACCOUNT SERVICE EXCEPTIONS IN CALENDAR_DATES AND TIMES PAST MIDNIGHT?
     query1 = StopTime.objects.filter(stop_id=stop_pk)
     query2 = query1.filter(arrival_time__gt=datetime.now().time()).order_by('arrival_time')

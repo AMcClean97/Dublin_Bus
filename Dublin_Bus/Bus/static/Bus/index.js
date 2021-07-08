@@ -143,25 +143,28 @@ routingPreference: 'FEWER_TRANSFERS',
 },
 unitSystem: google.maps.UnitSystem.METRIC
 }
+
+//clear markers from map so route can be seen
 clearMarkers();
+
+//make request and render route on map
 directionsService.route(request, function(response, status) {
 if (status == "OK") {
 directionsRenderer.setDirections(response);
 directionsRenderer.setMap(map);
-var route = document.getElementById("route_instructions");
 
+
+var route = document.getElementById("route_instructions");
 var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
 var journey_description = "<br>";
-console.log(journey);
 
-//extract useful journey info and post to journey planner
+//extract useful journey info from response and post to journey planner
 for (var i=0; i<journey.length; i++) {
 if (journey[i].travel_mode == "TRANSIT") {
     journey_description += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
     journey_description += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
     journey_description += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
 }
-
 else if (journey[i].travel_mode == "WALKING") {
     journey_description += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
 } else {
@@ -170,10 +173,8 @@ else if (journey[i].travel_mode == "WALKING") {
 
 route.innerHTML = journey_description;
 }
-
 }
 });
-
 }
 
 //adds markers to map
@@ -202,8 +203,8 @@ route.innerHTML = journey_description;
 
 //displays infoWindow content
  function displayInfoWindow(timetable) {
-   var arrivals = JSON.parse(timetable);
-   const marker = stopMarkers[arrivals[0].fields.stop_id];
+    var arrivals = JSON.parse(timetable);
+    const marker = stopMarkers[arrivals[0].fields.stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
     //if no buses are due at the stop in the next 2 hours
@@ -243,9 +244,10 @@ function clearMarkers() {
  function showMarkers() {
  for (var marker in stopMarkers) {
  stopMarkers[marker].setVisible(true);
- }}
+ }
+ }
 
-//function to reset journey planner
+//function to reset journey planner - should also zoom back out on map?
 function resetJourneyPlanner() {
     document.getElementById('route_instructions').innerHTML = "";
     directionsRenderer.set('directions', null);
@@ -253,7 +255,6 @@ function resetJourneyPlanner() {
     inputOrigin.value = "";
     inputDestination.value = "";
     showMarkers();
-
     }
 
 

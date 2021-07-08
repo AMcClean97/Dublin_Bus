@@ -2,7 +2,7 @@
     position: relative;
 }
 #map-row{
-    height: 100vh;
+    height: 70vh;
     overflow-y: hidden;
     position:center;
     width: 100%;
