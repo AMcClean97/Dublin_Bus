@@ -65,7 +65,7 @@ def get_arrivals(stop_pk):
     query4 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1})
     query5 = query3.filter(service_id__in=query4)
     final_query = query2.filter(trip_id__in=query5)
-    arrivals = serializers.serialize("json", final_query[:5])
+    arrivals = serializers.serialize("json", final_query[:3])
     results['timetable'] = arrivals
     return results
 

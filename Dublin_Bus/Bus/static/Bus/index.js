@@ -203,15 +203,30 @@ route.innerHTML = journey_description;
 //displays infoWindow content
  function displayInfoWindow(timetable) {
    var arrivals = JSON.parse(timetable);
-   console.log(arrivals);
    const marker = stopMarkers[arrivals[0].fields.stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
-    //show next 5 arrivals?
-    for (var i=0; i<5; i++) {
+    //if no buses are due at the stop in the next 2 hours
+    if (arrivals.length == 0) {
+    infoWindowContent += "<br>No buses due at this stop in the next 2 hours.";
+    }
+
+    ///if less than 3 buses due to stop in the next 2 hours
+    else if (arrivals.length <= 3) {
+    for (var each in arrivals) {
+    infoWindowContent += "<br>Line: " + arrivals[each].fields.route_short_name + " (to " + arrivals[each].fields.stop_headsign + ")<br>";
+        infoWindowContent += "Arrival time: " + arrivals[each].fields.arrival_time + "<br>";
+    }
+    }
+
+    //else list 3 buses? Maybe more?
+    else {
+    for (var i=0; i<3; i++) {
         infoWindowContent += "<br>Line: " + arrivals[i].fields.route_short_name + " (to " + arrivals[i].fields.stop_headsign + ")<br>";
         infoWindowContent += "Arrival time: " + arrivals[i].fields.arrival_time + "<br>";
         }
+        }
+
     infoWindow.setContent(infoWindowContent);
     infoWindow.open(map, marker);
     }
