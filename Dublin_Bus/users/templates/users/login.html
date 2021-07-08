@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Login</h3>
+
+<p>Don't have an account? Sign in <a href="{% url 'register' %}">Here</a></p>
+
+{% for message in messages %}
+<p id="messages">{{message}}</p>
+{% endfor %}
+{% endblock %}
