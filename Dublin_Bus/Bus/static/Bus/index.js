@@ -131,8 +131,7 @@ directionsService = new google.maps.DirectionsService();
 
 function getRoute(start, end) {
 //request to Google Directions API
-console.log(start);
-console.log(end);
+
 const request = {
 origin: start,
 destination: end,
@@ -196,15 +195,15 @@ route.innerHTML = journey_description;
     //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
     marker.addListener("click", () =>
     postData('/bus/ajax/', marker.title.split(":")[0]).then((data) =>
-    displayInfoWindow(data.timetable)))
+    displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
  }
 
 
 //displays infoWindow content
- function displayInfoWindow(timetable) {
+ function displayInfoWindow(timetable, stop_id) {
     var arrivals = JSON.parse(timetable);
-    const marker = stopMarkers[arrivals[0].fields.stop_id];
+    const marker = stopMarkers[stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
     //if no buses are due at the stop in the next 2 hours
