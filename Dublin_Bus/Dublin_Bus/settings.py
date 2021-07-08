@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'Dublin_Bus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django',
+        'USER': 'dublinbus',
+        'PASSWORD': 'the3amigos',
+        'HOST': 'dublinbus.casbkjuzj0uj.eu-west-1.rds.amazonaws.com',
+        'PORT': '3306',
     }
 }
 
@@ -106,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Dublin'
 
 USE_I18N = True
 

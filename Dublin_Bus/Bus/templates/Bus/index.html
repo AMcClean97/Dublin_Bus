@@ -1,14 +1,25 @@
 {% extends 'Bus/base.html' %}
 {% block content %}
 <!-- Map Div-->
-  <div class="row justify-content-center" id="map-row">
-    <!--The div element for the map -->
-    <div class="col-8 " id="map"></div>
-  </div>
+<div class="container-fluid">
+ <div class="row shadow" id="map-row">
+        <!--The div element for the map -->
+        <div class="col-9" id="map"></div>
+     {% include 'Bus/journey_planner.html' %}
+    </div>
 
+</div>
 
   {% load static %}
   <script src="{% static '/Bus/index.js' %}" ></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBCjP_NacWRLfOdJrfjaEZjY6YVw4-jONo&callback=initMap&libraries=&v=weekly" async defer></script>
+     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
+<script>
+
+window.onpageshow = function () {
+addMarkers(JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"')));
+};
+
+
+</script>
 
 {% endblock %}
