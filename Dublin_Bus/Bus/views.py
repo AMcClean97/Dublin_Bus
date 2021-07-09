@@ -59,10 +59,10 @@ def get_arrivals(stop_pk):
 
     #This can definitely be neater/cleaner/faster - look into refactoring?
     #ALSO NEED TO TAKE INTO ACCOUNT SERVICE EXCEPTIONS IN CALENDAR_DATES AND TIMES PAST MIDNIGHT?
-    query1 = StopTime.objects.filter(stop_id=stop_pk).filter(arrival_time__gt=datetime.now().time()).order_by('arrival_time')
+    query1 = StopTime.objects.filter(stop_id=stop_pk).filter(arrival_time__gt=datetime.now().time())
     query2 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1})
     query3 = Trip.objects.filter(stoptime__in=query1).filter(service_id__in=query2)
-    final_query = query1.filter(trip_id__in=query3)
+    final_query = query1.filter(trip_id__in=query3).order_by('arrival_time')
     arrivals = serializers.serialize("json", final_query[:3])
     results['timetable'] = arrivals
     return results
