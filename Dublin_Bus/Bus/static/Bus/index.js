@@ -206,12 +206,12 @@ route.innerHTML = journey_description;
     const marker = stopMarkers[stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
-    //if no buses are due at the stop in the next 2 hours
+    //if no buses are due at the stop that day
     if (arrivals.length == 0) {
     infoWindowContent += "<br>No buses due at this stop in the next 2 hours.";
     }
 
-    ///if less than 3 buses due to stop in the next 2 hours
+    ///if less than 3 buses due to stop that day
     else if (arrivals.length <= 3) {
     for (var each in arrivals) {
     infoWindowContent += "<br>Line: " + arrivals[each].fields.route_short_name + " (to " + arrivals[each].fields.stop_headsign + ")<br>";
