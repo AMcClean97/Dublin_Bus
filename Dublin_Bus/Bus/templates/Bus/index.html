@@ -2,24 +2,21 @@
 {% block content %}
 <!-- Map Div-->
 <div class="container-fluid" id="map-planner-container">
- <div class="row shadow" id="map-row">
+ 	<div class="row shadow" id="map-row">
         <!--The div element for the map -->
-        <div class="col-9" id="map"></div>
-     {% include 'Bus/journey_planner.html' %}
+    	<div class="col-9" id="map"></div>
+     	{% include 'Bus/journey_planner.html' %}
     </div>
 
 </div>
 
-  {% load static %}
-  <script src="{% static '/Bus/index.js' %}" ></script>
-     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
+{% load static %}
+<script src="{% static '/Bus/index.js' %}" ></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
 <script>
-
-window.onpageshow = function () {
-addMarkers(JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"')));
-};
-
-
+	window.onpageshow = function () {
+		addMarkers(JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"')));
+	};
 </script>
 
 {% endblock %}
