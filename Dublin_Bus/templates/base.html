@@ -38,13 +38,10 @@
             <div class="col text-end">
                 {% if user.is_authenticated %}
                 <span>{{request.user}}</span>
-                <span><a class="btn btn-primary" href="{% url 'logout' %}">Logout</a></span>
+                <span><a class="btn btn-primary" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
-                <div class="btn-group">
-                    <a class ="btn btn-primary" href="{% url 'login' %}">Login</a>
-                    <a class ="btn btn-primary" href="{% url 'register' %}">Register</a>
-                </div>
+                <a class ="btn btn-primary" href="{% url 'login' %}">Login</a>
                 {% endif %}
             </div>
         </div>

@@ -1,38 +1,42 @@
 {% extends 'base.html' %}
+{% block head%}
+{% load static %}
+<link href="{% static '/users/users.css' %}" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<h3>Create an Account</h3>
 
-<form method="POST" action="" id= "registerForm">
-    {% csrf_token %}
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fas fa-user"></i></span>
-        {{form.username}}
-    </div>
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-        {{form.email}}
-    </div>
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fas fa-key"></i></span>
-        {{form.password1}}
-    </div>
-    <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fas fa-key"></i></span>
-        {{form.password2}}
-    </div>
-</form>
+<div class ="row justify-content-center">
 
-<button type="submit" form="registerForm" class="btn btn-primary">Create User</button>
-{{ form.errors }}
- 
-<p>Already have an account? Sign in <a href="{% url 'login' %}">Here</a></p>
-
-<script>
-    var form_fields = document.getElementsByTagName('input')
-    form_fields[1].placeholder = "Username"
-    form_fields[2].placeholder = "Email"
-    form_fields[3].placeholder = "Enter Password"
-    form_fields[4].placeholder = "Re-enter Password"
-</script>
+    <div class ="col-auto text-center" id="formContainer">
+        <div class="card">
+            <h4 class="card-header">Create an Account</h4>
+            
+            <div class="card-body">
+                <form method="POST" action="" id= "registerForm">
+                    {% csrf_token %}
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        {{form.username}}
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        {{form.email}}
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        {{form.password1}}
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        {{form.password2}}
+                    </div>
+                </form>
+                <button type="submit" form="registerForm" class="btn btn-primary">Create User</button>
+                {{ form.errors }}
+                <p>Already have an account? Sign in <a href="{% url 'login' %}">here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

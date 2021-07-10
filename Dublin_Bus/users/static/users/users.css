@@ -1,9 +1,0 @@
-.input_user,
-.input_pass:focus {
-    box-shadow: none !important;
-    outline: 0px !important;
-}
-.input-group-text {
-    border: 0;
-    border-radius: 0.25rem 0 0 0.25rem;
-}
