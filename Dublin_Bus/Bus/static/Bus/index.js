@@ -210,7 +210,7 @@ function displayInfoWindow(timetable, stop_id) {
 
     //if no buses are due at the stop that day
     if (arrivals.length == 0) {
-    	infoWindowContent += "<br>No buses due at this stop in the next 2 hours.";
+    	infoWindowContent += "<br>No buses stopping here today.";
 
 	//if less than 3 buses due to stop that day
     } else if (arrivals.length <= 3) {
