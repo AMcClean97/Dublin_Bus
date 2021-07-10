@@ -1,4 +1,10 @@
 {% extends 'base.html' %}
+
+
+{% block head %}
+{% load static %}
+<link href="{% static '/Bus/index.css' %}" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <!-- Map Div-->
   <div class="row justify-content-center" id="map-row">

@@ -1,29 +1,33 @@
 {% extends 'base.html' %}
 
+{% block head%}
+{% load static %}
+<link href="{% static '/users/users.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<h3>Login</h3>
 
-<form method="POST" action="">
-    {% csrf_token %}
-    <div class="input-group mb-3">
-        <div class="input-group-append">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
+<div class="row justify-content-center">
+    <div class ="col-md-3 text-center" id="formContainer">
+        <h3>Login</h3>
+        <form method="POST" action="" id="loginForm" class="form-signin">
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" name="username" class="form-control" value="" placeholder="Username" required autofocus>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                <input type="password" name="password" class="form-control" value="" placeholder="Password">
+            </div>
+        </form>
+        <button type="submit" form="loginForm" class="btn btn-primary">Submit</button>
+        <div class="login-info-box">
+            <p>Don't have an account? Create one here <a href="{% url 'register' %}">Here</a></p>
         </div>
-        <input type="text" name="username" class="form-control input_user" value="" placeholder="Username">
+        {% for message in messages %}
+        <p id="messages">{{message}}</p>
+        {% endfor %}
     </div>
-    <div class="input-group mb-3">
-        <div class="input-group-append">
-            <span class="input-group-text"><i class="fas fa-key"></i></span>
-        </div>
-        <input type="text" name="password" class="form-control input_user" value="" placeholder="Password">
-    </div>
-
-    <input type="submit" name="Create User">
-</form>
-
-<p>Don't have an account? Sign in <a href="{% url 'register' %}">Here</a></p>
-
-{% for message in messages %}
-<p id="messages">{{message}}</p>
-{% endfor %}
+</div>
 {% endblock %}
