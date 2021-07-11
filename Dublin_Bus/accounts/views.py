@@ -26,7 +26,7 @@ def register_view(request):
             return redirect("/")
         else:
             request.session['registration_error'] = 1  # 1 == True
-    return render(request, "forms.html", {"form": form})
+    return render(request, "accounts/forms.html", {"form": form})
 
 
 def login_view(request):
@@ -47,7 +47,7 @@ def login_view(request):
             # request.session['attempt'] = attempt + 1
             # return redirect("/invalid-password")
             request.session['invalid_user'] = 1  # 1 == True
-    return render(request, "forms.html", {"form": form})
+    return render(request, "accounts/forms.html", {"form": form})
 
 
 def logout_view(request):
