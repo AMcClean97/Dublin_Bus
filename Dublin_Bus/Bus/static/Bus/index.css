@@ -1,14 +1,25 @@
 #map {
     position: relative;
+    height: 50vh;
+    margin-left:auto;
+    margin-right:auto;
+    width: 100%;
+    object-fit: cover;
 }
-#map-row{
-    height: 70vh;
+
+#route-suggestions {
+    
+}
+
+/*#map-row{
+    height: 50vh;
     overflow-y: hidden;
     position:center;
     width: 100%;
     margin-left:auto;
     margin-right:auto;
-}
+}*/
+
 .content-row{
     height: 300px;
 }
