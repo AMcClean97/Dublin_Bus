@@ -22,11 +22,18 @@
 					<div class="col-sm-auto col-md-4" id="journey_planner">
 						<h4>Journey planner</h4>
 						<div class="input-group mb-3">
+							<span class="input-group-text">A</span>
 							<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
 						</div>
 						<div class="input-group mb-3">
+							<span class="input-group-text">B</span>
 							<input id="inputDestin" class="form-control" placeholder="Enter your destination" type="text" />
 						</div>
+						<div class="input-group mb-3">
+							<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
+							<input type="datetime-local" class="form-control">
+						</div>
+
 						<button class="btn btn-secondary" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 					</div>
 					<div class="col" id="route_suggestions">
