@@ -13,6 +13,7 @@ let inputOrigin;
 let inputDestination;
 
 
+
 //function to retrieve Django CSRF token for POST requests - adapted from https://engineertodeveloper.com/how-to-use-ajax-with-django/
 function getCookie(name) {
     let cookieValue = null;
@@ -62,10 +63,15 @@ function initMap (){
     streetViewControl: false,
   	});
 
+
+
   	// Setup Places Autocomplete Service
   	// Set options for service
+  	// Need to add Dublin bounds to restrict search box
   	const autocompleteOptions = {
     	componentRestrictions: { country: ["IE"] },
+    	//bounds: dublin_bounds,
+        strictBounds: true,
     	fields: ["name", "geometry", "place_id"], // Google charges per field
   	};
 
@@ -153,7 +159,7 @@ function getRoute(start, end) {
 		if (status == "OK") {
 			directionsRenderer.setDirections(response);
 			directionsRenderer.setMap(map);
-
+            infoWindow.close();
 
 			var route = document.getElementById("route_instructions");
 			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
@@ -254,11 +260,11 @@ function resetJourneyPlanner() {
     inputOrigin.value = "";
     inputDestination.value = "";
     showMarkers();
+    //reset map center and zoom
+    map.setCenter({lat: 53.350140, lng: -6.266155});
+    map.setZoom(14);
+
 }
-
-
-
-
 
 
 
