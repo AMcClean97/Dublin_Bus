@@ -63,6 +63,9 @@ function initMap (){
     streetViewControl: false,
   	});
 
+    //will be used to restrict autocomplete search box options, radius can be increased or decreased as needed
+    var dublin_bounds = new google.maps.Circle({ center: myLatLng, radius: 30000 });
+
 
 
   	// Setup Places Autocomplete Service
@@ -70,7 +73,7 @@ function initMap (){
   	// Need to add Dublin bounds to restrict search box
   	const autocompleteOptions = {
     	componentRestrictions: { country: ["IE"] },
-    	//bounds: dublin_bounds,
+    	bounds: dublin_bounds.getBounds(),
         strictBounds: true,
     	fields: ["name", "geometry", "place_id"], // Google charges per field
   	};
