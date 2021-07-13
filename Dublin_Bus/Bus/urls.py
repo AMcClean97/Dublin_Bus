@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name= 'index'),
-    path('bus/ajax/', views.ajax_view),
+    path('bus/', views.index, name= 'index'),
+    path('bus/fetch_stops/', views.fetch_stops),
+    path('bus/send_to_model', views.send_to_model),
 ]

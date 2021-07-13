@@ -11,6 +11,7 @@ let originLatLon;
 let destinationLatLon;
 let inputOrigin;
 let inputDestination;
+let departureTime;
 
 
 
@@ -127,7 +128,6 @@ function initMap (){
 
     const destination_name = destination.name;
 
-    getRoute(originLatLon, destinationLatLon);
 
 })
 
@@ -137,10 +137,43 @@ function initMap (){
   	directionsRenderer = new google.maps.DirectionsRenderer({
     	preserveViewport: false,
   	});
+
+
+  	//set minimum date field to current date so user can't plan journeys in the past
+    var today = new Date();
+    var date = today.getDate();
+    var month = today.getMonth() + 1;
+    var year = today.getFullYear();
+    var hour = today.getHours();
+    var minute = today.getMinutes();
+
+    if(date<10) {
+    date = '0' + date};
+    if (month<10) {
+    month='0' + month};
+
+    today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
+    document.getElementById("time-dropdown").setAttribute("min", today);
+
+
+  	//event listener to get time value from time/date dropdown
+    const selectElement = document.getElementById('time-dropdown');
+
+    selectElement.addEventListener('change', (event) => {
+    departureTime = event.target.value;
+
+});
+
+    const submitButton = document.getElementById('submitJourneyPlanner');
+    submitButton.addEventListener('click', (event) => {
+    console.log(departureTime);
+    getRoute(originLatLon, destinationLatLon, departureTime);
+
+});
 }
 
 
-function getRoute(start, end) {
+function getRoute(start, end, time) {
 //request to Google Directions API
 
 	const request = {
@@ -150,6 +183,7 @@ function getRoute(start, end) {
 		transitOptions: {
 			modes: ['BUS'],
 			routingPreference: 'FEWER_TRANSFERS',
+			departureTime: new Date(time),
 		},
 		unitSystem: google.maps.UnitSystem.METRIC
 	}
@@ -158,6 +192,7 @@ function getRoute(start, end) {
 	clearMarkers();
 
 	//make request and render route on map
+	//need to fix to make sure agency is Dublin Bus?
 	directionsService.route(request, function(response, status) {
 		if (status == "OK") {
 			directionsRenderer.setDirections(response);
@@ -166,22 +201,38 @@ function getRoute(start, end) {
 
 			var route = document.getElementById("route_instructions");
 			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
-			var journey_description = "<br>";
+			var journeyDescription = "<br>";
+
 
 			//extract useful journey info from response and post to journey planner
 			for (var i=0; i<journey.length; i++) {
 				if (journey[i].travel_mode == "TRANSIT") {
-    				journey_description += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
-    				journey_description += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
-    				journey_description += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
+    				journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
+    				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
+    				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
+    				var routeDetails = {};
+    				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
+    				routeDetails['line'] = journey[i].transit.line.short_name;
+    				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
+    				routeDetails['num_stops'] = journey[i].transit.num_stops;
+    				var journeyPrediction;
+
+    				//post details to Django view
+    				postData('/bus/send_to_model', routeDetails).then((data) =>
+                    displayRoute(JSON.parse(data.current_pred)));
+
 				
 				} else if (journey[i].travel_mode == "WALKING") {
-    				journey_description += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
+    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
 				} else {
- 					journey_description = "<br> This route is not served by Dublin Bus.";
+ 					journeyDescription = "<br> This route is not served by Dublin Bus.";
  				}
 
-				route.innerHTML = journey_description;
+ 				function displayRoute(journeyPrediction) {
+ 				journeyPrediction = journeyPrediction.slice(1,-1);
+ 				journeyDescription += 'TRAVEL TIME ON BUS: ' + journeyPrediction;
+				route.innerHTML = journeyDescription;
+				}
 			}
 		}
 	});
@@ -205,7 +256,7 @@ function addMarkers(stops_data) {
 
     //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
     marker.addListener("click", () =>
-    postData('/bus/ajax/', marker.title.split(":")[0]).then((data) =>
+    postData('/bus/fetch_stops/', marker.title.split(":")[0]).then((data) =>
     displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
 }
@@ -268,6 +319,7 @@ function resetJourneyPlanner() {
     map.setZoom(14);
 
 }
+
 
 
 

@@ -32,10 +32,11 @@
 							</div>
 							<div class="input-group mb-3">
 								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
-								<input type="datetime-local" class="form-control">
+								<input type="datetime-local" class="form-control" id="time-dropdown"">
 							</div>
-	
-							<button class="btn btn-secondary" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
+
+							<button class="btn btn-success" id="submitJourneyPlanner">Submit</button>
+							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 						</div>
 						<div class="col" id="route_suggestions">
 							<p id="route_instructions"></p>

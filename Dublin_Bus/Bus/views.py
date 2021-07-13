@@ -5,6 +5,12 @@ from django.core import serializers
 from datetime import datetime, date
 import json
 from .models import Stop, Trip, Calendar, Route, StopTime
+import pickle
+import pandas as pd
+import xgboost
+import sklearn
+from .bus_models import get_prediction
+
 
 # Create your views here.
 def index(request):
@@ -20,8 +26,8 @@ def bus_stops():
     return bus_stops_dict
 
 
-#handle ajax request
-def ajax_view(request):
+#handle request for stop_data
+def fetch_stops(request):
     if request.method == "POST":
         stop_pk = json.loads(request.body)
         data = get_arrivals(stop_pk)
@@ -32,6 +38,18 @@ def ajax_view(request):
         }
         return JsonResponse(data)
 
+#handle parameters for predictions, returns whole journey prediction, currently hardcoded to use model for route 145_102 for all routes
+def send_to_model(request):
+    if request.method =="POST":
+        model_params = json.loads(request.body)
+        prediction = {}
+        prediction['current_pred'] = get_prediction(model_params)
+        return JsonResponse(prediction)
+    else:
+        data = {
+            "msg": "It worked!!",
+        }
+        return JsonResponse(data)
 
 #get next 5 arrivals for a given stop
 def get_arrivals(stop_pk):
@@ -66,3 +84,5 @@ def get_arrivals(stop_pk):
     arrivals = serializers.serialize("json", final_query[:3])
     results['timetable'] = arrivals
     return results
+
+
