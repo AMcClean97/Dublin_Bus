@@ -66,21 +66,3 @@ def get_arrivals(stop_pk):
     arrivals = serializers.serialize("json", final_query[:3])
     results['timetable'] = arrivals
     return results
-
-    ## Need to come back to ------
-    def current_weather():
-        url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
-
-        response = get(url).json()
-        weather = response["weather"][0]
-
-        city_weather = {
-            "Temperature": response['main']['temp'],
-            "Feels Like": response['main']['feels_like'],
-            "Minimum Temp": response['main']['temp_min'],
-            "Maximum Temp": response['main']['temp_max'],
-            "Humidity": response['main']['humidity'],
-            "Description": weather["description"],
-            "icon": weather["icon"]
-        }
-        return city_weather
