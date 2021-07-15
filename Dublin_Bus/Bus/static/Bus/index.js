@@ -12,7 +12,8 @@ let destinationLatLon;
 let inputOrigin;
 let inputDestination;
 
-
+//store csrftoken in a constant
+const csrftoken = getCookie('csrftoken');
 
 //function to retrieve Django CSRF token for POST requests - adapted from https://engineertodeveloper.com/how-to-use-ajax-with-django/
 function getCookie(name) {
@@ -30,9 +31,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-//store csrftoken in a constant
-const csrftoken = getCookie('csrftoken');
-
 
 //function to post data from frontend to Django
 async function postData(url="", data={}) {
@@ -48,19 +46,15 @@ async function postData(url="", data={}) {
     return response.json();
 }
 
-
-
-
-
 function initMap (){
 
 	let myLatLng = {lat: 53.350140, lng: -6.266155};//set the latitude and longitude to Dublin
 
   	map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 14,
-    center: myLatLng,
-    mapTypeControl: false,
-    streetViewControl: false,
+    	zoom: 14,
+    	center: myLatLng,
+    	mapTypeControl: false,
+    	streetViewControl: false,
   	});
 
     //will be used to restrict autocomplete search box options, radius can be increased or decreased as needed
@@ -92,7 +86,7 @@ function initMap (){
     	autocompleteOptions
   	);
 
-  //event listeners for autocomplete boxes
+//event listeners for autocomplete boxes
 
  	autocompleteOrigin.addListener("place_changed", () => {
     	const origin = autocompleteOrigin.getPlace();
@@ -104,32 +98,32 @@ function initMap (){
     	}
 
     	originLatLon = {
-    	lat: origin.geometry.location.lat(),
-    	lng: origin.geometry.location.lng(),
+    		lat: origin.geometry.location.lat(),
+    		lng: origin.geometry.location.lng(),
     	}
 
     	const origin_name = origin.name;
     })
 
  	autocompleteDestin.addListener("place_changed", () => {
-    const destination = autocompleteDestin.getPlace();
+    	const destination = autocompleteDestin.getPlace();
 
 
-      if (!destination.geometry || !destination.geometry.location) {
-      window.alert("Hmmmm, we are not familiar with " + destination.name + ". Choose an option from the searchbox dropdown.");
-      return;
-    }
+      	if (!destination.geometry || !destination.geometry.location) {
+      		window.alert("Hmmmm, we are not familiar with " + destination.name + ". Choose an option from the searchbox dropdown.");
+      		return;
+    	}
 
-    destinationLatLon = {
-    	lat: destination.geometry.location.lat(),
-    	lng: destination.geometry.location.lng(),
-    };
+    	destinationLatLon = {
+    		lat: destination.geometry.location.lat(),
+    		lng: destination.geometry.location.lng(),
+    	};
 
-    const destination_name = destination.name;
+    	const destination_name = destination.name;
 
-    getRoute(originLatLon, destinationLatLon);
+    	getRoute(originLatLon, destinationLatLon);
 
-})
+	})
 
 	//Make Directions Service object for getRoute
 	directionsService = new google.maps.DirectionsService();
@@ -197,16 +191,16 @@ function addMarkers(stops_data) {
         position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
         map: map,
         title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
-    });
+    	});
 
-    //add reference to each marker in stopMarkers
-    stopMarkers[stops_data[i].pk] = marker;
+    	//add reference to each marker in stopMarkers
+    	stopMarkers[stops_data[i].pk] = marker;
 
 
-    //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
-    marker.addListener("click", () =>
-    postData('/bus/ajax/', marker.title.split(":")[0]).then((data) =>
-    displayInfoWindow(data.timetable, marker.title.split(":")[0])))
+    	//add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
+    	marker.addListener("click", () =>
+    		postData('/bus/ajax/', marker.title.split(":")[0]).then((data) =>
+    		displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
 }
 
