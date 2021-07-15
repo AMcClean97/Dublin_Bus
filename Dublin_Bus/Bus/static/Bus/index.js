@@ -151,8 +151,13 @@ function initMap (){
     date = '0' + date};
     if (month<10) {
     month='0' + month};
+    if (hour<10) {
+    hour='0' + hour};
+    if (minute<10) {
+    minute='0' + minute};
 
     today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
+    console.log(today)
     document.getElementById("time-dropdown").setAttribute("min", today);
 
 
@@ -230,7 +235,7 @@ function getRoute(start, end, time) {
 
  				function displayRoute(journeyPrediction) {
  				journeyPrediction = journeyPrediction.slice(1,-1);
- 				journeyDescription += 'TRAVEL TIME ON BUS: ' + journeyPrediction;
+ 				journeyDescription += '<br>ESTIMATED TRAVEL TIME FOR WHOLE JOURNEY: ' + journeyPrediction;
 				route.innerHTML = journeyDescription;
 				}
 			}
@@ -256,7 +261,7 @@ function addMarkers(stops_data) {
 
     //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
     marker.addListener("click", () =>
-    postData('/bus/fetch_stops/', marker.title.split(":")[0]).then((data) =>
+    postData('/bus/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
     displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
 }
@@ -306,7 +311,7 @@ function showMarkers() {
  	}
 }
 
-//function to reset journey planner - should also zoom back out on map?
+//function to reset journey planner - should also reset time dropdown???
 function resetJourneyPlanner() {
     document.getElementById('route_instructions').innerHTML = "";
     directionsRenderer.set('directions', null);

@@ -2,13 +2,9 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from requests import get
 from django.core import serializers
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import json
 from .models import Stop, Trip, Calendar, Route, StopTime
-import pickle
-import pandas as pd
-import xgboost
-import sklearn
 from .bus_models import get_prediction
 
 
@@ -27,7 +23,7 @@ def bus_stops():
 
 
 #handle request for stop_data
-def fetch_stops(request):
+def fetch_arrivals(request):
     if request.method == "POST":
         stop_pk = json.loads(request.body)
         data = get_arrivals(stop_pk)
@@ -73,15 +69,20 @@ def get_arrivals(stop_pk):
 
     today_date = date.today()
     today_str = today_date.strftime("%Y%m%d")
+    now = datetime.now().time()
+    two_hours = datetime.now() + timedelta(hours=2)
+    two_hours_from_now = two_hours.time()
 
 
-    #This can definitely be neater/cleaner/faster - look into refactoring?
+
+    #This can probably be neater?
     #ALSO NEED TO TAKE INTO ACCOUNT SERVICE EXCEPTIONS IN CALENDAR_DATES AND TIMES PAST MIDNIGHT?
-    query1 = StopTime.objects.filter(stop_id=stop_pk).filter(arrival_time__gt=datetime.now().time())
+    #MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
+    query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now, arrival_time__lt=two_hours_from_now)
     query2 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1})
-    query3 = Trip.objects.filter(stoptime__in=query1).filter(service_id__in=query2)
-    final_query = query1.filter(trip_id__in=query3).order_by('arrival_time')
-    arrivals = serializers.serialize("json", final_query[:3])
+    query3 = Trip.objects.filter(stoptime__in=list(query), service_id__in=list(query2))
+    query = query.filter(trip_id__in=list(query3)).order_by('arrival_time')
+    arrivals = serializers.serialize("json", query[:3])
     results['timetable'] = arrivals
     return results
 

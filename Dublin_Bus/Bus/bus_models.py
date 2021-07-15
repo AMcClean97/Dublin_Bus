@@ -101,7 +101,7 @@ def get_prediction(details):
     df_bus = encode_features(departure_time)
     df_weather = get_current_weather()
     df_all = pd.concat([df_bus, df_weather], axis=1)
-
+    print(df_all)
     # load the model
     f = open('145_102.sav', 'rb')
     model = pickle.load(f)
