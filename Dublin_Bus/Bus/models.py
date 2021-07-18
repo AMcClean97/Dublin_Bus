@@ -65,22 +65,13 @@ class Stop(models.Model):
         managed = False
         db_table = 'stops'
 
-class Shape(models.Model):
-    shape_id = models.CharField(primary_key=True, max_length=225)
-    shape_pt_lat = models.FloatField(blank=True, null=True)
-    shape_pt_lon = models.FloatField(blank=True, null=True)
-    shape_pt_sequence = models.IntegerField(blank=True, null=True)
-    shape_dist_traveled = models.FloatField(blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = 'shapes'
 
 class Trip(models.Model):
     route_id = models.ForeignKey(Route, db_column='route_id', on_delete=models.CASCADE)
     service_id = models.ForeignKey(Calendar, db_column='service_id', on_delete=models.CASCADE)
     trip_id = models.CharField(primary_key=True, max_length=225)
-    shape_id = models.ForeignKey(Shape, db_column='shape_id', on_delete=models.CASCADE)
+    shape_id = models.CharField(max_length=225)
     trip_headsign = models.TextField(blank=True, null=True)
     direction_id = models.IntegerField(blank=True, null=True)
 
@@ -96,8 +87,6 @@ class StopTime(models.Model):
     stop_id = models.ForeignKey(Stop, db_column='stop_id', on_delete=models.CASCADE)
     stop_sequence = models.IntegerField(blank=True, null=True)
     stop_headsign = models.CharField(blank=True, null=True, max_length=225)
-    route_id = models.TextField(blank=True, null=True)
-    route_short_name = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

@@ -4,8 +4,9 @@ from requests import get
 from django.core import serializers
 from datetime import datetime, date, timedelta
 import json
-from .models import Stop, Trip, Calendar, Route, StopTime
+from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
 from .bus_models import get_prediction
+from .serializers import StopTimeSerializer
 
 
 # Create your views here.
@@ -76,14 +77,16 @@ def get_arrivals(stop_pk):
 
 
     #This can probably be neater?
-    #ALSO NEED TO TAKE INTO ACCOUNT SERVICE EXCEPTIONS IN CALENDAR_DATES AND TIMES PAST MIDNIGHT?
+    #NEED TO ACCOUNT FOR TIMES PAST MIDNIGHT?
     #MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
     query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now, arrival_time__lt=two_hours_from_now)
     query2 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1})
-    query3 = Trip.objects.filter(stoptime__in=list(query), service_id__in=list(query2))
+    query4 = CalendarDate.objects.filter(date=today_str)
+    query3 = Trip.objects.filter(stoptime__in=list(query), service_id__in=list(query2)).exclude(service_id__in=list(query4))
     query = query.filter(trip_id__in=list(query3)).order_by('arrival_time')
-    arrivals = serializers.serialize("json", query[:3])
-    results['timetable'] = arrivals
+    arrivals = StopTimeSerializer(query[:3], many=True)
+    results['timetable'] = arrivals.data
     return results
+
 
 

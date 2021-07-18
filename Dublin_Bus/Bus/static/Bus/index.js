@@ -12,6 +12,7 @@ let destinationLatLon;
 let inputOrigin;
 let inputDestination;
 let departureTime;
+let markerCluster;
 
 
 
@@ -52,7 +53,7 @@ async function postData(url="", data={}) {
 
 
 
-
+// function to initialise map and markers
 function initMap (){
 
 	let myLatLng = {lat: 53.350140, lng: -6.266155};//set the latitude and longitude to Dublin
@@ -157,7 +158,6 @@ function initMap (){
     minute='0' + minute};
 
     today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
-    console.log(today)
     document.getElementById("time-dropdown").setAttribute("min", today);
 
 
@@ -171,7 +171,6 @@ function initMap (){
 
     const submitButton = document.getElementById('submitJourneyPlanner');
     submitButton.addEventListener('click', (event) => {
-    console.log(departureTime);
     getRoute(originLatLon, destinationLatLon, departureTime);
 
 });
@@ -229,8 +228,10 @@ function getRoute(start, end, time) {
 				
 				} else if (journey[i].travel_mode == "WALKING") {
     				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
+    				route.innerHTML = journeyDescription;
 				} else {
  					journeyDescription = "<br> This route is not served by Dublin Bus.";
+ 					route.innerHTML = journeyDescription;
  				}
 
  				function displayRoute(journeyPrediction) {
@@ -255,6 +256,8 @@ function addMarkers(stops_data) {
         title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
     });
 
+
+
     //add reference to each marker in stopMarkers
     stopMarkers[stops_data[i].pk] = marker;
 
@@ -269,26 +272,26 @@ function addMarkers(stops_data) {
 
 //displays infoWindow content
 function displayInfoWindow(timetable, stop_id) {
-	var arrivals = JSON.parse(timetable);
+	var arrivals = timetable;
     const marker = stopMarkers[stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
     //if no buses are due at the stop that day
     if (arrivals.length == 0) {
-    	infoWindowContent += "<br>No buses stopping here today.";
+    	infoWindowContent += "<br>No buses stopping here in the next 2 hours.";
 
 	//if less than 3 buses due to stop that day
     } else if (arrivals.length <= 3) {
     	for (var each in arrivals) {
-			infoWindowContent += "<br>Line: " + arrivals[each].fields.route_short_name + " (to " + arrivals[each].fields.stop_headsign + ")<br>";
-			infoWindowContent += "Arrival time: " + arrivals[each].fields.arrival_time + "<br>";
+			infoWindowContent += "<br>Line: " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ")<br>";
+			infoWindowContent += "Arrival time: " + arrivals[each].arrival_time + "<br>";
 		}
 
 	//else list 3 buses? Maybe more?
 	} else {
     	for (var i=0; i<3; i++) {
-        	infoWindowContent += "<br>Line: " + arrivals[i].fields.route_short_name + " (to " + arrivals[i].fields.stop_headsign + ")<br>";
-        	infoWindowContent += "Arrival time: " + arrivals[i].fields.arrival_time + "<br>";
+        	infoWindowContent += "<br>Line: " + arrivals[i].trip_id.route_id.route_short_name + " (to " + arrivals[i].stop_headsign + ")<br>";
+        	infoWindowContent += "Arrival time: " + arrivals[i].arrival_time + "<br>";
     	}
     }
 
