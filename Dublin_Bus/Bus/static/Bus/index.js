@@ -14,6 +14,7 @@ let inputOrigin;
 let inputDestination;
 let departureTime;
 let markerCluster;
+let clusterStyles;
 
 
 
@@ -316,7 +317,7 @@ function addMarkers(stops_data) {
     }
 
     //clusters added, need to be styles
-    var clusterStyles = {
+    clusterStyles = {
     ignoreHidden: true,
     gridSize: 60,
     maxZoom: 15,
@@ -397,6 +398,7 @@ function showMarkers() {
  		stopMarkers[marker].setVisible(true);
 
  	}
+ 	markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 
 }
 
