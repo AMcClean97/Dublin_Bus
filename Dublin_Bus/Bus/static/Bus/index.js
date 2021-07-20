@@ -317,28 +317,32 @@ function addMarkers(stops_data) {
 
     //clusters added, need to be styles
     var clusterStyles = {
+    ignoreHidden: true,
+    gridSize: 60,
+    maxZoom: 15,
 styles: [{
-    height: 40,
-    width: 40,
-    anchorText: [20, 26],
-    textColor: 'black',
+    height: 30,
+    width: 30,
+    anchorText: [10, 15],
+    textColor: 'white',
     textSize: 10,
-    url: "../static/Bus/marker_clusters/m1.png",
+    url: "../static/Bus/marker_clusters/icons8-filled-circle-30.png",
 },
-{ height: 60,
-    width: 60,
-    anchorText: [21, 27],
-    textColor: 'black',
-    textSize: 10,
-    url: "../static/Bus/marker_clusters/m2.png",
+{ height: 50,
+    width: 50,
+    anchorText: [18, 24],
+    textColor: 'white',
+    textSize: 12,
+    fontWeight: 'bold',
+    url: "../static/Bus/marker_clusters/icons8-filled-circle-48.png",
     },
 
- { height: 80,
-    width: 80,
-    anchorText: [27, 35],
-    textColor: 'black',
-    textSize: 10,
-    url: "../static/Bus/marker_clusters/m3.png",
+ { height: 60,
+    width: 60,
+    anchorText: [25, 33],
+    textColor: 'white',
+    textSize: 14,
+    url: "../static/Bus/marker_clusters/icons8-filled-circle-65.png",
     },
 
 ],
@@ -383,7 +387,7 @@ function displayInfoWindow(timetable, stop_id) {
 function clearMarkers() {
   	for (var marker in stopMarkers) {
     	stopMarkers[marker].setVisible(false);
-    	markerCluster.setMap(null);
+    	markerCluster.clearMarkers();
   	}
 }
 
@@ -391,7 +395,7 @@ function clearMarkers() {
 function showMarkers() {
  	for (var marker in stopMarkers) {
  		stopMarkers[marker].setVisible(true);
- 		markerCluster.setMap(map);
+
  	}
 
 }
@@ -403,10 +407,11 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
     inputOrigin.value = "";
     inputDestination.value = "";
-    showMarkers();
+    infoWindow.close();
     //reset map center and zoom
     map.setCenter({lat: 53.350140, lng: -6.266155});
     map.setZoom(14);
+    showMarkers();
 
 
 }
