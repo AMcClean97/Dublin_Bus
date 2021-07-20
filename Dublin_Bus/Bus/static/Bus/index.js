@@ -61,7 +61,7 @@ function initMap (){
 	let myLatLng = {lat: 53.350140, lng: -6.266155};//set the latitude and longitude to Dublin
 
   	map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 14,
+    zoom: 13,
     center: myLatLng,
     mapTypeControl: false,
     streetViewControl: false,
@@ -86,9 +86,8 @@ function initMap (){
             elementType: "geometry",
             stylers: [{ visibility: "off" }],
           },
-          { featureType: "poi.attraction", stylers: [{ visibility: "off" }] },
-          { featureType: "poi.business", stylers: [{ visibility: "off" }] },
-          { featureType: "poi.government", stylers: [{ visibility: "off" }] },
+          { featureType: "poi", stylers: [{ visibility: "off" }] },
+
           {
             featureType: "road",
             elementType: "labels.icon",
@@ -287,10 +286,10 @@ function getRoute(start, end, time) {
 function addMarkers(stops_data) {
 
     infoWindow = new google.maps.InfoWindow();
-    //create marker icon
+    //create stop icon
      var busStopIcon = {
-        url: '../static/Bus/DBIcon.png',
-        scaledSize: new google.maps.Size(25, 25),
+        url: '../static/Bus/bus-stop.png',
+        scaledSize: new google.maps.Size(30, 30),
       };
 
     for (var i=0; i<stops_data.length; i++) {
@@ -319,9 +318,9 @@ function addMarkers(stops_data) {
     //clusters added, need to be styles
     clusterStyles = {
     ignoreHidden: true,
-    gridSize: 60,
+    gridSize: 80,
     maxZoom: 15,
-styles: [{
+    styles: [{
     height: 30,
     width: 30,
     anchorText: [10, 15],
@@ -335,15 +334,15 @@ styles: [{
     textColor: 'white',
     textSize: 12,
     fontWeight: 'bold',
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-48.png",
+    url: "../static/Bus/marker_clusters/icons8-filled-circle-50.png",
     },
 
- { height: 60,
-    width: 60,
+ { height: 65,
+    width: 65,
     anchorText: [25, 33],
     textColor: 'white',
     textSize: 14,
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-65.png",
+    url: "../static/Bus/marker_clusters/icons8-filled-circle-70.png",
     },
 
 ],
@@ -386,33 +385,35 @@ function displayInfoWindow(timetable, stop_id) {
 
   //function to clear stop markers from map
 function clearMarkers() {
-  	for (var marker in stopMarkers) {
-    	stopMarkers[marker].setVisible(false);
-    	markerCluster.clearMarkers();
+  	for (var i=0; i < stopMarkersArr.length; i++) {
+    	stopMarkersArr[i].setVisible(false);
   	}
+  	//markerCluster.clearMarkers();
+  	//stopMarkersArr = [];
 }
 
  //function to make stop markers visible again
 function showMarkers() {
  	for (var marker in stopMarkers) {
  		stopMarkers[marker].setVisible(true);
-
- 	}
- 	markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
+    }
 
 }
 
 //function to reset journey planner - should also reset time dropdown???
 function resetJourneyPlanner() {
+    //clearMarkers();
     document.getElementById('route_instructions').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
     inputOrigin.value = "";
     inputDestination.value = "";
     infoWindow.close();
+
     //reset map center and zoom
-    map.setCenter({lat: 53.350140, lng: -6.266155});
+
     map.setZoom(14);
+    map.setCenter({lat: 53.350140, lng: -6.266155});
     showMarkers();
 
 
