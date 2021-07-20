@@ -7,6 +7,7 @@ let directionsService;
 let directionsRenderer;
 //list for storing reference to bus stop markers
 let stopMarkers = {};
+let stopMarkersArr = [];
 let originLatLon;
 let destinationLatLon;
 let inputOrigin;
@@ -63,6 +64,42 @@ function initMap (){
     center: myLatLng,
     mapTypeControl: false,
     streetViewControl: false,
+    styles: [
+          { stylers: [{ saturation: -10 }] },
+          {
+            featureType: "administrative.land_parcel",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }],
+          },
+          {
+            featureType: "landscape.man_made",
+            stylers: [{ visibility: "off" }],
+          },
+          {
+            featureType: "poi",
+            elementType: "labels.text",
+            stylers: [{ visibility: "off" }],
+          },
+          {
+            featureType: "poi",
+            elementType: "geometry",
+            stylers: [{ visibility: "off" }],
+          },
+          { featureType: "poi.attraction", stylers: [{ visibility: "off" }] },
+          { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+          { featureType: "poi.government", stylers: [{ visibility: "off" }] },
+          {
+            featureType: "road",
+            elementType: "labels.icon",
+            stylers: [{ visibility: "on" }],
+          },
+          {
+            featureType: "road.local",
+            elementType: "labels",
+            stylers: [{ visibility: "on" }],
+          },
+          { featureType: "transit", stylers: [{ visibility: "off" }] },
+        ],
   	});
 
     //will be used to restrict autocomplete search box options, radius can be increased or decreased as needed
@@ -205,6 +242,7 @@ function getRoute(start, end, time) {
 
 			var route = document.getElementById("route_instructions");
 			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+			console.log(journey);
 			var journeyDescription = "<br>";
 
 
@@ -222,7 +260,7 @@ function getRoute(start, end, time) {
     				var journeyPrediction;
 
     				//post details to Django view
-    				postData('/bus/send_to_model', routeDetails).then((data) =>
+    				postData('/send_to_model', routeDetails).then((data) =>
                     displayRoute(JSON.parse(data.current_pred)));
 
 				
@@ -248,9 +286,15 @@ function getRoute(start, end, time) {
 function addMarkers(stops_data) {
 
     infoWindow = new google.maps.InfoWindow();
+    //create marker icon
+     var busStopIcon = {
+        url: '../static/Bus/DBIcon.png',
+        scaledSize: new google.maps.Size(25, 25),
+      };
 
     for (var i=0; i<stops_data.length; i++) {
         const marker = new google.maps.Marker({
+        icon: busStopIcon,
         position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
         map: map,
         title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
@@ -258,15 +302,50 @@ function addMarkers(stops_data) {
 
 
 
-    //add reference to each marker in stopMarkers
+    //add reference to each marker in stopMarkers, probably don't need this if we do stopMarkerArr
     stopMarkers[stops_data[i].pk] = marker;
+
+    //array to hold markers
+    stopMarkersArr.push(marker);
 
 
     //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
     marker.addListener("click", () =>
-    postData('/bus/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
+    postData('/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
     displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
+
+    //clusters added, need to be styles
+    var clusterStyles = {
+styles: [{
+    height: 40,
+    width: 40,
+    anchorText: [20, 26],
+    textColor: 'black',
+    textSize: 10,
+    url: "../static/Bus/marker_clusters/m1.png",
+},
+{ height: 60,
+    width: 60,
+    anchorText: [21, 27],
+    textColor: 'black',
+    textSize: 10,
+    url: "../static/Bus/marker_clusters/m2.png",
+    },
+
+ { height: 80,
+    width: 80,
+    anchorText: [27, 35],
+    textColor: 'black',
+    textSize: 10,
+    url: "../static/Bus/marker_clusters/m3.png",
+    },
+
+],
+};
+
+
+    markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
 
@@ -304,6 +383,7 @@ function displayInfoWindow(timetable, stop_id) {
 function clearMarkers() {
   	for (var marker in stopMarkers) {
     	stopMarkers[marker].setVisible(false);
+    	markerCluster.setMap(null);
   	}
 }
 
@@ -311,7 +391,9 @@ function clearMarkers() {
 function showMarkers() {
  	for (var marker in stopMarkers) {
  		stopMarkers[marker].setVisible(true);
+ 		markerCluster.setMap(map);
  	}
+
 }
 
 //function to reset journey planner - should also reset time dropdown???
@@ -325,6 +407,7 @@ function resetJourneyPlanner() {
     //reset map center and zoom
     map.setCenter({lat: 53.350140, lng: -6.266155});
     map.setZoom(14);
+
 
 }
 
