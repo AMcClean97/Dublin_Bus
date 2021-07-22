@@ -9,8 +9,8 @@ let directionsRenderer;
 let stopMarkers = {};
 let inputOrigin = document.getElementById("inputOrigin");
 let inputDestination = document.getElementById("inputDestin");
-let firstStop = document.getElementById('inputFirstStop');
-let finalStop = document.getElementById("inputLastStop");
+let inputFirstStop = document.getElementById('inputFirstStop');
+let inputLastStop = document.getElementById("inputLastStop");
 let autocompleteOrigin;
 let autocompleteDestin;
 
@@ -176,8 +176,8 @@ function submitRoute() {
 			lng: destination.geometry.location.lng(),
 		};
 	} else {
-		var origin = firstStop.value;
-		var destination = finalStop.value;
+		var origin = inputFirstStop.value;
+		var destination = inputLastStop.value;
 		
 		if (origin == ""){
 			alert("Please input a starting bus stop.");
@@ -220,7 +220,19 @@ function addMarkers(stops_data) {
     }
 }
 
-
+//Swaps Origin and Destination
+function swapInputs(){
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		var temp = inputOrigin.value;
+		inputOrigin.value = inputDestination.value;
+		inputDestination.value = temp;
+	} else {
+		var temp = inputFirstStop.value;
+		inputFirstStop.value = inputLastStop.value;
+		inputLastStop.value = temp;
+	}
+}
 //displays infoWindow content
 function displayInfoWindow(timetable, stop_id) {
 	var arrivals = JSON.parse(timetable);
@@ -270,15 +282,18 @@ function resetJourneyPlanner() {
     document.getElementById('route_instructions').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
+
+	//Reset Inputs
     inputOrigin.value = "";
     inputDestination.value = "";
-	firstStop.value ="";
-	finalStop.value ="";
+	inputFirstStop.value ="";
+	inputLastStop.value ="";
     showMarkers();
     //reset map center and zoom
     map.setCenter({lat: 53.350140, lng: -6.266155});
     map.setZoom(14);
 
+	//Reset autocompletes
 	autocompleteOrigin.set('place', null);
 	autocompleteDestin.set('place', null);
 }
