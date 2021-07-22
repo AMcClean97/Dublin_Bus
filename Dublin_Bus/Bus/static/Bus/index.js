@@ -137,7 +137,7 @@ function initMap (){
 
     	// will alert user if request fails or if they enter invalid place
     	if (!origin.geometry || !origin.geometry.location) {
-      		window.alert( "Please choose an option from the searchbox dropdown.");
+      		window.alert( "Hmmmmm...we are not familiar with " + origin.name + ". Choose an option from the searchbox dropdown.");
       		return;
     	}
 
@@ -154,7 +154,7 @@ function initMap (){
 
 
       	if (!destination.geometry || !destination.geometry.location) {
-      		window.alert("Please choose an option from the searchbox dropdown.");
+      		window.alert("Hmmmm, we are not familiar with " + destination.name + ". Choose an option from the searchbox dropdown.");
       		return;
     	}
 
@@ -274,7 +274,7 @@ function getRoute(start, end, time) {
 
  				function displayRoute(journeyPrediction) {
  				journeyPrediction = journeyPrediction.slice(1,-1);
- 				journeyDescription += '<br>ESTIMATED TRAVEL TIME: ' + journeyPrediction;
+ 				journeyDescription += '<br>ESTIMATED TRAVEL TIME FOR WHOLE JOURNEY: ' + journeyPrediction;
 				route.innerHTML = journeyDescription;
 				}
 			}
