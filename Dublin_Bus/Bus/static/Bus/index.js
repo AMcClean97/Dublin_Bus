@@ -7,10 +7,12 @@ let directionsService;
 let directionsRenderer;
 //list for storing reference to bus stop markers
 let stopMarkers = {};
-let originLatLon;
-let destinationLatLon;
-let inputOrigin;
-let inputDestination;
+let inputOrigin = document.getElementById("inputOrigin");
+let inputDestination = document.getElementById("inputDestin");
+let firstStop = document.getElementById('inputFirstStop');
+let finalStop = document.getElementById("inputLastStop");
+let autocompleteOrigin;
+let autocompleteDestin;
 
 //store csrftoken in a constant
 const csrftoken = getCookie('csrftoken');
@@ -73,57 +75,15 @@ function initMap (){
   	};
 
   	// Set idss of text-boxes attached to autocomplete
-  	inputOrigin = document.getElementById("inputOrigin");
-  	inputDestination = document.getElementById("inputDestin");
-
-  	const autocompleteOrigin = new google.maps.places.Autocomplete(
+  	autocompleteOrigin = new google.maps.places.Autocomplete(
     	inputOrigin,
     	autocompleteOptions
   	);
 
-  	const autocompleteDestin = new google.maps.places.Autocomplete(
+  	autocompleteDestin = new google.maps.places.Autocomplete(
     	inputDestination,
     	autocompleteOptions
   	);
-
-//event listeners for autocomplete boxes
-
- 	autocompleteOrigin.addListener("place_changed", () => {
-    	const origin = autocompleteOrigin.getPlace();
-
-    	// will alert user if request fails or if they enter invalid place
-    	if (!origin.geometry || !origin.geometry.location) {
-      		window.alert( "Hmmmmm...we are not familiar with " + origin.name + ". Choose an option from the searchbox dropdown.");
-      		return;
-    	}
-
-    	originLatLon = {
-    		lat: origin.geometry.location.lat(),
-    		lng: origin.geometry.location.lng(),
-    	}
-
-    	const origin_name = origin.name;
-    })
-
- 	autocompleteDestin.addListener("place_changed", () => {
-    	const destination = autocompleteDestin.getPlace();
-
-
-      	if (!destination.geometry || !destination.geometry.location) {
-      		window.alert("Hmmmm, we are not familiar with " + destination.name + ". Choose an option from the searchbox dropdown.");
-      		return;
-    	}
-
-    	destinationLatLon = {
-    		lat: destination.geometry.location.lat(),
-    		lng: destination.geometry.location.lng(),
-    	};
-
-    	const destination_name = destination.name;
-
-    	getRoute(originLatLon, destinationLatLon);
-
-	})
 
 	//Make Directions Service object for getRoute
 	directionsService = new google.maps.DirectionsService();
@@ -133,6 +93,17 @@ function initMap (){
   	});
 }
 
+function getStopData(pk, stop_list) {
+	for (i=0; i < stop_list.length; i++){
+		if(stop_list[i]['pk'] == pk){
+			var StopLatLon = {
+				lat: stop_list[i]['fields']['stop_lat'],
+				lng: stop_list[i]['fields']['stop_lon'],
+			};
+			return StopLatLon;
+		}
+	}
+};
 
 function getRoute(start, end) {
 //request to Google Directions API
@@ -181,6 +152,51 @@ function getRoute(start, end) {
 	});
 }
 
+//Press submit button
+function submitRoute() {
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		var origin = autocompleteOrigin.getPlace();
+		var destination = autocompleteDestin.getPlace();
+		
+		if (origin == undefined){
+			alert("Please use a valid starting point.");
+			return;
+		} else if (destination == undefined) {
+			alert("Please use a valid destination.");
+			return;
+		}
+
+		var originLatLon = {
+			lat: origin.geometry.location.lat(),
+			lng: origin.geometry.location.lng(),
+		}
+		var destinationLatLon = {
+			lat: destination.geometry.location.lat(),
+			lng: destination.geometry.location.lng(),
+		};
+	} else {
+		var origin = firstStop.value;
+		var destination = finalStop.value;
+		
+		if (origin == ""){
+			alert("Please input a starting bus stop.");
+			return;
+		}else if (destination == ""){
+			alert("Please input a destination bus stop.");
+			return;
+		};
+		var originLatLon = getStopData(origin, stops);
+		var destinationLatLon = getStopData(destination, stops);
+
+	}
+	//Clear Previous Route
+	directionsRenderer.set('directions', null);
+    directionsRenderer.setMap(null);
+
+	//Get New Route
+	getRoute(originLatLon, destinationLatLon);
+};
 //adds markers to map
 function addMarkers(stops_data) {
 
@@ -188,9 +204,9 @@ function addMarkers(stops_data) {
 
     for (var i=0; i<stops_data.length; i++) {
         const marker = new google.maps.Marker({
-        position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
-        map: map,
-        title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
+        	position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
+        	map: map,
+        	title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
     	});
 
     	//add reference to each marker in stopMarkers
@@ -256,11 +272,15 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
     inputOrigin.value = "";
     inputDestination.value = "";
+	firstStop.value ="";
+	finalStop.value ="";
     showMarkers();
     //reset map center and zoom
     map.setCenter({lat: 53.350140, lng: -6.266155});
     map.setZoom(14);
 
+	autocompleteOrigin.set('place', null);
+	autocompleteDestin.set('place', null);
 }
 
 
