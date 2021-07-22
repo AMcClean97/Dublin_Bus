@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import xgboost
 import sklearn
-from .models import CurrentWeather
+from .models import CurrentWeather, Stop
 from datetime import datetime, date
 import holidays
 import numpy as np
@@ -95,8 +95,43 @@ def rush_hour_flag(df):
 
     return df
 
+
+def get_proportion_of_route(line, departure_stop, num_stops):
+    """import json file with historical averages for relevant line """
+
+    ### THIS IS STILL A WORK IN PROGRESS, NEED TO FIGURE OUT HOW TO RETRIEVE RIGHT JSON FILE? USE LINE and possibly direction?
+    with open('145_102.json') as f:
+        historical_averages = json.load(f)
+        print(historical_averages)
+
+    ## GET STOP NUMBER FROM STOP OBJECT
+    start_stop_query = Stop.objects.filter(stop_name__contains=departure_stop).values('stop_name')
+    stop_num_list = []
+    for i in range(0, len(start_stop_query)):
+        current = start_stop_query[i]['stop_name']
+        stop_num = [int(j) for j in current.split() if j.isdigit()]
+        stop_num_str = ''.join([str(elem) for elem in stop_num])
+        stop_num_list.append(stop_num_str)
+
+    ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
+    for i in range(0, len(stop_num_list)):
+        for j in range(0, len(historical_averages)):
+            if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
+                print(proportion_total)
+                return proportion_total / 100
+
+
+
+
+
 def get_prediction(details):
+    print(details)
     line = details['line']
+    departure_stop = details['departure_stop']
+    num_stops = details['num_stops']
+    proportion_of_route = get_proportion_of_route(line, departure_stop, num_stops)
+    print(proportion_of_route)
     departure_time = details['departure_time']
     df_bus = encode_features(departure_time)
     df_weather = get_current_weather()
@@ -108,5 +143,7 @@ def get_prediction(details):
 
     # make predictions
     predicted_tt = model.predict(df_all)
-    predicted_tt = json.dumps(str(predicted_tt))
-    return predicted_tt
+    partial_prediction = proportion_of_route * predicted_tt
+    prediction = json.dumps(str(partial_prediction))
+    return prediction
+
