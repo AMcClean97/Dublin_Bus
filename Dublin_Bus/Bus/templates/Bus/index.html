@@ -40,6 +40,7 @@
 									<div class="input-group mb-3">
 										<span class="input-group-text">A</span>
 										<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
+										<button id ="currentLocationButton" class="btn btn-secondary" onclick="toggleCurrentLocation()"><i class="fas fa-male"></i></button>
 									</div>
 
 									<!-- End Point -->
@@ -115,6 +116,10 @@
 			option.text = stop['fields']['stop_name'].replace("&#x27;","'");
   			selects[i].add(option);
 		});
+	}
+
+	function test(){
+		console.log(getPosition());
 	}
 
 

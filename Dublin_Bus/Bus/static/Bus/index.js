@@ -7,12 +7,15 @@ let directionsService;
 let directionsRenderer;
 //list for storing reference to bus stop markers
 let stopMarkers = {};
+//Inputs
 let inputOrigin = document.getElementById("inputOrigin");
 let inputDestination = document.getElementById("inputDestin");
 let inputFirstStop = document.getElementById('inputFirstStop');
 let inputLastStop = document.getElementById("inputLastStop");
 let autocompleteOrigin;
 let autocompleteDestin;
+//Geolocation
+let currentLocationOrigin = false;
 
 //store csrftoken in a constant
 const csrftoken = getCookie('csrftoken');
@@ -106,8 +109,11 @@ function getStopData(pk, stop_list) {
 };
 
 function getRoute(start, end) {
-//request to Google Directions API
+	//Clear Previous Route
+	directionsRenderer.set('directions', null);
+    directionsRenderer.setMap(null);
 
+	//request to Google Directions API
 	const request = {
 		origin: start,
 		destination: end,
@@ -156,25 +162,35 @@ function getRoute(start, end) {
 function submitRoute() {
 	var id = $('.tab-content .active').attr('id');
 	if(id == "locations-tab"){
-		var origin = autocompleteOrigin.getPlace();
+		//Get Destination
 		var destination = autocompleteDestin.getPlace();
-		
-		if (origin == undefined){
-			alert("Please use a valid starting point.");
-			return;
-		} else if (destination == undefined) {
+		if (destination == undefined) {
 			alert("Please use a valid destination.");
 			return;
-		}
-
-		var originLatLon = {
-			lat: origin.geometry.location.lat(),
-			lng: origin.geometry.location.lng(),
 		}
 		var destinationLatLon = {
 			lat: destination.geometry.location.lat(),
 			lng: destination.geometry.location.lng(),
 		};
+
+		//Check if Origin is Current Location
+		if (currentLocationOrigin){
+			getRoutefromCurrentPosition(destinationLatLon)
+			return;
+		// If Origin is not current Location Check Origin
+		} else {
+			var origin = autocompleteOrigin.getPlace();
+		
+			if (origin == undefined){
+				alert("Please use a valid starting point.");
+				return;
+			}
+	
+			var originLatLon = {
+				lat: origin.geometry.location.lat(),
+				lng: origin.geometry.location.lng(),
+			}
+		}
 	} else {
 		var origin = inputFirstStop.value;
 		var destination = inputLastStop.value;
@@ -188,15 +204,11 @@ function submitRoute() {
 		};
 		var originLatLon = getStopData(origin, stops);
 		var destinationLatLon = getStopData(destination, stops);
-
 	}
-	//Clear Previous Route
-	directionsRenderer.set('directions', null);
-    directionsRenderer.setMap(null);
-
 	//Get New Route
 	getRoute(originLatLon, destinationLatLon);
 };
+
 //adds markers to map
 function addMarkers(stops_data) {
 
@@ -233,6 +245,49 @@ function swapInputs(){
 		inputLastStop.value = temp;
 	}
 }
+
+function toggleCurrentLocation(){
+	currentLocationOrigin = !currentLocationOrigin;
+	inputOrigin.disabled = !inputOrigin.disabled
+	if (currentLocationOrigin){
+		$('#currentLocationButton').addClass("active");
+	} else {
+		$('#currentLocationButton').removeClass("active");
+	}
+}
+
+//Handle Geo Location
+function getRoutefromCurrentPosition(destinationLatLon){
+
+	//var return_value;
+	//Options regarding accuracy and speed
+	var options = {
+		enableHighAccuracy: true,
+		timeout: 5000,
+		maximumAge: 0
+	};
+
+	function success(pos){
+		var originLatLon = {
+			lat: pos.coords.latitude,
+			lng: pos.coords.longitude,
+		}
+		getRoute(originLatLon, destinationLatLon);
+	}
+
+	function error(err){
+		console.warn(`ERROR(${err.code}): ${err.message}`);
+	}
+
+	if('geolocation' in navigator){
+		navigator.geolocation.getCurrentPosition(success, error, options);
+	} else {
+		alert("Browser is unable to use Geolocation services");
+	}
+
+}
+
+
 //displays infoWindow content
 function displayInfoWindow(timetable, stop_id) {
 	var arrivals = JSON.parse(timetable);
