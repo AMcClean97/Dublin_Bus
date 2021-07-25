@@ -15,6 +15,7 @@ let inputOrigin = document.getElementById("inputOrigin");
 let inputDestination = document.getElementById("inputDestin");
 let inputFirstStop = document.getElementById('inputFirstStop');
 let inputLastStop = document.getElementById("inputLastStop");
+let inputTime = document.getElementById("time-dropdown")
 let autocompleteOrigin;
 let autocompleteDestin;
 //Geolocation
@@ -70,38 +71,39 @@ function initMap (){
         styles: [
             { stylers: [{ saturation: -10 }] },
             {
-             featureType: "administrative.land_parcel",
-             elementType: "labels",
+             	featureType: "administrative.land_parcel",
+             	elementType: "labels",
                 stylers: [{ visibility: "off" }],
-             },
-            {
-              featureType: "landscape.man_made",
-              stylers: [{ visibility: "off" }],
             },
             {
-              featureType: "poi",
-              elementType: "labels.text",
-              stylers: [{ visibility: "off" }],
+              	featureType: "landscape.man_made",
+              	stylers: [{ visibility: "off" }],
             },
             {
-              featureType: "poi",
-              elementType: "geometry",
-              stylers: [{ visibility: "off" }],
-            },
-            { featureType: "poi", stylers: [{ visibility: "off" }] },
-
-            {
-              featureType: "road",
-              elementType: "labels.icon",
-              stylers: [{ visibility: "on" }],
+              	featureType: "poi",
+              	elementType: "labels.text",
+              	stylers: [{ visibility: "off" }],
             },
             {
-              featureType: "road.local",
-              elementType: "labels",
-              stylers: [{ visibility: "on" }],
+              	featureType: "poi",
+              	elementType: "geometry",
+              	stylers: [{ visibility: "off" }],
+            },
+            { 
+				featureType: "poi", stylers: [{ visibility: "off" }] },
+            {
+              	featureType: "road",
+              	elementType: "labels.icon",
+              	stylers: [{ visibility: "on" }],
             },
             {
-              featureType: "transit", stylers: [{ visibility: "off" }] },
+              	featureType: "road.local",
+              	elementType: "labels",
+              	stylers: [{ visibility: "on" }],
+            },
+            {
+              	featureType: "transit", stylers: [{ visibility: "off" }] 
+			},
             ],
   	});
 
@@ -141,6 +143,11 @@ function initMap (){
 
 	//This should not be in init_map
   	//set minimum date field to current date so user can't plan journeys in the past
+	var today = currentTime();
+    document.getElementById("time-dropdown").setAttribute("min", today);
+}
+
+function currentTime(){
     var today = new Date();
     var date = today.getDate();
     var month = today.getMonth() + 1;
@@ -148,17 +155,13 @@ function initMap (){
     var hour = today.getHours();
     var minute = today.getMinutes();
 
-    if(date<10) {
-    date = '0' + date};
-    if (month<10) {
-    month='0' + month};
-    if (hour<10) {
-    hour='0' + hour};
-    if (minute<10) {
-    minute='0' + minute};
+    if(date<10) { date = '0' + date};
+    if (month<10) { month='0' + month};
+    if (hour<10) { hour='0' + hour};
+    if (minute<10) { minute='0' + minute};
 
     today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
-    document.getElementById("time-dropdown").setAttribute("min", today);
+	return today;
 }
 
 function getStopData(pk, stop_list) {
@@ -173,7 +176,7 @@ function getStopData(pk, stop_list) {
 	}
 };
 
-function getRoute(start, end) {
+function getRoute(start, end, time) {
 	//Clear Previous Route
 	directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
@@ -248,6 +251,10 @@ function getRoute(start, end) {
 function submitRoute() {
 
 	//Get DepartureTime Here
+	var time = inputTime.value;
+	if (!time){
+		time = currentTime();
+	}
 
 	var id = $('.tab-content .active').attr('id');
 	if(id == "locations-tab"){
@@ -264,7 +271,7 @@ function submitRoute() {
 
 		//Check if Origin is Current Location
 		if (currentLocationOrigin){
-			getRoutefromCurrentPosition(destinationLatLon)
+			getRoutefromCurrentPosition(destinationLatLon, time)
 			return;
 		// If Origin is not current Location Check Origin
 		} else {
@@ -295,7 +302,7 @@ function submitRoute() {
 		var destinationLatLon = getStopData(destination, stops);
 	}
 	//Get New Route
-	getRoute(originLatLon, destinationLatLon);
+	getRoute(originLatLon, destinationLatLon, time);
 };
 
 //adds markers to map
@@ -402,7 +409,7 @@ function toggleCurrentLocation(){
 }
 
 //Handle Geo Location
-function getRoutefromCurrentPosition(destinationLatLon){
+function getRoutefromCurrentPosition(destinationLatLon, time){
 
 	//var return_value;
 	//Options regarding accuracy and speed
@@ -417,7 +424,7 @@ function getRoutefromCurrentPosition(destinationLatLon){
 			lat: pos.coords.latitude,
 			lng: pos.coords.longitude,
 		}
-		getRoute(originLatLon, destinationLatLon);
+		getRoute(originLatLon, destinationLatLon, time);
 	}
 
 	function error(err){
