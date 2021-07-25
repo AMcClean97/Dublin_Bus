@@ -4,43 +4,90 @@
 {% block head %}
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
 {% block content %}
-<!-- Map Div-->
 
 <div class ="col-auto text-center">
 
 </div>
 <div class="container-fluid" id="map-planner-container">
  	<div class="row justify-content-center" id="map-row">
-		<div class ="col-12 text-center">
+		<div class ="col-11 text-center">
+			<!--Central Card-->
 			<div class="card">
+				<!--Map-->
 				<div class="card-img-top" id="map"></div>
 
+				<!--Body-->
 				<div class="card-body">
 					<div class="row justify-content-center">
 						<div class="col-sm-auto col-md-4" id="journey_planner">
 							<h4>Journey planner</h4>
-							<div class="input-group mb-3">
-								<span class="input-group-text">A</span>
-								<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
+							<ul class="nav nav-tabs"  role="tablist">
+								<li class="nav-item" role="presentation">
+									<button class="nav-link active"  data-bs-toggle="tab" data-bs-target="#locations-tab" type="button" role="tab" aria-controls="location" aria-selected="true"><i class="fas fa-globe-americas"></i> Locations</button>
+								</li>
+								<li class="nav-item" role="presentation">
+								  	<button class="nav-link"  data-bs-toggle="tab" data-bs-target="#stops-tab" type="button" role="tab" aria-controls="stop" aria-selected="false"><i class="fas fa-map-pin"></i> Stops</button>
+								</li>
+							</ul>
+							<div class="tab-content">
+								<!-- Google Locations Tab -->
+								<div class="tab-pane fade show active" id="locations-tab" role="tabpanel">
+									<!--Start Point -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">A</span>
+										<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
+										<button id ="currentLocationButton" class="btn btn-secondary" onclick="toggleCurrentLocation()"><i class="fas fa-male"></i></button>
+									</div>
+
+									<!-- End Point -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">B</span>
+										<input id="inputDestin" class="form-control" placeholder="Enter your destination" type="text" />
+									</div>
+								</div>
+
+								<!-- Bus Stops Tab-->
+								<div class="tab-pane fade" id="stops-tab" role="tabpanel">
+									<!--Starting Stop -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">A</span>
+										<select class="form-select stop-select" id="inputFirstStop">
+											<option value="" disabled selected>First Stop</option>
+										</select>
+									</div>
+
+									<!-- End Stop -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">B</span>
+										<select class="form-select stop-select" id="inputLastStop" placeholder="Last Stop">
+											<option value="" disabled selected>Last Stop</option>
+										</select>
+									</div>
+									
+								</div>
+
+							
+
 							</div>
-							<div class="input-group mb-3">
-								<span class="input-group-text">B</span>
-								<input id="inputDestin" class="form-control" placeholder="Enter your destination" type="text" />
-							</div>
+							<!-- Start Time -->
 							<div class="input-group mb-3">
 								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
-								<input type="datetime-local" class="form-control" id="time-dropdown"">
+								<input type="datetime-local" class="form-control" id="time-dropdown">
 							</div>
-
-							<button class="btn btn-success" id="submitJourneyPlanner">Submit</button>
+							<div class= "input-group mb-3">
+								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+							</div>
+							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 						</div>
 						<div class="col" id="route_suggestions">
 							<p id="route_instructions"></p>
 						</div>
 					</div>
+					
 				</div>
 			</div>
 		</div>
@@ -51,9 +98,31 @@
 <script src="{% static '/Bus/index.js' %}" ></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
 <script>
+
+	//Process bus stops
+	var stops = JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"'))
+
+	//Add Stop Markers
 	window.onpageshow = function () {
-		addMarkers(JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"')));
+		addMarkers(stops);
 	};
+
+	//Add Bus Stops to Stops Form
+	var selects = document.getElementsByClassName('form-select stop-select');
+	for (i = 0; i< selects.length; i++){
+		stops.forEach(function(stop) {
+			var option = document.createElement('option');
+  			option.value = stop['pk'];
+			option.text = stop['fields']['stop_name'].replace("&#x27;","'");
+  			selects[i].add(option);
+		});
+	}
+
+	function test(){
+		console.log(getPosition());
+	}
+
+
 </script>
 
 {% endblock %}

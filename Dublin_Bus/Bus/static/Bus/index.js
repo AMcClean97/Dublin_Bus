@@ -8,13 +8,17 @@ let directionsRenderer;
 //list for storing reference to bus stop markers
 let stopMarkers = {};
 let stopMarkersArr = [];
-let originLatLon;
-let destinationLatLon;
-let inputOrigin;
-let inputDestination;
-let departureTime;
 let markerCluster;
 let clusterStyles;
+//Inputs
+let inputOrigin = document.getElementById("inputOrigin");
+let inputDestination = document.getElementById("inputDestin");
+let inputFirstStop = document.getElementById('inputFirstStop');
+let inputLastStop = document.getElementById("inputLastStop");
+let autocompleteOrigin;
+let autocompleteDestin;
+//Geolocation
+let currentLocationOrigin = false;
 
 //store csrftoken in a constant
 const csrftoken = getCookie('csrftoken');
@@ -117,57 +121,15 @@ function initMap (){
   	};
 
   	// Set idss of text-boxes attached to autocomplete
-  	inputOrigin = document.getElementById("inputOrigin");
-  	inputDestination = document.getElementById("inputDestin");
-
-  	const autocompleteOrigin = new google.maps.places.Autocomplete(
+  	autocompleteOrigin = new google.maps.places.Autocomplete(
     	inputOrigin,
     	autocompleteOptions
   	);
 
-  	const autocompleteDestin = new google.maps.places.Autocomplete(
+  	autocompleteDestin = new google.maps.places.Autocomplete(
     	inputDestination,
     	autocompleteOptions
   	);
-
-//event listeners for autocomplete boxes
-
- 	autocompleteOrigin.addListener("place_changed", () => {
-    	const origin = autocompleteOrigin.getPlace();
-
-    	// will alert user if request fails or if they enter invalid place
-    	if (!origin.geometry || !origin.geometry.location) {
-      		window.alert( "Hmmmmm...we are not familiar with " + origin.name + ". Choose an option from the searchbox dropdown.");
-      		return;
-    	}
-
-    	originLatLon = {
-    		lat: origin.geometry.location.lat(),
-    		lng: origin.geometry.location.lng(),
-    	}
-
-    	const origin_name = origin.name;
-    })
-
- 	autocompleteDestin.addListener("place_changed", () => {
-    	const destination = autocompleteDestin.getPlace();
-
-
-      	if (!destination.geometry || !destination.geometry.location) {
-      		window.alert("Hmmmm, we are not familiar with " + destination.name + ". Choose an option from the searchbox dropdown.");
-      		return;
-    	}
-
-    	destinationLatLon = {
-    		lat: destination.geometry.location.lat(),
-    		lng: destination.geometry.location.lng(),
-    	};
-
-    	const destination_name = destination.name;
-
-    	getRoute(originLatLon, destinationLatLon);
-
-	})
 
 	//Make Directions Service object for getRoute
 	directionsService = new google.maps.DirectionsService();
@@ -177,6 +139,7 @@ function initMap (){
   	});
 
 
+	//This should not be in init_map
   	//set minimum date field to current date so user can't plan journeys in the past
     var today = new Date();
     var date = today.getDate();
@@ -196,27 +159,26 @@ function initMap (){
 
     today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
     document.getElementById("time-dropdown").setAttribute("min", today);
-
-
-  	//event listener to get time value from time/date dropdown
-    const selectElement = document.getElementById('time-dropdown');
-
-    selectElement.addEventListener('change', (event) => {
-    departureTime = event.target.value;
-
-});
-
-    const submitButton = document.getElementById('submitJourneyPlanner');
-    submitButton.addEventListener('click', (event) => {
-    getRoute(originLatLon, destinationLatLon, departureTime);
-
-});
 }
 
+function getStopData(pk, stop_list) {
+	for (i=0; i < stop_list.length; i++){
+		if(stop_list[i]['pk'] == pk){
+			var StopLatLon = {
+				lat: stop_list[i]['fields']['stop_lat'],
+				lng: stop_list[i]['fields']['stop_lon'],
+			};
+			return StopLatLon;
+		}
+	}
+};
 
-function getRoute(start, end, time) {
-//request to Google Directions API
+function getRoute(start, end) {
+	//Clear Previous Route
+	directionsRenderer.set('directions', null);
+    directionsRenderer.setMap(null);
 
+	//request to Google Directions API
 	const request = {
 		origin: start,
 		destination: end,
@@ -281,6 +243,60 @@ function getRoute(start, end, time) {
 		}
 	});
 }
+
+//Press submit button
+function submitRoute() {
+
+	//Get DepartureTime Here
+
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		//Get Destination
+		var destination = autocompleteDestin.getPlace();
+		if (destination == undefined) {
+			alert("Please use a valid destination.");
+			return;
+		}
+		var destinationLatLon = {
+			lat: destination.geometry.location.lat(),
+			lng: destination.geometry.location.lng(),
+		};
+
+		//Check if Origin is Current Location
+		if (currentLocationOrigin){
+			getRoutefromCurrentPosition(destinationLatLon)
+			return;
+		// If Origin is not current Location Check Origin
+		} else {
+			var origin = autocompleteOrigin.getPlace();
+		
+			if (origin == undefined){
+				alert("Please use a valid starting point.");
+				return;
+			}
+	
+			var originLatLon = {
+				lat: origin.geometry.location.lat(),
+				lng: origin.geometry.location.lng(),
+			}
+		}
+	} else {
+		var origin = inputFirstStop.value;
+		var destination = inputLastStop.value;
+		
+		if (origin == ""){
+			alert("Please input a starting bus stop.");
+			return;
+		}else if (destination == ""){
+			alert("Please input a destination bus stop.");
+			return;
+		};
+		var originLatLon = getStopData(origin, stops);
+		var destinationLatLon = getStopData(destination, stops);
+	}
+	//Get New Route
+	getRoute(originLatLon, destinationLatLon);
+};
 
 //adds markers to map
 function addMarkers(stops_data) {
@@ -350,6 +366,72 @@ function addMarkers(stops_data) {
     markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
+//Swaps Origin and Destination
+function swapInputs(){
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		if(!currentLocationOrigin){
+			var temp = inputOrigin.value;
+			inputOrigin.value = inputDestination.value;
+			inputDestination.value = temp;
+		}
+	} else {
+		var temp = inputFirstStop.value;
+		inputFirstStop.value = inputLastStop.value;
+		inputLastStop.value = temp;
+	}
+}
+
+//Activates Current Location as origin
+function toggleCurrentLocation(){
+	if('geolocation' in navigator){
+		currentLocationOrigin = !currentLocationOrigin;
+		inputOrigin.disabled = !inputOrigin.disabled
+		document.getElementById('swapButton').disabled = !document.getElementById('swapButton').disabled;
+
+		//Aesthetic Changes
+		if (currentLocationOrigin){
+			$('#currentLocationButton').attr('class','btn btn-info');
+		} else {
+			$('#currentLocationButton').attr('class','btn btn-secondary');
+		}
+	} else{
+		alert("Browser is unable to use Geolocation services");
+	}
+
+}
+
+//Handle Geo Location
+function getRoutefromCurrentPosition(destinationLatLon){
+
+	//var return_value;
+	//Options regarding accuracy and speed
+	var options = {
+		enableHighAccuracy: true,
+		timeout: 5000,
+		maximumAge: 0
+	};
+
+	function success(pos){
+		var originLatLon = {
+			lat: pos.coords.latitude,
+			lng: pos.coords.longitude,
+		}
+		getRoute(originLatLon, destinationLatLon);
+	}
+
+	function error(err){
+		console.warn(`ERROR(${err.code}): ${err.message}`);
+	}
+
+	if('geolocation' in navigator){
+		navigator.geolocation.getCurrentPosition(success, error, options);
+	} else {
+		alert("Browser is unable to use Geolocation services");
+	}
+
+}
+
 
 //displays infoWindow content
 function displayInfoWindow(timetable, stop_id) {
@@ -401,16 +483,23 @@ function resetJourneyPlanner() {
     document.getElementById('route_instructions').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
+
+	//Reset Inputs
     inputOrigin.value = "";
     inputDestination.value = "";
-    infoWindow.close();
-
+	infoWindow.close();
+	inputFirstStop.value ="";
+	inputLastStop.value ="";
+    showMarkers();
     //reset map center and zoom
 
     map.setZoom(14);
     map.setCenter({lat: 53.350140, lng: -6.266155});
     showMarkers();
 
+	//Reset autocompletes
+	autocompleteOrigin.set('place', null);
+	autocompleteDestin.set('place', null);
 }
 
 
