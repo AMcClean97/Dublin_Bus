@@ -248,7 +248,7 @@ function getRoute(start, end, time) {
 
 			//extract useful journey info from response and post to journey planner
 			for (var i=0; i<journey.length; i++) {
-				if (journey[i].travel_mode == "TRANSIT") {
+				if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
     				journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
     				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
     				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
@@ -275,7 +275,7 @@ function getRoute(start, end, time) {
 
  				function displayRoute(journeyPrediction) {
  				journeyPrediction = journeyPrediction.slice(1,-1);
- 				journeyDescription += '<br>ESTIMATED TRAVEL TIME: ' + journeyPrediction;
+ 				journeyDescription += '<br>ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction;
 				route.innerHTML = journeyDescription;
 				}
 			}
