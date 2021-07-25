@@ -8,19 +8,15 @@ import holidays
 import numpy as np
 import json
 
+
 def get_current_weather():
     """ retrieves current weather info
         formats for model and returns dataframe"""
     current_weather = CurrentWeather.objects.first()
-    data = [[current_weather.temp, current_weather.wind_speed, current_weather.weather_main]]
-    df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main'])
-    df['weather_main_Clouds'] = df['weather_main'].apply(lambda x: 1 if x in ['Clouds'] else 0)
-    df['weather_main_Drizzle'] = df['weather_main'].apply(lambda x: 1 if x in ['Drizzle'] else 0)
-    df['weather_main_Fog'] = df['weather_main'].apply(lambda x: 1 if x in ['Fog'] else 0)
-    df['weather_main_Mist'] = df['weather_main'].apply(lambda x: 1 if x in ['Mist'] else 0)
-    df['weather_main_Rain'] = df['weather_main'].apply(lambda x: 1 if x in ['Rain'] else 0)
-    df['weather_main_Smoke'] = df['weather_main'].apply(lambda x: 1 if x in ['Smoke'] else 0)
-    df['weather_main_Snow'] = df['weather_main'].apply(lambda x: 1 if x in ['Snow'] else 0)
+    data = [[current_weather.temp, current_weather.wind_speed, current_weather.weather_main, current_weather.humidity]]
+    df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main', 'humidity'])
+    df['weather_main_precipitation'] = df['weather_main'].apply(
+        lambda x: 1 if x in ['Rain', 'Drizzle', 'Snow'] else 0)
     df.drop('weather_main', axis=1, inplace=True)
     return df
 
@@ -60,12 +56,9 @@ def encode_features(departure_time):
 
 
 def term_flag(df):
-    "adds term time flag if date of departure falls within school term"
+    "adds term time flag if date of departure falls within school term, need to be manually changed, current dates are for "
     df['is_term'] = np.where(
-        (df['date'] > '2018-01-07') & (df['date'] <= '2018-02-12') | (df['date'] > '2018-02-16') & (
-                    df['date'] <= '2018-03-23') | (df['date'] > '2018-08-04') & (df['date'] < '2018-05-31') | (
-                    df['date'] > '2018-09-02') & (df['date'] < '2018-10-29') | (df['date'] > '2018-11-05') & (
-                    df['date'] >= '2018-12-21'), 1, 0)
+        (df['date'] > '2021-09-01') & (df['date'] < '2021-10-25') | (df['date'] > '2021-10-29') & (df['date'] < '2021-12-22') | (df['date'] > '2022-01-06') & (df['date'] < '2022-02-15') | (df['date'] > '2022-02-19') & (df['date'] <= '2022-03-26') | (df['date'] >= '2022-04-12') & (df['date'] <= '2022-07-01'),  1, 0)
     return df
 
 
@@ -83,7 +76,7 @@ def holiday_flag(df):
 
 def rush_hour_flag(df):
     """adds rush hour flag if time of departure is during rush hour"""
-    rush_hours = [7, 8, 9, 16, 17, 18]
+    rush_hours = [7, 8, 17, 18]
     weekdays = [1, 2, 3, 4, 5]
 
     conditions = [
@@ -99,19 +92,13 @@ def rush_hour_flag(df):
 def get_proportion_of_route(line, departure_stop, num_stops):
     """import json file with historical averages for relevant line """
 
-    ### THIS IS STILL A WORK IN PROGRESS, NEED TO FIGURE OUT HOW TO RETRIEVE RIGHT JSON FILE? USE LINE and possibly direction?
+    ### THIS IS STILL A WORK IN PROGRESS, CURRENTLY ONLY HAVE JSON FOR 145_102
     with open('145_102.json') as f:
         historical_averages = json.load(f)
         print(historical_averages)
 
-    ## GET STOP NUMBER FROM STOP OBJECT
-    start_stop_query = Stop.objects.filter(stop_name__contains=departure_stop).values('stop_name')
-    stop_num_list = []
-    for i in range(0, len(start_stop_query)):
-        current = start_stop_query[i]['stop_name']
-        stop_num = [int(j) for j in current.split() if j.isdigit()]
-        stop_num_str = ''.join([str(elem) for elem in stop_num])
-        stop_num_list.append(stop_num_str)
+
+    stop_num_list = get_matching_stop_numbers(departure_stop)
 
     ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
     for i in range(0, len(stop_num_list)):
@@ -121,29 +108,67 @@ def get_proportion_of_route(line, departure_stop, num_stops):
                 print(proportion_total)
                 return proportion_total / 100
 
+def get_matching_stop_numbers(stop_name, integer=False):
+    """function takes stop name string and matches it up to return potential list of stoppoint id/number matches
+    if integer flag is true, return stop ids as list of ints, otherwise returns as list of strings"""
+    start_stop_query = Stop.objects.filter(stop_name__icontains=stop_name).values('stop_name')
+    stop_num_list = []
+    for i in range(0, len(start_stop_query)):
+        current = start_stop_query[i]['stop_name']
+        stop_num = [int(j) for j in current.split() if j.isdigit()]
+        stop_num_str = ''.join([str(elem) for elem in stop_num])
+        if integer:
+            stop_num_list.append(int(stop_num_str))
+        else:
+            stop_num_list.append(stop_num_str)
+    return stop_num_list
 
 
+def find_route(departure_stop, arrival_stop, line):
+    """takes line, departure stop and arrival stop from Google API response and finds a matching Dublin Bus route"""
 
+    #first retrieve relevant bus stop numbers by matching those in DB database with the string returned by Google
+    potential_departure_stops = get_matching_stop_numbers(departure_stop, True)
+    potential_arrival_stops = get_matching_stop_numbers(arrival_stop, True)
+
+    # SAVE CSV AGAIN WITHOUT INDEX, read in routes CSV
+    df = pd.read_csv('df_routes.csv')
+
+    # retrieve records for a particular line
+    df = df.loc[(df['lineid'] == line)]
+
+    #This finds the route by checking which route for the line contains both the departure and arrival stops given by Google
+    #Need to test this to ensure there aren't lines where both routes share 2 stops?
+    filter1 = df['stoppointid'].isin(potential_departure_stops)
+    filter2 = df['stoppointid'].isin(potential_arrival_stops)
+    df = df[filter1 | filter2]
+    route = df['routeid'].tolist()
+    route = max(route, key=route.count)
+    return route
 
 def get_prediction(details):
-    print(details)
-    line = details['line']
-    departure_stop = details['departure_stop']
-    num_stops = details['num_stops']
-    proportion_of_route = get_proportion_of_route(line, departure_stop, num_stops)
-    print(proportion_of_route)
+    """takes journey planner input / Google reponse and returns predicted travel time """
+    ## find out which route, and therefore which model is required
+    route = find_route(details['departure_stop'], details['arrival_stop'], details['line'])
+
+    ## encode features for prediction
     departure_time = details['departure_time']
     df_bus = encode_features(departure_time)
     df_weather = get_current_weather()
     df_all = pd.concat([df_bus, df_weather], axis=1)
-    print(df_all)
-    # load the model
-    f = open('145_102.sav', 'rb')
+
+    # load the model that corresponds to the route
+    f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
     model = pickle.load(f)
 
-    # make predictions
+    # make predictions - at the moment only have json for single route 145_102, so all other routes return entire tt prediction
     predicted_tt = model.predict(df_all)
-    partial_prediction = proportion_of_route * predicted_tt
-    prediction = json.dumps(str(partial_prediction))
-    return prediction
+    if route =='145_102':
+        proportion_of_route = get_proportion_of_route(details['line'], details['departure_stop'], details['num_stops'])
+        print(proportion_of_route)
+        partial_prediction = proportion_of_route * predicted_tt
+        predicted_tt = json.dumps(str(partial_prediction))
+    else:
+        predicted_tt = json.dumps(str(predicted_tt))
+    return predicted_tt
 

@@ -256,6 +256,7 @@ function getRoute(start, end, time) {
     				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
     				routeDetails['line'] = journey[i].transit.line.short_name;
     				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
+    				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
     				routeDetails['num_stops'] = journey[i].transit.num_stops;
     				var journeyPrediction;
 
