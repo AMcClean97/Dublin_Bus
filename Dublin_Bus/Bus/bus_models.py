@@ -103,6 +103,7 @@ def get_proportion_of_route(route, departure_stop, num_stops):
     for i in range(0, len(stop_num_list)):
         for j in range(0, len(historical_averages)):
             if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
                 proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
                 print(proportion_total)
                 return proportion_total / 100
