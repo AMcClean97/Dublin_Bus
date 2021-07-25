@@ -236,9 +236,11 @@ function addMarkers(stops_data) {
 function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
 	if(id == "locations-tab"){
-		var temp = inputOrigin.value;
-		inputOrigin.value = inputDestination.value;
-		inputDestination.value = temp;
+		if(!currentLocationOrigin){
+			var temp = inputOrigin.value;
+			inputOrigin.value = inputDestination.value;
+			inputDestination.value = temp;
+		}
 	} else {
 		var temp = inputFirstStop.value;
 		inputFirstStop.value = inputLastStop.value;
@@ -246,14 +248,23 @@ function swapInputs(){
 	}
 }
 
+//Activates Current Location as origin
 function toggleCurrentLocation(){
-	currentLocationOrigin = !currentLocationOrigin;
-	inputOrigin.disabled = !inputOrigin.disabled
-	if (currentLocationOrigin){
-		$('#currentLocationButton').addClass("active");
-	} else {
-		$('#currentLocationButton').removeClass("active");
+	if('geolocation' in navigator){
+		currentLocationOrigin = !currentLocationOrigin;
+		inputOrigin.disabled = !inputOrigin.disabled
+		document.getElementById('swapButton').disabled = !document.getElementById('swapButton').disabled;
+
+		//Aesthetic Changes
+		if (currentLocationOrigin){
+			$('#currentLocationButton').attr('class','btn btn-info');
+		} else {
+			$('#currentLocationButton').attr('class','btn btn-secondary');
+		}
+	} else{
+		alert("Browser is unable to use Geolocation services");
 	}
+
 }
 
 //Handle Geo Location
