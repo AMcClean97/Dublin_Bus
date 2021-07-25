@@ -89,11 +89,10 @@ def rush_hour_flag(df):
     return df
 
 
-def get_proportion_of_route(line, departure_stop, num_stops):
+def get_proportion_of_route(route, departure_stop, num_stops):
     """import json file with historical averages for relevant line """
 
-    ### THIS IS STILL A WORK IN PROGRESS, CURRENTLY ONLY HAVE JSON FOR 145_102
-    with open('145_102.json') as f:
+    with open('json/avg' + route + '.json') as f:
         historical_averages = json.load(f)
         print(historical_averages)
 
@@ -143,6 +142,7 @@ def find_route(departure_stop, arrival_stop, line):
     filter2 = df['stoppointid'].isin(potential_arrival_stops)
     df = df[filter1 | filter2]
     route = df['routeid'].tolist()
+    print(line, route)
     route = max(route, key=route.count)
     return route
 
@@ -163,12 +163,9 @@ def get_prediction(details):
 
     # make predictions - at the moment only have json for single route 145_102, so all other routes return entire tt prediction
     predicted_tt = model.predict(df_all)
-    if route =='145_102':
-        proportion_of_route = get_proportion_of_route(details['line'], details['departure_stop'], details['num_stops'])
-        print(proportion_of_route)
-        partial_prediction = proportion_of_route * predicted_tt
-        predicted_tt = json.dumps(str(partial_prediction))
-    else:
-        predicted_tt = json.dumps(str(predicted_tt))
+    proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'])
+    print(proportion_of_route)
+    partial_prediction = proportion_of_route * predicted_tt
+    predicted_tt = json.dumps(str(partial_prediction))
     return predicted_tt
 
