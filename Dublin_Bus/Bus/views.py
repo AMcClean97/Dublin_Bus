@@ -80,9 +80,9 @@ def get_arrivals(stop_pk):
     #NEED TO ACCOUNT FOR TIMES PAST MIDNIGHT?
     #MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
     query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now, arrival_time__lt=two_hours_from_now)
-    query2 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1})
-    query4 = CalendarDate.objects.filter(date=today_str)
-    query3 = Trip.objects.filter(stoptime__in=list(query), service_id__in=list(query2)).exclude(service_id__in=list(query4))
+    query4 = CalendarDate.objects.only('service_id').filter(date=today_str)
+    query2 = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1}).exclude(service_id__in=query4)
+    query3 = Trip.objects.filter(stoptime__in=list(query), service_id__in=list(query2))
     query = query.filter(trip_id__in=list(query3)).order_by('arrival_time')
     arrivals = StopTimeSerializer(query[:3], many=True)
     results['timetable'] = arrivals.data
