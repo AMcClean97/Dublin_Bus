@@ -164,9 +164,9 @@ function currentTime(){
 	return today;
 }
 
-function getStopData(pk, stop_list) {
-	for (i=0; i < stop_list.length; i++){
-		if(stop_list[i]['pk'] == pk){
+function getStopData(name, stop_list) {
+	for (var i=0; i < stop_list.length; i++){
+		if(stop_list[i]['fields']['stop_name'].replace("&#x27;","'") == name){
 			var StopLatLon = {
 				lat: stop_list[i]['fields']['stop_lat'],
 				lng: stop_list[i]['fields']['stop_lon'],
@@ -174,6 +174,7 @@ function getStopData(pk, stop_list) {
 			return StopLatLon;
 		}
 	}
+	return false;
 };
 
 function getRoute(start, end, time) {
@@ -290,16 +291,19 @@ function submitRoute() {
 	} else {
 		var origin = inputFirstStop.value;
 		var destination = inputLastStop.value;
-		
-		if (origin == ""){
-			alert("Please input a starting bus stop.");
-			return;
-		}else if (destination == ""){
-			alert("Please input a destination bus stop.");
-			return;
-		};
+
 		var originLatLon = getStopData(origin, stops);
 		var destinationLatLon = getStopData(destination, stops);
+
+		if (!originLatLon) {
+			alert("Please input a valid First Stop")
+			return;
+		} else if (!destinationLatLon) {
+			alert("Please input a valid Last Stop")
+			return;
+		}
+
+
 	}
 	//Get New Route
 	getRoute(originLatLon, destinationLatLon, time);

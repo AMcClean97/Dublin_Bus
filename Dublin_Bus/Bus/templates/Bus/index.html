@@ -5,6 +5,8 @@
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
 {% endblock %}
 {% block content %}
 
@@ -54,23 +56,16 @@
 									<!--Starting Stop -->
 									<div class="input-group mb-3">
 										<span class="input-group-text">A</span>
-										<select class="form-select stop-select" id="inputFirstStop">
-											<option value="" disabled selected>First Stop</option>
-										</select>
+										<input id="inputFirstStop" class="form-control" placeholder="First Stop" list = "stopOptions" type="text" />
 									</div>
 
 									<!-- End Stop -->
 									<div class="input-group mb-3">
 										<span class="input-group-text">B</span>
-										<select class="form-select stop-select" id="inputLastStop" placeholder="Last Stop">
-											<option value="" disabled selected>Last Stop</option>
-										</select>
+										<input id="inputLastStop" class="form-control" placeholder="Last Stop" list = "stopOptions" type="text" />
 									</div>
-									
+									<datalist id="stopOptions"></datalist>
 								</div>
-
-							
-
 							</div>
 							<!-- Start Time -->
 							<div class="input-group mb-3">
@@ -107,22 +102,13 @@
 		addMarkers(stops);
 	};
 
-	//Add Bus Stops to Stops Form
-	var selects = document.getElementsByClassName('form-select stop-select');
-	for (i = 0; i< selects.length; i++){
-		stops.forEach(function(stop) {
-			var option = document.createElement('option');
-  			option.value = stop['pk'];
-			option.text = stop['fields']['stop_name'].replace("&#x27;","'");
-  			selects[i].add(option);
-		});
-	}
-
-	function test(){
-		console.log(getPosition());
-	}
-
-
+	var stopOptions = document.getElementById("stopOptions")
+	stops.forEach(function(stop){
+		var option = document.createElement('option');
+		option.value = stop['fields']['stop_name'].replace("&#x27;","'");
+		stopOptions.appendChild(option);
+	});
+	
 </script>
 
 {% endblock %}
