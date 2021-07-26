@@ -258,6 +258,10 @@ function getRoute(start, end, time) {
     				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
     				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
     				routeDetails['num_stops'] = journey[i].transit.num_stops;
+    				routeDetails['dep_stop_lat'] = journey[i].transit.departure_stop.location.lat();
+    				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
+    				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
+    				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
     				var journeyPrediction;
 
     				//post details to Django view
@@ -358,11 +362,11 @@ function displayInfoWindow(timetable, stop_id) {
     const marker = stopMarkers[stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
-    //if no buses are due at the stop that day
+    //if no buses are due at the stop in next 2 hours
     if (arrivals.length == 0) {
     	infoWindowContent += "<br>No buses stopping here in the next 2 hours.";
 
-	//if less than 3 buses due to stop that day
+	//if less than 3 buses due to stop in next 2 hours
     } else if (arrivals.length <= 3) {
     	for (var each in arrivals) {
 			infoWindowContent += "<br>Line: " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ")<br>";
