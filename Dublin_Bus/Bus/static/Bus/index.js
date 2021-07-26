@@ -262,6 +262,7 @@ function getRoute(start, end, time) {
     				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
     				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
     				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
+    				routeDetails['google_pred'] = journey[i].duration.value;
     				var journeyPrediction;
 
     				//post details to Django view
@@ -270,17 +271,34 @@ function getRoute(start, end, time) {
 
 				
 				} else if (journey[i].travel_mode == "WALKING") {
-    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
+    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")<br>";
     				route.innerHTML = journeyDescription;
-				} else {
+
+
+				} else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
+				    journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
+    				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
+    				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
+    				displayRoute(journey[i].duration.value);
+
+				}
+
+				else
+				{
  					journeyDescription = "<br> This route is not served by Dublin Bus.";
  					route.innerHTML = journeyDescription;
  				}
 
  				function displayRoute(journeyPrediction) {
- 				journeyPrediction = journeyPrediction.slice(1,-1);
- 				journeyDescription += '<br>ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction;
-				route.innerHTML = journeyDescription;
+ 				if (typeof journeyPrediction == 'string') {
+ 				    journeyPrediction = journeyPrediction.slice(1,-1);
+ 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction + '<br>';
+ 				    }
+ 				else {
+ 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction.toString() + '<br>';
+ 				}
+ 				route.innerHTML = journeyDescription;
+
 				}
 			}
 		}

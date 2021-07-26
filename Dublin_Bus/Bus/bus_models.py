@@ -7,6 +7,7 @@ from datetime import datetime, date
 import holidays
 import numpy as np
 import json
+import os.path
 
 
 def get_current_weather():
@@ -91,21 +92,23 @@ def rush_hour_flag(df):
 
 def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng):
     """import json file with historical averages for relevant line """
+    if os.path.exists('json/avg' + route + '.json'):
+        with open('json/avg' + route + '.json') as f:
+            historical_averages = json.load(f)
+            print(historical_averages)
 
-    with open('json/avg' + route + '.json') as f:
-        historical_averages = json.load(f)
-        print(historical_averages)
+        stop_num_list = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop)
 
-    stop_num_list = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop)
-
-    ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
-    for i in range(0, len(stop_num_list)):
-        for j in range(0, len(historical_averages)):
-            if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
-                # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
-                proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
-                print(proportion_total)
-                return proportion_total / 100
+        ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
+        for i in range(0, len(stop_num_list)):
+            for j in range(0, len(historical_averages)):
+                if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                    # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
+                    proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
+                    print(proportion_total)
+                    return proportion_total / 100
+        else:
+            return 1
 
 def get_stop(stop_lat, stop_lng, integer=False):
     """function takes stop lat and lng and returns stoppoint id/number match
@@ -171,32 +174,38 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
     filter2 = df['stoppointid'].isin(potential_arrival_stops)
     df = df[filter1 | filter2]
     route = df['routeid'].tolist()
-    print(line, route)
-    route = max(route, key=route.count)
-    print(route)
-    return route
+    if len(route) == 0:
+        route = None
+    else:
+        route = max(route, key=route.count)
+        return route
 
 def get_prediction(details):
     """takes journey planner input / Google reponse and returns predicted travel time """
     ## find out which route, and therefore which model is required
     print(details)
     route = find_route(details['arr_stop_lat'], details['arr_stop_lng'], details['dep_stop_lat'], details['dep_stop_lng'], details['departure_stop'], details['arrival_stop'], details['line'])
+    if route == None:
+        predicted_tt = details['google_pred']
+        print(type(predicted_tt))
 
-    ## encode features for prediction
-    departure_time = details['departure_time']
-    df_bus = encode_features(departure_time)
-    df_weather = get_current_weather()
-    df_all = pd.concat([df_bus, df_weather], axis=1)
+    else:
+        ## encode features for prediction
+        departure_time = details['departure_time']
+        df_bus = encode_features(departure_time)
+        df_weather = get_current_weather()
+        df_all = pd.concat([df_bus, df_weather], axis=1)
 
-    # load the model that corresponds to the route
-    f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
-    model = pickle.load(f)
+        # load the model that corresponds to the route
+        f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
+        model = pickle.load(f)
 
-    # make predictions - at the moment only have json for single route 145_102, so all other routes return entire tt prediction
-    predicted_tt = model.predict(df_all)
-    proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'])
-    print(proportion_of_route)
-    partial_prediction = proportion_of_route * predicted_tt
-    predicted_tt = json.dumps(str(partial_prediction))
+        # make predictions
+        predicted_tt = model.predict(df_all)
+        proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'])
+        print(proportion_of_route)
+        partial_prediction = proportion_of_route * predicted_tt
+        predicted_tt = json.dumps(str(partial_prediction))
+        print(type(predicted_tt))
     return predicted_tt
 
