@@ -381,11 +381,15 @@ function addMarkers(stops_data) {
 function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
 	if(id == "locations-tab"){
-		if(!currentLocationOrigin){
-			var temp = inputOrigin.value;
-			inputOrigin.value = inputDestination.value;
-			inputDestination.value = temp;
-		}
+		//Swap Input values
+		var temp = inputOrigin.value;
+		inputOrigin.value = inputDestination.value;
+		inputDestination.value = temp;
+
+		//Swap autocomplete Places
+		var tempPlace = autocompleteOrigin.getPlace();
+		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
+		autocompleteDestin.set('place', tempPlace);
 	} else {
 		var temp = inputFirstStop.value;
 		inputFirstStop.value = inputLastStop.value;
@@ -398,7 +402,6 @@ function toggleCurrentLocation(){
 	if('geolocation' in navigator){
 		currentLocationOrigin = !currentLocationOrigin;
 		inputOrigin.disabled = !inputOrigin.disabled
-		document.getElementById('swapButton').disabled = !document.getElementById('swapButton').disabled;
 
 		//Aesthetic Changes
 		if (currentLocationOrigin){
