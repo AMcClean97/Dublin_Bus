@@ -412,7 +412,7 @@ function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
 
 	//if origin is current location, use geocoder to get Place
-	if(currentLocationOrigin){
+	/*if(currentLocationOrigin){
         var temp = inputOrigin.value;
 		geocoder.geocode({ address: temp}, (results, status) => {
 	    if (status === "OK") {
@@ -425,19 +425,30 @@ function swapInputs(){
 	        autocompleteOrigin.set('place', autocompleteDestin.getPlace());
 		    autocompleteDestin.set('place', tempPlace);
             }
-            });
+        });
             //switch off currentLocation button (as current location is no longer origin)
             toggleCurrentLocation();
-	}
+	}*/
 
-	else if(id == "locations-tab"){
+	if(id == "locations-tab"){
 		//Swap Input values
 		var temp = inputOrigin.value;
 		inputOrigin.value = inputDestination.value;
 		inputDestination.value = temp;
 
 		//Swap autocomplete Places
-		var tempPlace = autocompleteOrigin.getPlace();
+		var tempPlace
+		//If current Location on
+		if(currentLocationOrigin){
+			toggleCurrentLocation();
+			geocoder.geocode({ address: temp}, (results, status) => {
+				if (status === "OK") {
+					tempPlace = results[0];
+				}
+			});
+		} else {
+			tempPlace = autocompleteOrigin.getPlace();
+		}
 		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
 		autocompleteDestin.set('place', tempPlace);
 	} else {
@@ -487,22 +498,22 @@ function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false
 		var originLatLon = {
 			lat: pos.coords.latitude,
 			lng: pos.coords.longitude,
-			}
+		}
 
 		geocoder.geocode({ location: originLatLon }, (results, status) => {
-
-	    if (status === "OK") {
-	        const location_description = results[0].address_components[0].long_name + ' ' + results[0].address_components[1].long_name;
-            inputOrigin.value = location_description;
-            }});
+	    	if (status === "OK") {
+	        	const location_description = results[0].address_components[0].long_name + ' ' + results[0].address_components[1].long_name;
+            	inputOrigin.value = location_description;
+        	}
+		});
 
 
         if (positionOnly) {
             return;
-
         } else {
-		getRoute(originLatLon, destinationLatLon, time);
-		}}
+			getRoute(originLatLon, destinationLatLon, time);
+		}
+	}
 
 
 	function error(err){
@@ -510,10 +521,10 @@ function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false
 	}
 
 	if('geolocation' in navigator) {
-	inputOrigin.placeholder = "retrieving current location...";
-	navigator.geolocation.getCurrentPosition(success, error, options);
+		inputOrigin.placeholder = "retrieving current location...";
+		navigator.geolocation.getCurrentPosition(success, error, options);
 	} else {
-		    alert("Browser is unable to use Geolocation services");
+		alert("Browser is unable to use Geolocation services");
 	}
 
 }
@@ -589,7 +600,7 @@ function resetJourneyPlanner() {
 	autocompleteOrigin.set('place', null);
 	autocompleteDestin.set('place', null);
 	if (currentLocationOrigin) {
-	toggleCurrentLocation();
+		toggleCurrentLocation();
 	}
 
 
