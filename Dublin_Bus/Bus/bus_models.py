@@ -97,7 +97,7 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
             historical_averages = json.load(f)
             print(historical_averages)
 
-        stop_num_list = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop)
+        stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
 
         ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
         for i in range(0, len(stop_num_list)):
@@ -107,15 +107,18 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                     proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
                     print(proportion_total)
                     return proportion_total / 100
+
+        #if json file doesn't exist? For the moment returning full journey prediction, but will have to handle differently
+        #first going to revisit historical averages with full leavetimes data and see what (if any routes) are missing data
         else:
             return 1
 
-def get_stop(stop_lat, stop_lng, integer=False):
+def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
     """function takes stop lat and lng and returns stoppoint id/number match
 
     called if matching by name doesn't work. If integer flag=True, returns integer otherwise returns string
 """
-    ##truncate lat & lng to 3 decimal places (Google and GTFS data don't give the exact same lat/lng for stops, but are typically the same within 3 decimal places
+    ##truncate lat & lng to 3 decimal places for matching (Google and GTFS data don't give the exact same lat/lng for stops, but are typically the same within 3 decimal places
     stop_lat = float(int(stop_lat * (10**3))/10**3)
     stop_lng = float(int(stop_lng * (10**3))/10**3)
     stop_query = Stop.objects.filter(stop_lat__startswith=stop_lat, stop_lon__startswith=stop_lng).values('stop_name')
@@ -132,10 +135,13 @@ def get_stop(stop_lat, stop_lng, integer=False):
             stop_num_list.append(stop_num_str)
     return stop_num_list
 
-def get_matching_stop_numbers(stop_lat, stop_lng, stop_name, integer=False):
+def get_stop_num(stop_lat, stop_lng, stop_name, integer=False):
     """function takes stop name string and matches it up to return potential list of stoppoint id/number matches
     if integer flag is true, return stop ids as list of ints, otherwise returns as list of strings"""
+
+    #query stops model (GTFS data in DB) for matches with Google response stop name
     start_stop_query = Stop.objects.filter(stop_name__icontains=stop_name).values('stop_name')
+    #add matches to a list
     stop_num_list = []
     for i in range(0, len(start_stop_query)):
         current = start_stop_query[i]['stop_name']
@@ -145,22 +151,21 @@ def get_matching_stop_numbers(stop_lat, stop_lng, stop_name, integer=False):
             stop_num_list.append(int(stop_num_str))
         else:
             stop_num_list.append(stop_num_str)
-    ## If we fail to match by name, we attempt to match by lat/lng
+
+    ## If we fail to match stop by name, we attempt to match by lat/lng
     if len(stop_num_list) == 0:
-        stop_num_list = get_stop(stop_lat, stop_lng)
+        stop_num_list = get_stop_num_lat_lng(stop_lat, stop_lng)
 
     return stop_num_list
 
 
 def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure_stop, arrival_stop, line):
-    """takes line, departure stop and arrival stop from Google API response and finds a matching Dublin Bus route"""
+    """takes line, departure stop name/lat/lng, arrival stop name/lat/lng from Google API response and finds a matching Dublin Bus route"""
 
-    #first retrieve relevant bus stop numbers by matching those in DB database with the string returned by Google
-    potential_departure_stops = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop, True)
-    potential_arrival_stops = get_matching_stop_numbers(arr_stop_lat, arr_stop_lng, arrival_stop, True)
+    #first retrieve relevant bus stop numbers by matching those in database (GTFS) with the string returned by Google
+    potential_departure_stops = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop, True)
+    potential_arrival_stops = get_stop_num(arr_stop_lat, arr_stop_lng, arrival_stop, True)
 
-    print(potential_departure_stops)
-    print(potential_arrival_stops)
 
     # SAVE CSV AGAIN WITHOUT INDEX, read in routes CSV
     df = pd.read_csv('df_routes.csv')
@@ -168,12 +173,13 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
     # retrieve records for a particular line
     df = df.loc[(df['lineid'] == line)]
 
-    #This finds the route by checking which route for the line contains both the departure and arrival stops given by Google
+    #This finds the route by checking which subroute for a line contains both the departure and arrival stops given by Google
     #Need to test this to ensure there aren't lines where both routes share 2 stops?
     filter1 = df['stoppointid'].isin(potential_departure_stops)
     filter2 = df['stoppointid'].isin(potential_arrival_stops)
     df = df[filter1 | filter2]
     route = df['routeid'].tolist()
+
     if len(route) == 0:
         route = None
     else:
@@ -183,14 +189,14 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
 def get_prediction(details):
     """takes journey planner input / Google reponse and returns predicted travel time """
     ## find out which route, and therefore which model is required
-    print(details)
     route = find_route(details['arr_stop_lat'], details['arr_stop_lng'], details['dep_stop_lat'], details['dep_stop_lng'], details['departure_stop'], details['arrival_stop'], details['line'])
+
+    #if we don't have a model or matching route, return Google's duration prediction instead
     if route == None:
         predicted_tt = details['google_pred']
-        print(type(predicted_tt))
 
     else:
-        ## encode features for prediction
+        ## encode features for our model
         departure_time = details['departure_time']
         df_bus = encode_features(departure_time)
         df_weather = get_current_weather()
@@ -203,9 +209,7 @@ def get_prediction(details):
         # make predictions
         predicted_tt = model.predict(df_all)
         proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'])
-        print(proportion_of_route)
         partial_prediction = proportion_of_route * predicted_tt
         predicted_tt = json.dumps(str(partial_prediction))
-        print(type(predicted_tt))
     return predicted_tt
 

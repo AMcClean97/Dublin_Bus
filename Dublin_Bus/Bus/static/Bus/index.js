@@ -366,7 +366,7 @@ function addMarkers(stops_data) {
     //clusters added, need to be styles
     clusterStyles = {
     ignoreHidden: true,
-    gridSize: 80,
+    gridSize: 70,
     maxZoom: 15,
     styles: [{
     height: 30,
