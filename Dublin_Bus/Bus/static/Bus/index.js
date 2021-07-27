@@ -89,7 +89,7 @@ function initMap (){
               	elementType: "geometry",
               	stylers: [{ visibility: "off" }],
             },
-            { 
+            {
 				featureType: "poi", stylers: [{ visibility: "off" }] },
             {
               	featureType: "road",
@@ -102,7 +102,7 @@ function initMap (){
               	stylers: [{ visibility: "on" }],
             },
             {
-              	featureType: "transit", stylers: [{ visibility: "off" }] 
+              	featureType: "transit", stylers: [{ visibility: "off" }]
 			},
             ],
   	});
@@ -214,7 +214,7 @@ function getRoute(start, end, time) {
 
 			//extract useful journey info from response and post to journey planner
 			for (var i=0; i<journey.length; i++) {
-				if (journey[i].travel_mode == "TRANSIT") {
+				if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
     				journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
     				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
     				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
@@ -222,7 +222,13 @@ function getRoute(start, end, time) {
     				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
     				routeDetails['line'] = journey[i].transit.line.short_name;
     				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
+    				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
     				routeDetails['num_stops'] = journey[i].transit.num_stops;
+    				routeDetails['dep_stop_lat'] = journey[i].transit.departure_stop.location.lat();
+    				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
+    				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
+    				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
+    				routeDetails['google_pred'] = journey[i].duration.value;
     				var journeyPrediction;
 
     				//post details to Django view
@@ -231,17 +237,34 @@ function getRoute(start, end, time) {
 
 				
 				} else if (journey[i].travel_mode == "WALKING") {
-    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")";
+    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")<br>";
     				route.innerHTML = journeyDescription;
-				} else {
+
+
+				} else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
+				    journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
+    				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
+    				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
+    				displayRoute(journey[i].duration.value);
+
+				}
+
+				else
+				{
  					journeyDescription = "<br> This route is not served by Dublin Bus.";
  					route.innerHTML = journeyDescription;
  				}
 
  				function displayRoute(journeyPrediction) {
- 				journeyPrediction = journeyPrediction.slice(1,-1);
- 				journeyDescription += '<br>ESTIMATED TRAVEL TIME FOR WHOLE JOURNEY: ' + journeyPrediction;
-				route.innerHTML = journeyDescription;
+ 				if (typeof journeyPrediction == 'string') {
+ 				    journeyPrediction = journeyPrediction.slice(1,-1);
+ 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction + '<br>';
+ 				    }
+ 				else {
+ 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction.toString() + '<br>';
+ 				}
+ 				route.innerHTML = journeyDescription;
+
 				}
 			}
 		}
@@ -277,12 +300,12 @@ function submitRoute() {
 		// If Origin is not current Location Check Origin
 		} else {
 			var origin = autocompleteOrigin.getPlace();
-		
+
 			if (origin == undefined){
 				alert("Please use a valid starting point.");
 				return;
 			}
-	
+
 			var originLatLon = {
 				lat: origin.geometry.location.lat(),
 				lng: origin.geometry.location.lng(),
@@ -453,11 +476,11 @@ function displayInfoWindow(timetable, stop_id) {
     const marker = stopMarkers[stop_id];
     let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
 
-    //if no buses are due at the stop that day
+    //if no buses are due at the stop in next 2 hours
     if (arrivals.length == 0) {
     	infoWindowContent += "<br>No buses stopping here in the next 2 hours.";
 
-	//if less than 3 buses due to stop that day
+	//if less than 3 buses due to stop in next 2 hours
     } else if (arrivals.length <= 3) {
     	for (var each in arrivals) {
 			infoWindowContent += "<br>Line: " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ")<br>";
@@ -504,7 +527,7 @@ function resetJourneyPlanner() {
 	infoWindow.close();
 	inputFirstStop.value ="";
 	inputLastStop.value ="";
-    showMarkers();
+
     //reset map center and zoom
 
     map.setZoom(14);

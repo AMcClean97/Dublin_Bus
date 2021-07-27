@@ -2,25 +2,22 @@ import pickle
 import pandas as pd
 import xgboost
 import sklearn
-from .models import CurrentWeather
+from .models import CurrentWeather, Stop
 from datetime import datetime, date
 import holidays
 import numpy as np
 import json
+import os.path
+
 
 def get_current_weather():
     """ retrieves current weather info
         formats for model and returns dataframe"""
     current_weather = CurrentWeather.objects.first()
-    data = [[current_weather.temp, current_weather.wind_speed, current_weather.weather_main]]
-    df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main'])
-    df['weather_main_Clouds'] = df['weather_main'].apply(lambda x: 1 if x in ['Clouds'] else 0)
-    df['weather_main_Drizzle'] = df['weather_main'].apply(lambda x: 1 if x in ['Drizzle'] else 0)
-    df['weather_main_Fog'] = df['weather_main'].apply(lambda x: 1 if x in ['Fog'] else 0)
-    df['weather_main_Mist'] = df['weather_main'].apply(lambda x: 1 if x in ['Mist'] else 0)
-    df['weather_main_Rain'] = df['weather_main'].apply(lambda x: 1 if x in ['Rain'] else 0)
-    df['weather_main_Smoke'] = df['weather_main'].apply(lambda x: 1 if x in ['Smoke'] else 0)
-    df['weather_main_Snow'] = df['weather_main'].apply(lambda x: 1 if x in ['Snow'] else 0)
+    data = [[current_weather.temp, current_weather.wind_speed, current_weather.weather_main, current_weather.humidity]]
+    df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main', 'humidity'])
+    df['weather_main_precipitation'] = df['weather_main'].apply(
+        lambda x: 1 if x in ['Rain', 'Drizzle', 'Snow'] else 0)
     df.drop('weather_main', axis=1, inplace=True)
     return df
 
@@ -60,12 +57,9 @@ def encode_features(departure_time):
 
 
 def term_flag(df):
-    "adds term time flag if date of departure falls within school term"
+    "adds term time flag if date of departure falls within school term, need to be manually changed, current dates are for 2021/22 school year "
     df['is_term'] = np.where(
-        (df['date'] > '2018-01-07') & (df['date'] <= '2018-02-12') | (df['date'] > '2018-02-16') & (
-                    df['date'] <= '2018-03-23') | (df['date'] > '2018-08-04') & (df['date'] < '2018-05-31') | (
-                    df['date'] > '2018-09-02') & (df['date'] < '2018-10-29') | (df['date'] > '2018-11-05') & (
-                    df['date'] >= '2018-12-21'), 1, 0)
+        (df['date'] > '2021-09-01') & (df['date'] < '2021-10-25') | (df['date'] > '2021-10-29') & (df['date'] < '2021-12-22') | (df['date'] > '2022-01-06') & (df['date'] < '2022-02-15') | (df['date'] > '2022-02-19') & (df['date'] <= '2022-03-26') | (df['date'] >= '2022-04-12') & (df['date'] <= '2022-07-01'),  1, 0)
     return df
 
 
@@ -95,18 +89,123 @@ def rush_hour_flag(df):
 
     return df
 
-def get_prediction(details):
-    line = details['line']
-    departure_time = details['departure_time']
-    df_bus = encode_features(departure_time)
-    df_weather = get_current_weather()
-    df_all = pd.concat([df_bus, df_weather], axis=1)
-    print(df_all)
-    # load the model
-    f = open('145_102.sav', 'rb')
-    model = pickle.load(f)
 
-    # make predictions
-    predicted_tt = model.predict(df_all)
-    predicted_tt = json.dumps(str(predicted_tt))
+def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng):
+    """import json file with historical averages for relevant line """
+    if os.path.exists('json/avg' + route + '.json'):
+        with open('json/avg' + route + '.json') as f:
+            historical_averages = json.load(f)
+            print(historical_averages)
+
+        stop_num_list = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop)
+
+        ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
+        for i in range(0, len(stop_num_list)):
+            for j in range(0, len(historical_averages)):
+                if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                    # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
+                    proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
+                    print(proportion_total)
+                    return proportion_total / 100
+        else:
+            return 1
+
+def get_stop(stop_lat, stop_lng, integer=False):
+    """function takes stop lat and lng and returns stoppoint id/number match
+
+    called if matching by name doesn't work. If integer flag=True, returns integer otherwise returns string
+"""
+    ##truncate lat & lng to 3 decimal places (Google and GTFS data don't give the exact same lat/lng for stops, but are typically the same within 3 decimal places
+    stop_lat = float(int(stop_lat * (10**3))/10**3)
+    stop_lng = float(int(stop_lng * (10**3))/10**3)
+    stop_query = Stop.objects.filter(stop_lat__startswith=stop_lat, stop_lon__startswith=stop_lng).values('stop_name')
+
+
+    stop_num_list = []
+    for i in range(0, len(stop_query)):
+        current = stop_query[i]['stop_name']
+        stop_num = [int(j) for j in current.split() if j.isdigit()]
+        stop_num_str = ''.join([str(elem) for elem in stop_num])
+        if integer:
+            stop_num_list.append(int(stop_num_str))
+        else:
+            stop_num_list.append(stop_num_str)
+    return stop_num_list
+
+def get_matching_stop_numbers(stop_lat, stop_lng, stop_name, integer=False):
+    """function takes stop name string and matches it up to return potential list of stoppoint id/number matches
+    if integer flag is true, return stop ids as list of ints, otherwise returns as list of strings"""
+    start_stop_query = Stop.objects.filter(stop_name__icontains=stop_name).values('stop_name')
+    stop_num_list = []
+    for i in range(0, len(start_stop_query)):
+        current = start_stop_query[i]['stop_name']
+        stop_num = [int(j) for j in current.split() if j.isdigit()]
+        stop_num_str = ''.join([str(elem) for elem in stop_num])
+        if integer:
+            stop_num_list.append(int(stop_num_str))
+        else:
+            stop_num_list.append(stop_num_str)
+    ## If we fail to match by name, we attempt to match by lat/lng
+    if len(stop_num_list) == 0:
+        stop_num_list = get_stop(stop_lat, stop_lng)
+
+    return stop_num_list
+
+
+def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure_stop, arrival_stop, line):
+    """takes line, departure stop and arrival stop from Google API response and finds a matching Dublin Bus route"""
+
+    #first retrieve relevant bus stop numbers by matching those in DB database with the string returned by Google
+    potential_departure_stops = get_matching_stop_numbers(dep_stop_lat, dep_stop_lng, departure_stop, True)
+    potential_arrival_stops = get_matching_stop_numbers(arr_stop_lat, arr_stop_lng, arrival_stop, True)
+
+    print(potential_departure_stops)
+    print(potential_arrival_stops)
+
+    # SAVE CSV AGAIN WITHOUT INDEX, read in routes CSV
+    df = pd.read_csv('df_routes.csv')
+
+    # retrieve records for a particular line
+    df = df.loc[(df['lineid'] == line)]
+
+    #This finds the route by checking which route for the line contains both the departure and arrival stops given by Google
+    #Need to test this to ensure there aren't lines where both routes share 2 stops?
+    filter1 = df['stoppointid'].isin(potential_departure_stops)
+    filter2 = df['stoppointid'].isin(potential_arrival_stops)
+    df = df[filter1 | filter2]
+    route = df['routeid'].tolist()
+    if len(route) == 0:
+        route = None
+    else:
+        route = max(route, key=route.count)
+        return route
+
+def get_prediction(details):
+    """takes journey planner input / Google reponse and returns predicted travel time """
+    ## find out which route, and therefore which model is required
+    print(details)
+    route = find_route(details['arr_stop_lat'], details['arr_stop_lng'], details['dep_stop_lat'], details['dep_stop_lng'], details['departure_stop'], details['arrival_stop'], details['line'])
+    if route == None:
+        predicted_tt = details['google_pred']
+        print(type(predicted_tt))
+
+    else:
+        ## encode features for prediction
+        departure_time = details['departure_time']
+        df_bus = encode_features(departure_time)
+        df_weather = get_current_weather()
+        df_all = pd.concat([df_bus, df_weather], axis=1)
+
+        # load the model that corresponds to the route
+        f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
+        model = pickle.load(f)
+
+        # make predictions
+        predicted_tt = model.predict(df_all)
+        proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'])
+        print(proportion_of_route)
+        partial_prediction = proportion_of_route * predicted_tt
+        predicted_tt = json.dumps(str(partial_prediction))
+        print(type(predicted_tt))
     return predicted_tt
+
