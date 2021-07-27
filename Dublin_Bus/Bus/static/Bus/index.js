@@ -5,6 +5,7 @@ let map;
 let infoWindow;
 let directionsService;
 let directionsRenderer;
+let geocoder;
 //list for storing reference to bus stop markers
 let stopMarkers = {};
 let stopMarkersArr = [];
@@ -20,6 +21,8 @@ let autocompleteOrigin;
 let autocompleteDestin;
 //Geolocation
 let currentLocationOrigin = false;
+
+
 
 //store csrftoken in a constant
 const csrftoken = getCookie('csrftoken');
@@ -128,6 +131,8 @@ function initMap (){
     	autocompleteOptions
   	);
 
+
+
   	autocompleteDestin = new google.maps.places.Autocomplete(
     	inputDestination,
     	autocompleteOptions
@@ -139,6 +144,9 @@ function initMap (){
   	directionsRenderer = new google.maps.DirectionsRenderer({
     	preserveViewport: false,
   	});
+
+  	//make geocoder object for geolocation/journey planner feature
+  	geocoder = new google.maps.Geocoder();
 
 
 	//This should not be in init_map
@@ -208,7 +216,6 @@ function getRoute(start, end, time) {
 
 			var route = document.getElementById("route_instructions");
 			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
-			console.log(journey);
 			var journeyDescription = "<br>";
 
 
@@ -295,7 +302,7 @@ function submitRoute() {
 
 		//Check if Origin is Current Location
 		if (currentLocationOrigin){
-			getRoutefromCurrentPosition(destinationLatLon, time)
+			getRouteFromCurrentPosition(destinationLatLon, time, false);
 			return;
 		// If Origin is not current Location Check Origin
 		} else {
@@ -403,7 +410,27 @@ function addMarkers(stops_data) {
 //Swaps Origin and Destination
 function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
-	if(id == "locations-tab"){
+
+	//if origin is current location, use geocoder to get Place
+	if(currentLocationOrigin){
+        var temp = inputOrigin.value;
+		geocoder.geocode({ address: temp}, (results, status) => {
+	    if (status === "OK") {
+	        //swap input values
+		    inputOrigin.value = inputDestination.value;
+		    inputDestination.value = temp;
+
+            //swap autocomplete Places
+	        var tempPlace = results[0];
+	        autocompleteOrigin.set('place', autocompleteDestin.getPlace());
+		    autocompleteDestin.set('place', tempPlace);
+            }
+            });
+            //switch off currentLocation button (as current location is no longer origin)
+            toggleCurrentLocation();
+	}
+
+	else if(id == "locations-tab"){
 		//Swap Input values
 		var temp = inputOrigin.value;
 		inputOrigin.value = inputDestination.value;
@@ -423,15 +450,22 @@ function swapInputs(){
 //Activates Current Location as origin
 function toggleCurrentLocation(){
 	if('geolocation' in navigator){
-		currentLocationOrigin = !currentLocationOrigin;
-		inputOrigin.disabled = !inputOrigin.disabled
 
-		//Aesthetic Changes
-		if (currentLocationOrigin){
-			$('#currentLocationButton').attr('class','btn btn-info');
+        currentLocationOrigin = !currentLocationOrigin;
+        inputOrigin.disabled = !inputOrigin.disabled;
+
+		//Aesthetic Changes - placeholder while waiting for geolocation/geocoding to return current location
+		if (currentLocationOrigin) {
+		    $('#currentLocationButton').attr('class','btn btn-info');
+		    inputOrigin.value = "";
+		    inputOrigin.placeholder = "retrieving current location...";
+			getRouteFromCurrentPosition(null, null, true);
 		} else {
+            inputOrigin.value = "";
+            inputOrigin.placeholder = "Enter your start point";
 			$('#currentLocationButton').attr('class','btn btn-secondary');
 		}
+
 	} else{
 		alert("Browser is unable to use Geolocation services");
 	}
@@ -439,32 +473,47 @@ function toggleCurrentLocation(){
 }
 
 //Handle Geo Location
-function getRoutefromCurrentPosition(destinationLatLon, time){
+function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false){
 
 	//var return_value;
 	//Options regarding accuracy and speed
 	var options = {
 		enableHighAccuracy: true,
 		timeout: 5000,
-		maximumAge: 0
+		maximumAge: 0,
 	};
 
 	function success(pos){
 		var originLatLon = {
 			lat: pos.coords.latitude,
 			lng: pos.coords.longitude,
-		}
+			}
+
+		geocoder.geocode({ location: originLatLon }, (results, status) => {
+
+	    if (status === "OK") {
+	        const location_description = results[0].address_components[0].long_name + ' ' + results[0].address_components[1].long_name;
+            inputOrigin.value = location_description;
+            }});
+
+
+        if (positionOnly) {
+            return;
+
+        } else {
 		getRoute(originLatLon, destinationLatLon, time);
-	}
+		}}
+
 
 	function error(err){
 		console.warn(`ERROR(${err.code}): ${err.message}`);
 	}
 
-	if('geolocation' in navigator){
-		navigator.geolocation.getCurrentPosition(success, error, options);
+	if('geolocation' in navigator) {
+	inputOrigin.placeholder = "retrieving current location...";
+	navigator.geolocation.getCurrentPosition(success, error, options);
 	} else {
-		alert("Browser is unable to use Geolocation services");
+		    alert("Browser is unable to use Geolocation services");
 	}
 
 }
@@ -522,6 +571,7 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
 
 	//Reset Inputs
+	inputOrigin.placeholder = "Enter your start point";
     inputOrigin.value = "";
     inputDestination.value = "";
 	infoWindow.close();
@@ -534,9 +584,16 @@ function resetJourneyPlanner() {
     map.setCenter({lat: 53.350140, lng: -6.266155});
     showMarkers();
 
+
 	//Reset autocompletes
 	autocompleteOrigin.set('place', null);
 	autocompleteDestin.set('place', null);
+	if (currentLocationOrigin) {
+	toggleCurrentLocation();
+	}
+
+
+
 }
 
 

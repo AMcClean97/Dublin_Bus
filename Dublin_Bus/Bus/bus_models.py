@@ -95,7 +95,7 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
     if os.path.exists('json/avg' + route + '.json'):
         with open('json/avg' + route + '.json') as f:
             historical_averages = json.load(f)
-            print(historical_averages)
+
 
         stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
 
@@ -105,7 +105,6 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                 if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
                     # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
                     proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
-                    print(proportion_total)
                     return proportion_total / 100
 
         #if json file doesn't exist? For the moment returning full journey prediction, but will have to handle differently
