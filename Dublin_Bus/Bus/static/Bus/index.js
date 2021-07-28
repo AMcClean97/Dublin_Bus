@@ -411,25 +411,33 @@ function addMarkers(stops_data) {
 function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
 
-	if(id == "locations-tab"){
+	//if origin is current location, use geocoder to get Place
+	if(id == "locations-tab" && currentLocationOrigin){
+        var temp = inputOrigin.value;
+		geocoder.geocode({ address: temp}, (results, status) => {
+	    if (status === "OK") {
+	        //swap input values
+		    inputOrigin.value = inputDestination.value;
+		    inputDestination.value = temp;
+
+            //swap autocomplete Places
+	        var tempPlace = results[0];
+	        autocompleteOrigin.set('place', autocompleteDestin.getPlace());
+		    autocompleteDestin.set('place', tempPlace);
+            }
+            });
+            //switch off currentLocation button (as current location is no longer origin)
+            toggleCurrentLocation();
+	}
+
+	else if(id == "locations-tab"){
 		//Swap Input values
 		var temp = inputOrigin.value;
 		inputOrigin.value = inputDestination.value;
 		inputDestination.value = temp;
 
 		//Swap autocomplete Places
-		var tempPlace
-		//If current Location on
-		if(currentLocationOrigin){
-			toggleCurrentLocation();
-			geocoder.geocode({ address: temp}, (results, status) => {
-				if (status === "OK") {
-					tempPlace = results[0];
-				}
-			});
-		} else {
-			tempPlace = autocompleteOrigin.getPlace();
-		}
+		var tempPlace = autocompleteOrigin.getPlace();
 		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
 		autocompleteDestin.set('place', tempPlace);
 	} else {
@@ -438,6 +446,7 @@ function swapInputs(){
 		inputLastStop.value = temp;
 	}
 }
+
 
 //Activates Current Location as origin
 function toggleCurrentLocation(){
