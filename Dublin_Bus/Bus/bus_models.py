@@ -97,20 +97,21 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
             historical_averages = json.load(f)
 
 
-        stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
 
-        ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
-        for i in range(0, len(stop_num_list)):
-            for j in range(0, len(historical_averages)):
-                if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
-                    # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
-                    proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
-                    return proportion_total / 100
+            stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
+
+            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
+            for i in range(0, len(stop_num_list)):
+                for j in range(0, len(historical_averages)):
+                    if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                        # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
+                        proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
+                        return proportion_total / 100
 
         #if json file doesn't exist? For the moment returning full journey prediction, but will have to handle differently
         #first going to revisit historical averages with full leavetimes data and see what (if any routes) are missing data
-        else:
-            return 1
+    else:
+        return 1
 
 def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
     """function takes stop lat and lng and returns stoppoint id/number match
@@ -183,6 +184,7 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
         route = None
     else:
         route = max(route, key=route.count)
+        print(route)
         return route
 
 def get_prediction(details):
