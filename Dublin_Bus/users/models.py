@@ -16,6 +16,9 @@ class favourite(models.Model):
     destin_lat = models.FloatField()
     destin_lon = models.FloatField()
 
+    #Bus?
+    stops = models.BooleanField(default=False)
+
     class Meta:
         managed = False
         db_table = 'favourites'

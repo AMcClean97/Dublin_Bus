@@ -5,16 +5,17 @@
     <div class="row justify-content-center">
        <div class ="col-auto text-center">
             <div class="card">
-                <h3 class="card-header">Favourites for {{ user.username }}</h3>
+                <h3 class="card-header">Favourites for {{ request.user }}</h3>
                 <ul class="list-group list-group-flush">
                     {% for route in favourites %}
                     <li class="list-group-item">
                         <h4>{{ route.favourite_name }}</h4>
                         <p>{{ route.origin_name }} --> {{ route.destin_name}}</p>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-success"><i class="fas fa-walking"></i></button>
-                            <button type="button" class="btn btn-danger"><i class="far fa-trash-alt"></i></button>
-                        </div>
+                            <form method="POST", action="{% url 'index' %}">
+                                {% csrf_token %}
+                                <button type="submit" name="favourite_id" value="{{ route.id }}" class="btn btn-success" ><i class="fas fa-walking"></i></button>
+                                <button type="button" class="btn btn-danger"><i class="far fa-trash-alt"></i></button>
+                            </form>
                     </li>
                     {% endfor %}
                 </ul>

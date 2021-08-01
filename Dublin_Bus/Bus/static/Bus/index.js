@@ -46,7 +46,6 @@ function getCookie(name) {
 
 //function to post data from frontend to Django
 async function postData(url="", data={}) {
-
   	const response = await fetch(url, {
     	method: "POST",
     	headers: {
@@ -58,9 +57,73 @@ async function postData(url="", data={}) {
     return response.json();
 }
 
+function createFavourite(user_id){
+	var active_tab = document.querySelector('.tab-content .active');
+	var new_favourite = {
+		user : user_id
+	}
+	if(active_tab['id'] == "locations-tab" && currentLocationOrigin){
 
+		// UNDER CONSTRUCTION
+		new_favourite['stops'] = 0;
+		new_favourite['origin_name'] = inputOrigin.value;
+		new_favourite['destin_name'] = inputDestination.value;
+		var destination = autocompleteDestin.getPlace();
+		if (!destination) {
+			alert("Please use a valid destination.");
+			return;
+		}
 
+		return;
+	} else if (active_tab['id'] == "locations-tab"){
+		new_favourite['stops'] = 0;
+		new_favourite['origin_name'] = inputOrigin.value;
+		new_favourite['destin_name'] = inputDestination.value;
 
+		var destination = autocompleteDestin.getPlace();
+		var origin = autocompleteOrigin.getPlace();
+		if (!destination) {
+			alert("Please use a valid destination.");
+			return;
+		} else if (!origin){
+			alert("Please use a valid starting point.");
+			return;
+		}
+
+		new_favourite['origin_lat'] = origin.geometry.location.lat();
+		new_favourite['origin_lon'] = origin.geometry.location.lng();
+
+		new_favourite['destin_lat'] = destination.geometry.location.lat();
+		new_favourite['destin_lon'] = destination.geometry.location.lng();
+	} else {
+		new_favourite['stops'] = 1;
+		new_favourite['origin_name'] = inputFirstStop.value;
+		new_favourite['destin_name'] = inputLastStop.value;
+
+		var originLatLon = getStopData(new_favourite['origin_name'], stops);
+		var destinationLatLon = getStopData(new_favourite['destin_name'], stops);
+		if (!destinationLatLon) {
+			alert("Please input a valid First Stop")
+			return;
+		} else if (!originLatLon) {
+			alert("Please input a valid Last Stop")
+			return;
+		}
+
+		new_favourite['origin_lat'] = originLatLon['lat'];
+		new_favourite['origin_lon'] = originLatLon['lng'];
+
+		new_favourite['destin_lat'] = destinationLatLon['lat'];
+		new_favourite['destin_lon'] = destinationLatLon['lng'];
+	}
+	postData('/users/makeFavourite', new_favourite);
+	console.log('beep');
+}
+
+function validateInput (origin, destination, stop=false){
+	var originLatLon = getStopData(origin, stops);
+	var destinationLatLon = getStopData(destination, stops);
+}
 
 function initMap (){
 
@@ -287,11 +350,11 @@ function submitRoute() {
 		time = currentTime();
 	}
 
-	var id = $('.tab-content .active').attr('id');
-	if(id == "locations-tab"){
+	var active_tab = $('.tab-content .active').attr('id');
+	if(active_tab == "locations-tab"){
 		//Get Destination
 		var destination = autocompleteDestin.getPlace();
-		if (destination == undefined) {
+		if (!destination) {
 			alert("Please use a valid destination.");
 			return;
 		}
@@ -308,7 +371,7 @@ function submitRoute() {
 		} else {
 			var origin = autocompleteOrigin.getPlace();
 
-			if (origin == undefined){
+			if (!origin){
 				alert("Please use a valid starting point.");
 				return;
 			}
@@ -339,12 +402,52 @@ function submitRoute() {
 	getRoute(originLatLon, destinationLatLon, time);
 };
 
+//swaps tabs
+function changeTabs(tab_id){
+	var active_tab = document.querySelector('.tab-content .active');
+	if (active_tab['id'] == tab_id){
+		return
+	}else {
+		var tab_list = document.querySelectorAll('.tab-content .tab-pane');
+		var tab_valid = false;
+		tab_list.forEach( function(tab){
+			if (tab_id == tab['id']){
+				tab_valid = true;
+			}
+		})
+		if (tab_valid){
+			
+			var new_tab = document.getElementById(tab_id)
+			//Change tabs
+			new_tab.classList.add("active");
+			new_tab.classList.add("show");
+			active_tab.classList.remove("active");
+			active_tab.classList.remove("show");
+
+			//Change buttons
+			var new_tab_button = document.getElementById(tab_id+"-btn");
+			var active_tab_button = document.getElementById(active_tab['id']+"-btn");
+
+			new_tab_button.classList.add("active");
+			active_tab_button.classList.remove("active");
+
+			new_tab_button.setAttribute("aria-selected", "true");
+			active_tab_button.setAttribute("aria-selected", "false");
+
+
+		}else{
+			console.log("ERROR: "+ tab + " not found");
+		}
+
+	}
+}
+
 //adds markers to map
 function addMarkers(stops_data) {
 
     infoWindow = new google.maps.InfoWindow();
     //create stop icon
-     var busStopIcon = {
+    var busStopIcon = {
         url: '../static/Bus/bus-stop.png',
         scaledSize: new google.maps.Size(30, 30),
       };
@@ -408,6 +511,7 @@ function addMarkers(stops_data) {
 }
 
 //Swaps Origin and Destination
+/*
 function swapInputs(){
 	var id = $('.tab-content .active').attr('id');
 
@@ -430,6 +534,42 @@ function swapInputs(){
 		} else {
 			tempPlace = autocompleteOrigin.getPlace();
 		}
+		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
+		autocompleteDestin.set('place', tempPlace);
+	} else {
+		var temp = inputFirstStop.value;
+		inputFirstStop.value = inputLastStop.value;
+		inputLastStop.value = temp;
+	}
+}*/
+function swapInputs(){
+	var active_tab = $('.tab-content .active').attr('id');
+
+	//if origin is current location, use geocoder to get Place
+	if(active_tab == "locations-tab" && currentLocationOrigin){
+        var temp = inputOrigin.value;
+		geocoder.geocode({ address: temp}, (results, status) => {
+	    if (status === "OK") {
+	        //swap input values
+		    inputOrigin.value = inputDestination.value;
+		    inputDestination.value = temp;
+
+            //swap autocomplete Places
+	        var tempPlace = results[0];
+	        autocompleteOrigin.set('place', autocompleteDestin.getPlace());
+		    autocompleteDestin.set('place', tempPlace);
+            }
+            });
+            //switch off currentLocation button (as current location is no longer origin)
+            toggleCurrentLocation();
+	}else if(active_tab == "locations-tab"){
+		//Swap Input values
+		var temp = inputOrigin.value;
+		inputOrigin.value = inputDestination.value;
+		inputDestination.value = temp;
+
+		//Swap autocomplete Places
+		var tempPlace = autocompleteOrigin.getPlace();
 		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
 		autocompleteDestin.set('place', tempPlace);
 	} else {
@@ -467,7 +607,6 @@ function toggleCurrentLocation(){
 //Handle Geo Location
 function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false){
 
-	//var return_value;
 	//Options regarding accuracy and speed
 	var options = {
 		enableHighAccuracy: true,
