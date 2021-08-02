@@ -21,7 +21,9 @@ let autocompleteOrigin;
 let autocompleteDestin;
 //Geolocation
 let currentLocationOrigin = false;
-
+//journey planner
+let predictionDisplay;
+let journeyDescription;
 
 
 //store csrftoken in a constant
@@ -203,6 +205,8 @@ function getRoute(start, end, time) {
 		unitSystem: google.maps.UnitSystem.METRIC
 	}
 
+
+
 	//clear markers from map so route can be seen
 	clearMarkers();
 
@@ -214,72 +218,105 @@ function getRoute(start, end, time) {
 			directionsRenderer.setMap(map);
             infoWindow.close();
 
-			var route = document.getElementById("route_instructions");
-			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
-			var journeyDescription = "<br>";
 
+			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+			console.log(journey);
+
+            var route_suggestions = document.getElementById('route_suggestions');
+            route_suggestions.innerHTML = "<h4>Directions</h4><br>";
+
+            //this variable is used to create ids for each step in a journey
+            var i = 0;
+            processJourney(journey);
 
 			//extract useful journey info from response and post to journey planner
-			for (var i=0; i<journey.length; i++) {
-				if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
-    				journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
-    				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
-    				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
-    				var routeDetails = {};
-    				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
-    				routeDetails['line'] = journey[i].transit.line.short_name;
-    				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
-    				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
-    				routeDetails['num_stops'] = journey[i].transit.num_stops;
-    				routeDetails['dep_stop_lat'] = journey[i].transit.departure_stop.location.lat();
-    				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
-    				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
-    				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
-    				routeDetails['google_pred'] = journey[i].duration.value;
-    				var journeyPrediction;
-
-    				//post details to Django view
-    				postData('/send_to_model', routeDetails).then((data) =>
-                    displayRoute(JSON.parse(data.current_pred)));
-
-				
-				} else if (journey[i].travel_mode == "WALKING") {
-    				journeyDescription += "<br>" + journey[i].instructions + ": " + journey[i].distance.text + " (" + journey[i].duration.text + ")<br>";
-    				route.innerHTML = journeyDescription;
+			async function processJourney(journey) {
+			journey.forEach(async (journey) => {
+			//increments id for each step of journey
+			i++;
+            //assigns id to p element
+            route_suggestions.innerHTML += "<p id='" + i + "'</p>";
 
 
-				} else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
-				    journeyDescription += "<br>Ride the " + journey[i].transit.line.short_name + " from ";
-    				journeyDescription += journey[i].transit.departure_stop.name + " toward " + journey[i].transit.headsign + " for " + journey[i].transit.num_stops + " stops.<br>";
-    				journeyDescription += "Get off at " + journey[i].transit.arrival_stop.name + ".<br>";
-    				displayRoute(journey[i].duration.value);
+            if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
+                journeyDescription = "<br>Ride the " + journey.transit.line.short_name + " from ";
+ 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign + "<br>";
+ 				journeyDescription += "Get off at " + journey.transit.arrival_stop.name;
 
-				}
 
-				else
-				{
- 					journeyDescription = "<br> This route is not served by Dublin Bus.";
- 					route.innerHTML = journeyDescription;
- 				}
+ 				var routeDetails = {};
+ 				routeDetails['departure_time'] = journey.transit.departure_time.value;
+ 				routeDetails['line'] = journey.transit.line.short_name;
+ 				routeDetails['departure_stop'] = journey.transit.departure_stop.name;
+ 				routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
+ 				routeDetails['num_stops'] = journey.transit.num_stops;
+ 				routeDetails['dep_stop_lat'] = journey.transit.departure_stop.location.lat();
+ 				routeDetails['dep_stop_lng'] = journey.transit.departure_stop.location.lng();
+ 				routeDetails['arr_stop_lat'] = journey.transit.arrival_stop.location.lat();
+ 				routeDetails['arr_stop_lng'] = journey.transit.arrival_stop.location.lng();
+ 				routeDetails['google_pred'] = journey.duration.value;
 
- 				function displayRoute(journeyPrediction) {
- 				if (typeof journeyPrediction == 'string') {
- 				    journeyPrediction = journeyPrediction.slice(1,-1);
- 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction + '<br>';
- 				    }
- 				else {
- 				    journeyDescription += 'ESTIMATED TRAVEL TIME ON BUS: ' + journeyPrediction.toString() + '<br>';
- 				}
- 				route.innerHTML = journeyDescription;
+                var predictionSpace = i.toString();
+                document.getElementById(predictionSpace).innerHTML = journeyDescription;
+                var numStops = routeDetails['num_stops'];
 
-				}
+
+ 				//post details to Django view
+ 				await postData('/send_to_model', routeDetails).then(async (data) =>
+                 await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}));
+
+	} else if (journey.travel_mode == "WALKING") {
+ 				journeyDescription = "<br>" + journey.instructions;
+ 				journeyDescription += "<br><i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>";
+ 				journeyDescription += '-----------------------------';
+ 				route_suggestions.innerHTML += journeyDescription;
+
+	} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
+	            journeyDescription = "<br>Ride the " + journey.transit.line.name + " from ";
+ 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
+ 				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name + "<br>";
+ 				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + '<br>';
+ 				journeyDescription += '-----------------------------';
+ 				route_suggestions.innerHTML += journeyDescription;
+	} else {
+			journeyDescription = "<br> This route is not served by Dublin Bus.";
+			journeyDescription += '-----------------------------';
+			route_suggestions.innerHTML += journeyDescription;
+		   }
+
+
+            })
+
 			}
-		}
-	});
-}
+			}
+
+
+
+
+
+ 				async function displayRoute(journeyPrediction, predictionSpace, numStops) {
+
+
+ 				    if (typeof journeyPrediction == 'string') {
+ 				        journeyPrediction = journeyPrediction.slice(1,-1);
+ 				        var predictionMins = parseInt(journeyPrediction);
+ 				    }
+
+ 				    else {
+ 				        var predictionMins = Math.round(journeyPrediction / 60);
+ 				    }
+ 				journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
+ 				journeyPrediction += '-----------------------------';
+ 			    document.getElementById(predictionSpace).innerHTML += journeyPrediction;
+				}
+
+		})
+	}
 
 //Press submit button
 function submitRoute() {
+
+
 
 	//Get DepartureTime Here
 	var time = inputTime.value;
@@ -335,6 +372,8 @@ function submitRoute() {
 
 
 	}
+
+
 	//Get New Route
 	getRoute(originLatLon, destinationLatLon, time);
 };
@@ -567,7 +606,7 @@ function showMarkers() {
 
 //function to reset journey planner - should also reset time dropdown???
 function resetJourneyPlanner() {
-    document.getElementById('route_instructions').innerHTML = "";
+    document.getElementById('route_suggestions').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
 

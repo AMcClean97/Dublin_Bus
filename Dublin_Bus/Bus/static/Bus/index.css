@@ -7,16 +7,23 @@
     object-fit: cover;
 }
 
-#route-suggestions {
-    
+.fa-bus-alt{
+    color:#05386B;
+ }
+
+.fa-walking{
+    color:#05386B;
 }
+
 
 .content-row{
     height: 300px;
 }
+
 html,body{
     margin: 0;
     padding: 0;
     min-height: 100%;
     width: 100%;
 }
+

@@ -90,7 +90,7 @@ def rush_hour_flag(df):
     return df
 
 
-def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng):
+def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng, rush_hour=False):
     """import json file with historical averages for relevant line """
     if os.path.exists('json/avg' + route + '.json'):
         with open('json/avg' + route + '.json') as f:
@@ -100,12 +100,16 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
 
             stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
 
-            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME?
+            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
             for i in range(0, len(stop_num_list)):
                 for j in range(0, len(historical_averages)):
                     if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
                         # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
-                        proportion_total = sum([historical_averages[k]['mean_tt_%'] for k in range(j+1, j+num_stops+1)])
+                        if rush_hour:
+                            proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
+                        else:
+                            proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
+                        print("proportion of route", proportion_total)
                         return proportion_total / 100
 
         #if json file doesn't exist? For the moment returning full journey prediction, but will have to handle differently
@@ -156,6 +160,7 @@ def get_stop_num(stop_lat, stop_lng, stop_name, integer=False):
     if len(stop_num_list) == 0:
         stop_num_list = get_stop_num_lat_lng(stop_lat, stop_lng)
 
+    print(stop_num_list)
     return stop_num_list
 
 
@@ -184,7 +189,7 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
         route = None
     else:
         route = max(route, key=route.count)
-        print(route)
+        print("route", route)
         return route
 
 def get_prediction(details):
@@ -209,8 +214,16 @@ def get_prediction(details):
 
         # make predictions
         predicted_tt = model.predict(df_all)
-        proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'])
+        if df_all['is_rush_hour'].item():
+            proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'], details['dep_stop_lat'], details['dep_stop_lng'], rush_hour = True)
+        else:
+            proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
+                                                          details['dep_stop_lat'], details['dep_stop_lng'])
+
         partial_prediction = proportion_of_route * predicted_tt
-        predicted_tt = json.dumps(str(partial_prediction))
+        predicted_tt_mins = partial_prediction / 60
+        print("prediction", predicted_tt_mins)
+        predicted_tt = json.dumps(str(predicted_tt_mins))
+
     return predicted_tt
 
