@@ -223,7 +223,7 @@ function getRoute(start, end, time) {
 			console.log(journey);
 
             var route_suggestions = document.getElementById('route_suggestions');
-            route_suggestions.innerHTML = "<h4>Directions</h4><br>";
+            route_suggestions.innerHTML = "<h4>Directions</h4>";
 
             //this variable is used to create ids for each step in a journey
             var i = 0;
@@ -266,15 +266,15 @@ function getRoute(start, end, time) {
                  await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}));
 
 	} else if (journey.travel_mode == "WALKING") {
- 				journeyDescription = "<br>" + journey.instructions;
+ 				journeyDescription = journey.instructions;
  				journeyDescription += "<br><i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>";
  				journeyDescription += '-----------------------------';
  				route_suggestions.innerHTML += journeyDescription;
 
 	} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
-	            journeyDescription = "<br>Ride the " + journey.transit.line.name + " from ";
+	            journeyDescription = "Ride the " + journey.transit.line.short_name + " from ";
  				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
- 				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name + "<br>";
+ 				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name;
  				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + '<br>';
  				journeyDescription += '-----------------------------';
  				route_suggestions.innerHTML += journeyDescription;
