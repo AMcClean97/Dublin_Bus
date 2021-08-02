@@ -60,9 +60,24 @@ def favourites(request):
 def makeFavourite(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
-        new_favourite.save()
-        return JsonResponse(data)
+        
+        #Check if Favourite with same user and co-ordinates exists
+        if favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
+            return_info = {
+                'result' : 'Duplicate Favourite Already Exists'
+            }
+        else:
+            try:
+                new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
+                new_favourite.save()
+                return_info = {
+                    'result' : "new favourite added"
+                }
+            except:
+                return_info = {
+                    'result' : "ERROR unable to save new favourite"
+                }
+        return JsonResponse(return_info)
     else:
         return redirect('index')
 
@@ -71,7 +86,6 @@ def removeFavourite(request):
         data = json.loads(request.body)
         favourite.objects.get(pk=data['id']).delete()
         return JsonResponse(data)
-
     else:
         return redirect('index')
 

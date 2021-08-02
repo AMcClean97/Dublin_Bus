@@ -81,8 +81,7 @@ function createFavourite(user_id){
 		new_favourite['destin_lat'] = destinationLatLon['lat'];
 		new_favourite['destin_lon'] = destinationLatLon['lng'];
 	}
-	postData('/users/makeFavourite', new_favourite);
-	console.log('beep');
+	console.log(postData('/users/makeFavourite', new_favourite));
 }
 
 function initMap (){
