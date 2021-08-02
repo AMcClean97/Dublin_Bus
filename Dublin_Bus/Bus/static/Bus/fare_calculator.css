@@ -1,0 +1,15 @@
+.row {
+margin-top: 20px;
+}
+
+.map-responsive{
+    overflow:hidden;
+    position:relative;
+    width: 18rem;
+    height: 18rem;
+    }
+
+#map {
+ width: 18rem;
+    height: 18rem;
+}

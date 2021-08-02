@@ -93,3 +93,7 @@ def get_arrivals(stop_pk):
 
 def twitter(request):
     return render(request, 'Bus/twitter.html')
+
+
+def fare_calculator(request):
+    return render(request, 'Bus/fare_calculator.html')

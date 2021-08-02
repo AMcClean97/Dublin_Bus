@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+{% load static %}
+<link href="{% static '/Bus/fare_calculator.css' %}" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+{% endblock %}
+{% block content %}
+
+<div class ="container-fluid">
+	  					<div style="text-align:center;">
+	  					<h4>Fare Calculator</h4>
+							<p> <b>Disclaimer:</b> This fare calculator should be considered as an <u><b> estimation only</b></u> and may not represent true costs. </p>
+							</div>
+						<div class="col-md-6 col-sm-6" style="float:none;margin:auto;" id="journey_planner">
+							<div class="tab-content">
+								<!-- Google Locations Tab -->
+								<div class="tab-pane fade show active" id="locations-tab" role="tabpanel">
+									<!--Start Point -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">A</span>
+										<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
+										<button id ="currentLocationButton" class="btn btn-secondary" onclick="toggleCurrentLocation()"><i class="fas fa-male"></i></button>
+									</div>
+
+									<!-- End Point -->
+									<div class="input-group mb-3">
+										<span class="input-group-text">B</span>
+										<input id="inputDestin" class="form-control" placeholder="Enter your destination" type="text" />
+									</div>
+								</div>
+
+							</div>
+							<!-- Start Time -->
+							<div class="input-group mb-3">
+								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
+								<input type="datetime-local" class="form-control" id="time-dropdown">
+							</div>
+							<div class= "input-group mb-3">
+								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+							</div>
+
+							<div class= "input-group mb-3">
+								Select Ticket Type:
+								<br>
+								</div>
+							<div class= "input-group mb-3">
+								<div class="form-check">
+									  <input type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Adult">
+									  <label  for="flexRadioDefault1">
+										Adult
+									  </label>
+									</div>
+								<div class="form-check">
+									<input type="radio" name="flexRadioDefault" id="flexRadioDefault2" value="Child">
+									<label  for="flexRadioDefault2">
+										Child: 5-16 Years OR 5-19 years (with Leap Card)
+									</label>
+								</div>
+								<div class="form-check">
+									<input  type="radio" name="flexRadioDefault" id="flexRadioDefault3" value="U5">
+									<label  for="flexRadioDefault3">
+										Child: Under 5yrs
+									</label>
+								</div>
+							</div>
+
+							<div class= "input-group mb-3">
+								Do you have a Leap Card?:
+								<br>
+								</div>
+							<div class= "input-group mb-3">
+								<div class="form-check">
+									  <input  type="radio" name="flexRadioDefault6" id="flexRadioDefault4" value="Yes">
+									  <label for="flexRadioDefault4">
+										Yes
+									  </label>
+									</div>
+								<div class="form-check">
+									<input  type="radio" name="flexRadioDefault6" id="flexRadioDefault5" value="No">
+									<label class="form-check-label" for="flexRadioDefault5">
+										No
+									</label>
+								</div>
+							</div>
+
+							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
+							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
+
+							<div class ="row" style="text-align:centre;">
+    <div class ="col-md-6 col-sm-6">
+       <div class="col-md-6 col-sm-6" style='width:18rem;height:18rem;display:flex;' id="map"></div>
+    </div>
+    <div class ="col-md-6 col-sm-6" style="display:flex;">
+      <p id="route_instructions"></p>
+     </div>
+  </div>
+
+
+</div>
+  </div>
+
+
+{% load static %}
+<script src="{% static '/Bus/fare_calculator.js' %}" ></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
+
+{% endblock %}
