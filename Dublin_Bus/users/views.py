@@ -66,6 +66,15 @@ def makeFavourite(request):
     else:
         return redirect('index')
 
+def removeFavourite(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        favourite.objects.get(pk=data['id']).delete()
+        return JsonResponse(data)
+
+    else:
+        return redirect('index')
+
 
 
 #def test(request):

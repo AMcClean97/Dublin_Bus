@@ -22,41 +22,6 @@ let autocompleteDestin;
 //Geolocation
 let currentLocationOrigin = false;
 
-
-
-//store csrftoken in a constant
-const csrftoken = getCookie('csrftoken');
-
-//function to retrieve Django CSRF token for POST requests - adapted from https://engineertodeveloper.com/how-to-use-ajax-with-django/
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-
-//function to post data from frontend to Django
-async function postData(url="", data={}) {
-  	const response = await fetch(url, {
-    	method: "POST",
-    	headers: {
-    		"X-CSRFToken": csrftoken,
-    	},
-    	body: JSON.stringify(data),
-    });
-
-    return response.json();
-}
-
 function createFavourite(user_id){
 	var active_tab = document.querySelector('.tab-content .active');
 	var new_favourite = {
@@ -118,11 +83,6 @@ function createFavourite(user_id){
 	}
 	postData('/users/makeFavourite', new_favourite);
 	console.log('beep');
-}
-
-function validateInput (origin, destination, stop=false){
-	var originLatLon = getStopData(origin, stops);
-	var destinationLatLon = getStopData(destination, stops);
 }
 
 function initMap (){
@@ -510,38 +470,6 @@ function addMarkers(stops_data) {
     markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
-//Swaps Origin and Destination
-/*
-function swapInputs(){
-	var id = $('.tab-content .active').attr('id');
-
-	if(id == "locations-tab"){
-		//Swap Input values
-		var temp = inputOrigin.value;
-		inputOrigin.value = inputDestination.value;
-		inputDestination.value = temp;
-
-		//Swap autocomplete Places
-		var tempPlace
-		//If current Location on
-		if(currentLocationOrigin){
-			toggleCurrentLocation();
-			geocoder.geocode({ address: temp}, (results, status) => {
-				if (status === "OK") {
-					tempPlace = results[0];
-				}
-			});
-		} else {
-			tempPlace = autocompleteOrigin.getPlace();
-		}
-		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
-		autocompleteDestin.set('place', tempPlace);
-	} else {
-		var temp = inputFirstStop.value;
-		inputFirstStop.value = inputLastStop.value;
-		inputLastStop.value = temp;
-	}
-}*/
 function swapInputs(){
 	var active_tab = $('.tab-content .active').attr('id');
 
