@@ -275,7 +275,7 @@ function getRoute(start, end, time) {
 	            journeyDescription = "Ride the " + journey.transit.line.short_name + " from ";
  				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
  				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name;
- 				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + '<br>';
+ 				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + ' GOOGLE PREDICTION<br>';
  				journeyDescription += '-----------------------------';
  				route_suggestions.innerHTML += journeyDescription;
 	} else {
@@ -300,12 +300,14 @@ function getRoute(start, end, time) {
  				    if (typeof journeyPrediction == 'string') {
  				        journeyPrediction = journeyPrediction.slice(1,-1);
  				        var predictionMins = parseInt(journeyPrediction);
+ 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
  				    }
 
  				    else {
  				        var predictionMins = Math.round(journeyPrediction / 60);
+ 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins GOOGLE PREDICTION<br>';
  				    }
- 				journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
+
  				journeyPrediction += '-----------------------------';
  			    document.getElementById(predictionSpace).innerHTML += journeyPrediction;
 				}
