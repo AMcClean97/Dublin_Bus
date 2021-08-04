@@ -4,7 +4,7 @@ from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from Bus.models import Stop
+from django.forms.models import model_to_dict
 from .models import favourite
 import json
 
@@ -57,26 +57,34 @@ def favourites(request):
     return render(request, 'users/favourites.html', context)
 
 
-def makeFavourite(request):
+def addFavourite(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         
         #Check if Favourite with same user and co-ordinates exists
         if favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
             return_info = {
+                'success' : False,
                 'result' : 'Duplicate Favourite Already Exists'
             }
         else:
             try:
                 new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
                 new_favourite.save()
+                favourite_dict = model_to_dict(new_favourite)
                 return_info = {
-                    'result' : "new favourite added"
+                    'success' : True,
+                    'result' : "favourite added",
+                    'favourite' : favourite_dict
                 }
+                return JsonResponse(return_info)
             except:
                 return_info = {
+                    'success' : False,
                     'result' : "ERROR unable to save new favourite"
                 }
+                return JsonResponse(return_info)
+        
         return JsonResponse(return_info)
     else:
         return redirect('index')
@@ -84,17 +92,21 @@ def makeFavourite(request):
 def removeFavourite(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        favourite.objects.get(pk=data['id']).delete()
-        return JsonResponse(data)
+        try:
+            favourite.objects.get(pk=data['id']).delete()
+            response = { 'success': True }
+        except:
+            response = { 'success': False }
+        return JsonResponse(response)
     else:
         return redirect('index')
 
-
-
-#def test(request):
-#    stop1 = Stop.objects.get(stop_id='8220DB000004')
-#    stop2 = Stop.objects.get(stop_id='8220DB000045')
-#    current_user = request.user
-#    k = favourite(user_id = 3, origin_name= stop1.stop_name, origin_lat = stop1.stop_lat, origin_lon = stop1.stop_lon, destin_name = stop2.stop_name, destin_lat = stop2.stop_lat, destin_lon = stop2.stop_lon)
-#    k.save()
-#    return redirect('index')
+def renameFavourite(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        renamed_favourite = favourite.objects.get(pk=data['id'])
+        renamed_favourite.favourite_name = data['new_name']
+        renamed_favourite.save(update_fields=['favourite_name'])
+        return JsonResponse({ 'new_name': renamed_favourite.favourite_name })
+    else:
+        return redirect('index')

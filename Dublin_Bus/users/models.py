@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 class favourite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    favourite_name = models.CharField(blank=True, null=True, max_length=50)
+    favourite_name = models.CharField(blank=True, null=True, max_length=50, default="Saved Route")
     
     #Origin
     origin_name = models.CharField(max_length=225)

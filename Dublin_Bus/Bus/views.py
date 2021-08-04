@@ -12,9 +12,12 @@ from users.models import favourite
 
 # Create your views here.
 def index(request):
+    favourites_json = serializers.serialize("json", favourite.objects.filter(user_id= request.user.id))
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
-    ##MAP_KEY = APIKeys.MAP_API_KEY
-    context = { 'bus_stops': bus_stops_json }
+    context = { 
+        'bus_stops': bus_stops_json,
+        'favourites' : favourites_json
+    }
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
         context['journey'] = favourite.objects.get(id=favourite_id)

@@ -11,14 +11,17 @@
             <div class="card">
                 <h3 class="card-header">Favourites for {{ request.user }}</h3>
                 <ul class="list-group list-group-flush">
-                    {% for route in favourites %}
-                    <li id='{{ route.id }}' class="list-group-item">
-                        <h4>{{ route.favourite_name }}</h4>
-                        <p>{{ route.origin_name }} --> {{ route.destin_name}}</p>
+                    {% for favourite in favourites %}
+                    <li id='{{ favourite.id }}' class="list-group-item">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text"><i class="fas fa-pen"></i></span>
+                            <input id='{{ favourite.id }}Name' class="form-control text-center" value="{{ favourite.favourite_name }}" onchange="changeName('{{ favourite.id }}')">
+                        </div>
+                        <p>{{ favourite.origin_name }} --> {{ favourite.destin_name}}</p>
                             <form method="POST", action="{% url 'index' %}">
                                 {% csrf_token %}
-                                <button type="submit" name="favourite_id" value="{{ route.id }}" class="btn btn-success" ><i class="fas fa-walking"></i></button>
-                                <button type="button" class="btn btn-danger" onclick="removeFavourite({{ route.id }})"><i class="far fa-trash-alt"></i></button>
+                                <button type="submit" name="favourite_id" value="{{ favourite.id }}" class="btn btn-success" ><i class="fas fa-walking"></i></button>
+                                <button type="button" class="btn btn-danger" onclick="removeFavourite({{ favourite.id }})"><i class="far fa-trash-alt"></i></button>
                             </form>
                     </li>
                     {% endfor %}
@@ -35,9 +38,19 @@
         var data = {
             id : favourite_id
         }
-        postData('{% url "removeFavourite" %}', data)
+        postData('{% url "removeFavourite" %}', data);
         //if successful remove
-        document.getElementById(favourite_id).remove()
+        document.getElementById(favourite_id).remove();
+    }
+
+    function changeName(favourite_id){
+        var input = document.getElementById(favourite_id + "Name");
+        data = {
+            id : favourite_id,
+            new_name : input.value
+        }
+        postData('{% url "renameFavourite" %}', data)
+
     }
 </script>
 {% endblock %}
