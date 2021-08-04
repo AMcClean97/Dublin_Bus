@@ -131,58 +131,6 @@ function initMap (){
 	}
 }
 
-//Collect Favourite and post it to the inputted url. alert indicates whether or not a popup will occur if invalid input used
-/*
-function postFavourite(url, user_id, warning=true){
-	var active_tab = document.querySelector('.tab-content .active');
-	var new_favourite = {
-		user : user_id
-	}
-	if (active_tab['id'] == "locations-tab"){
-		new_favourite['stops'] = 0;
-		new_favourite['origin_name'] = inputOrigin.value;
-		new_favourite['destin_name'] = inputDestination.value;
-
-		var destination = autocompleteDestin.getPlace();
-		var origin = autocompleteOrigin.getPlace();
-		if (!destination) {
-			if (warning) {alert("Please use a valid destination.")};
-			return false;
-		} else if (!origin){
-			if (warning) {alert("Please use a valid starting point.")};
-			return false;
-		}
-
-		new_favourite['origin_lat'] = origin.geometry.location.lat();
-		new_favourite['origin_lon'] = origin.geometry.location.lng();
-
-		new_favourite['destin_lat'] = destination.geometry.location.lat();
-		new_favourite['destin_lon'] = destination.geometry.location.lng();
-	} else {
-		new_favourite['stops'] = 1;
-		new_favourite['origin_name'] = inputFirstStop.value;
-		new_favourite['destin_name'] = inputLastStop.value;
-
-		var originLatLon = getStopData(new_favourite['origin_name'], stops);
-		var destinationLatLon = getStopData(new_favourite['destin_name'], stops);
-		if (!destinationLatLon) {
-			if (warning) {alert("Please input a valid First Stop")};
-			return false;
-		} else if (!originLatLon) {
-			if (warning) {alert("Please input a valid Last Stop")};
-			return false;
-		}
-
-		new_favourite['origin_lat'] = originLatLon['lat'];
-		new_favourite['origin_lon'] = originLatLon['lng'];
-
-		new_favourite['destin_lat'] = destinationLatLon['lat'];
-		new_favourite['destin_lon'] = destinationLatLon['lng'];
-	}
-	//console.log(new_favourite);
-	return postData(url, new_favourite);
-}*/
-//
 function getRouteData(warning=true){
 	var active_tab = document.querySelector('.tab-content .active');
 	var route = {
