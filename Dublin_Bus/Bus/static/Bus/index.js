@@ -459,7 +459,7 @@ function addMarkers(stops_data) {
     		},
 		],
 	};
-	
+
 	markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
@@ -665,7 +665,6 @@ function toggleFavourite(){
 var checkFavourite = function(evt) {
 	var currentRoute = getRouteData(false);
 	var match = false;
-	var pk = 0;
 	var co_ords = {
 		origin_lat : currentRoute.origin_lat,
 		origin_lon : currentRoute.origin_lon,
