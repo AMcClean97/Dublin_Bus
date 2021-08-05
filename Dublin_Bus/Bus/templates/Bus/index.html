@@ -85,69 +85,67 @@
 							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 						</div>
+
+						<!-- Fare Calculator -->
 						<div class="col-12 col-md-8" id="fare_suggestions" style="display:none">
-	<div class= "input-group mb-3">
-		<h4>Fare Calculator</h4>
-		<p> <b>Disclaimer:</b> This fare calculator should be considered as an <u><b> estimation only</b></u> and may not represent true costs. </p>
-		Select Ticket Type:
-		<br>
-		</div>
-	<div class= "input-group mb-3">
-		<div class="form-check">
-			  <input type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Adult">
-			  <label  for="flexRadioDefault1">
-				Adult
-			  </label>
-			</div>
-		<div class="form-check">
-			<input type="radio" name="flexRadioDefault" id="flexRadioDefault2" value="Child">
-			<label  for="flexRadioDefault2">
-				Child: 5-16 Years OR 5-19 years (with Leap Card)
-			</label>
-		</div>
-		<div class="form-check">
-			<input  type="radio" name="flexRadioDefault" id="flexRadioDefault3" value="U5">
-			<label  for="flexRadioDefault3">
-				Child: Under 5yrs
-			</label>
-		</div>
-	</div>
+							<div class= "input-group mb-3">
+								<h4>Fare Calculator</h4>
+								<p> <b>Disclaimer:</b> This fare calculator should be considered as an <u><b> estimation only</b></u> and may not represent true costs. </p>
+								Select Ticket Type:
+								<br>
+								</div>
+							<div class= "input-group mb-3">
+								<div class="form-check">
+									  <input type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Adult">
+									  <label  for="flexRadioDefault1">
+										Adult
+									  </label>
+									</div>
+								<div class="form-check">
+									<input type="radio" name="flexRadioDefault" id="flexRadioDefault2" value="Child">
+									<label  for="flexRadioDefault2">
+										Child: 5-16 Years OR 5-19 years (with Leap Card)
+									</label>
+								</div>
+								<div class="form-check">
+									<input  type="radio" name="flexRadioDefault" id="flexRadioDefault3" value="U5">
+									<label  for="flexRadioDefault3">
+										Child: Under 5yrs
+									</label>
+								</div>
+							</div>
 
-	<div class= "input-group mb-3">
-		Do you have a Leap Card?:
-		<br>
-		</div>
-	<div class= "input-group mb-3">
-		<div class="form-check">
-			  <input  type="radio" name="flexRadioDefault6" id="flexRadioDefault4" value="Yes">
-			  <label for="flexRadioDefault4">
-				Yes
-			  </label>
-			</div>
-		<div class="form-check">
-			<input  type="radio" name="flexRadioDefault6" id="flexRadioDefault5" value="No">
-			<label class="form-check-label" for="flexRadioDefault5">
-				No
-			</label>
-		</div>
-	</div>
-	<button class="btn btn-success" id="calculateFare" onclick="submitRoute2()">Calculate Fare</button>
+							<div class= "input-group mb-3">
+								Do you have a Leap Card?:
+								<br>
+								</div>
+							<div class= "input-group mb-3">
+								<div class="form-check">
+									  <input  type="radio" name="flexRadioDefault6" id="flexRadioDefault4" value="Yes">
+									  <label for="flexRadioDefault4">
+										Yes
+									  </label>
+									</div>
+								<div class="form-check">
+									<input  type="radio" name="flexRadioDefault6" id="flexRadioDefault5" value="No">
+									<label class="form-check-label" for="flexRadioDefault5">
+										No
+									</label>
+								</div>
+							</div>
+							<button class="btn btn-success" id="calculateFare" onclick="submitRoute2()">Calculate Fare</button>
 
-</div>
+						</div>
 						<div class="col-12 col-md-8" id="route_suggestions">
 
 						</div>
 						</div>
-
-							</p>
 						</div>
 					</div>
 
 				</div>
 			</div>
 		</div>
-    </div>
-</div>
 
 {% load static %}
 <script src="{% static '/Bus/index.js' %}" ></script>
