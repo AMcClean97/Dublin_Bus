@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 
+{% block title %} Journey Planner {% endblock %}
 
 {% block head %}
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 
 <!-- Load markerClusterer library -->
 <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>

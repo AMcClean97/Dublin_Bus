@@ -5,10 +5,11 @@
     {% csrf_token %} <!-- to fix this error Forbidden (CSRF cookie not set.): /bus/ajax/ -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Dublin Bus Application</title>
-    <meta name="Dublin Bus Application" content="A Web Application Capable of predicting Dublin Bus journey times">
-    <meta name="RC, AMcC, AH">
+    <title>Bustimates - {% block title %}{% endblock %}</title>
+    <meta name="application-name" content="Bustimates">
+    <meta name="description" content="A Web Application Capable of predicting Dublin Bus journey times">
+    <meta name ="keywords" content= "Bus, Dublin Bus, Dublin">
+    <meta name="author" content="RC, AMcC, AH">
 
     <link rel="icon" href="/favicon.ico">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -41,12 +42,11 @@
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
             <div class="col text-center">
-                <h1>Dublin Bus</h1>
+                <h1>Bustimates</h1>
             </div>
             <div class="col text-end">
                 {% if user.is_authenticated %}
-                <span>{{request.user}}</span>
-                <span><a class="btn btn-primary" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i></a></span>
+                <span><a class="btn btn-primary" href="{% url 'logout' %}">{{request.user}} <i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
                 <a class ="btn btn-primary" href="{% url 'login' %}">Login</a>
