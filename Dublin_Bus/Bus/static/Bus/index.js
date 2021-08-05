@@ -825,6 +825,21 @@ function getRoute2(start, end, time) {
 
 //Press submit button
 function submitRoute2() {
+
+   var route = getRouteData();
+
+	if (route){
+		var destinationLatLon = {
+			lat: route['origin_lat'],
+			lng: route['origin_lon'] ,
+		};
+		var originLatLon = {
+			lat: route['destin_lat'] ,
+			lng: route['destin_lon'] ,
+		}
+}
+    clearMarkers();
+
 	//Get DepartureTime Here
 	var time = inputTime.value;
 	if (!time){
