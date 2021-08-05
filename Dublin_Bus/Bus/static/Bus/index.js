@@ -29,6 +29,9 @@ let PositionOptions = {
 //Favourites
 let isFavourite = false;
 let currentFavourite;
+//Journey planner
+let predictionDisplay;
+let journeyDescription;
 
 function initMap (){
 
@@ -256,89 +259,81 @@ function getRoute(start, end, time) {
 
 			//extract useful journey info from response and post to journey planner
 			async function processJourney(journey) {
-			journey.forEach(async (journey) => {
-			//increments id for each step of journey
-			i++;
-            //assigns id to p element
-            route_suggestions.innerHTML += "<p id='" + i + "'</p>";
+				journey.forEach(async (journey) => {
+					//increments id for each step of journey
+					i++;
+            		//assigns id to p element
+            		route_suggestions.innerHTML += "<p id='" + i + "'</p>";
 
 
-            if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
-                journeyDescription = "<br>Ride the " + journey.transit.line.short_name + " from ";
- 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign + "<br>";
- 				journeyDescription += "Get off at " + journey.transit.arrival_stop.name;
+            		if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
+                		journeyDescription = "<br>Ride the " + journey.transit.line.short_name + " from ";
+ 						journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign + "<br>";
+ 						journeyDescription += "Get off at " + journey.transit.arrival_stop.name;
 
 
- 				var routeDetails = {};
- 				routeDetails['departure_time'] = journey.transit.departure_time.value;
- 				routeDetails['line'] = journey.transit.line.short_name;
- 				routeDetails['departure_stop'] = journey.transit.departure_stop.name;
- 				routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
- 				routeDetails['num_stops'] = journey.transit.num_stops;
- 				routeDetails['dep_stop_lat'] = journey.transit.departure_stop.location.lat();
- 				routeDetails['dep_stop_lng'] = journey.transit.departure_stop.location.lng();
- 				routeDetails['arr_stop_lat'] = journey.transit.arrival_stop.location.lat();
- 				routeDetails['arr_stop_lng'] = journey.transit.arrival_stop.location.lng();
- 				routeDetails['google_pred'] = journey.duration.value;
+ 						var routeDetails = {};
+ 						routeDetails['departure_time'] = journey.transit.departure_time.value;
+ 						routeDetails['line'] = journey.transit.line.short_name;
+ 						routeDetails['departure_stop'] = journey.transit.departure_stop.name;
+ 						routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
+ 						routeDetails['num_stops'] = journey.transit.num_stops;
+ 						routeDetails['dep_stop_lat'] = journey.transit.departure_stop.location.lat();
+ 						routeDetails['dep_stop_lng'] = journey.transit.departure_stop.location.lng();
+ 						routeDetails['arr_stop_lat'] = journey.transit.arrival_stop.location.lat();
+ 						routeDetails['arr_stop_lng'] = journey.transit.arrival_stop.location.lng();
+ 						routeDetails['google_pred'] = journey.duration.value;
 
-                var predictionSpace = i.toString();
-                document.getElementById(predictionSpace).innerHTML = journeyDescription;
-                var numStops = routeDetails['num_stops'];
-
-
- 				//post details to Django view
- 				await postData('/send_to_model', routeDetails).then(async (data) =>
-                 await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}));
-
-	} else if (journey.travel_mode == "WALKING") {
- 				journeyDescription = journey.instructions;
- 				journeyDescription += "<br><i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>";
- 				journeyDescription += '-----------------------------';
- 				route_suggestions.innerHTML += journeyDescription;
-
-	} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
-	            journeyDescription = "Ride the " + journey.transit.line.short_name + " from ";
- 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
- 				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name;
- 				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + ' GOOGLE PREDICTION<br>';
- 				journeyDescription += '-----------------------------';
- 				route_suggestions.innerHTML += journeyDescription;
-	} else {
-			journeyDescription = "<br> This route is not served by Dublin Bus.";
-			journeyDescription += '-----------------------------';
-			route_suggestions.innerHTML += journeyDescription;
-		   }
+                		var predictionSpace = i.toString();
+                		document.getElementById(predictionSpace).innerHTML = journeyDescription;
+                		var numStops = routeDetails['num_stops'];
 
 
-            })
+ 						//post details to Django view
+ 						await postData(query_model_URL, routeDetails).then(async (data) =>
+                 		await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}));
 
+					} else if (journey.travel_mode == "WALKING") {
+ 						journeyDescription = journey.instructions;
+ 						journeyDescription += "<br><i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>";
+ 						journeyDescription += '-----------------------------';
+ 						route_suggestions.innerHTML += journeyDescription;
+
+					} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
+	            		journeyDescription = "Ride the " + journey.transit.line.short_name + " from ";
+ 						journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
+ 						journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name;
+ 						journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + ' GOOGLE PREDICTION<br>';
+ 						journeyDescription += '-----------------------------';
+ 						route_suggestions.innerHTML += journeyDescription;
+					} else {
+						journeyDescription = "<br> This route is not served by Dublin Bus.";
+						journeyDescription += '-----------------------------';
+						route_suggestions.innerHTML += journeyDescription;
+		   			}
+            	})
 			}
-			}
+		}
 
+ 		async function displayRoute(journeyPrediction, predictionSpace, numStops) {
+	
+ 			if (typeof journeyPrediction == 'string') {
+ 				journeyPrediction = journeyPrediction.slice(1,-1);
+ 				var predictionMins = parseInt(journeyPrediction);
+ 				journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
+ 			}
 
+ 			else {
+ 				var predictionMins = Math.round(journeyPrediction / 60);
+ 				journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins GOOGLE PREDICTION<br>';
+ 			}
 
+ 			journeyPrediction += '-----------------------------';
+ 			document.getElementById(predictionSpace).innerHTML += journeyPrediction;
+		}
 
-
- 				async function displayRoute(journeyPrediction, predictionSpace, numStops) {
-
-
- 				    if (typeof journeyPrediction == 'string') {
- 				        journeyPrediction = journeyPrediction.slice(1,-1);
- 				        var predictionMins = parseInt(journeyPrediction);
- 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
- 				    }
-
- 				    else {
- 				        var predictionMins = Math.round(journeyPrediction / 60);
- 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins GOOGLE PREDICTION<br>';
- 				    }
-
- 				journeyPrediction += '-----------------------------';
- 			    document.getElementById(predictionSpace).innerHTML += journeyPrediction;
-				}
-
-		})
-	}
+	})
+}
 
 //Press submit button
 function submitRoute(){
@@ -411,15 +406,15 @@ function addMarkers(stops_data) {
     var busStopIcon = {
         url: '../static/Bus/bus-stop.png',
         scaledSize: new google.maps.Size(30, 30),
-      };
+    };
 
     for (var i=0; i<stops_data.length; i++) {
         const marker = new google.maps.Marker({
-        icon: busStopIcon,
-        position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
-        map: map,
-        title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
-    });
+        	icon: busStopIcon,
+        	position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
+        	map: map,
+        	title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
+    	});
 
     	//add reference to each marker in stopMarkers
     	stopMarkers[stops_data[i].pk] = marker;
@@ -428,47 +423,44 @@ function addMarkers(stops_data) {
         stopMarkersArr.push(marker);
 
 
-    //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
-    marker.addListener("click", () =>
-    postData('/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
-    displayInfoWindow(data.timetable, marker.title.split(":")[0])))
+    	//add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
+   		marker.addListener("click", () =>
+    	postData('/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
+    	displayInfoWindow(data.timetable, marker.title.split(":")[0])))
     }
 
     //clusters added, need to be styles
     clusterStyles = {
-    ignoreHidden: true,
-    gridSize: 70,
-    maxZoom: 15,
-    styles: [{
-    height: 30,
-    width: 30,
-    anchorText: [10, 15],
-    textColor: 'white',
-    textSize: 10,
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-30.png",
-},
-{ height: 50,
-    width: 50,
-    anchorText: [18, 24],
-    textColor: 'white',
-    textSize: 12,
-    fontWeight: 'bold',
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-50.png",
-    },
-
- { height: 65,
-    width: 65,
-    anchorText: [25, 33],
-    textColor: 'white',
-    textSize: 14,
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-70.png",
-    },
-
-],
-};
-
-
-    markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
+    	ignoreHidden: true,
+    	gridSize: 70,
+    	maxZoom: 15,
+    	styles: [
+			{	height: 30,
+    			width: 30,
+    			anchorText: [10, 15],
+    			textColor: 'white',
+    			textSize: 10,
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-30.png",
+			},
+			{ 	height: 50,
+    			width: 50,
+    			anchorText: [18, 24],
+    			textColor: 'white',
+    			textSize: 12,
+    			fontWeight: 'bold',
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-50.png",
+    		},
+ 			{	height: 65,
+    			width: 65,
+    			anchorText: [25, 33],
+    			textColor: 'white',
+    			textSize: 14,
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-70.png",
+    		},
+		],
+	};
+	
+	markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
 function swapInputs(){
