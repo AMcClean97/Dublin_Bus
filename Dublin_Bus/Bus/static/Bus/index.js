@@ -337,6 +337,14 @@ function getRoute(start, end, time) {
 
 //Press submit button
 function submitRoute(){
+   //Get rid of Fare Calculator
+   document.getElementById("flexRadioDefault1").checked = false;
+   document.getElementById("flexRadioDefault2").checked = false;
+   document.getElementById("flexRadioDefault3").checked = false;
+   document.getElementById("flexRadioDefault4").checked = false;
+   document.getElementById("flexRadioDefault5").checked = false;
+   fare_suggestions.style.display = "none";
+
 	var time = inputTime.value;
 	if (!time){
 		time = currentTime();
@@ -619,7 +627,277 @@ function resetJourneyPlanner() {
 		toggleCurrentLocation();
 	}
 
+   //reset journey planner
+	document.getElementById("flexRadioDefault1").checked = false;
+    document.getElementById("flexRadioDefault2").checked = false;
+    document.getElementById("flexRadioDefault3").checked = false;
+    document.getElementById("flexRadioDefault4").checked = false;
+    document.getElementById("flexRadioDefault5").checked = false;
+    fare_suggestions.style.display = "none";
 }
+
+function displayFareButtons() {
+    var fare_suggestions = document.getElementById('fare_suggestions');
+    fare_suggestions.style.display = "block";
+}
+
+function getRoute2(start, end, time) {
+	//Clear Previous Route
+	directionsRenderer.set('directions', null);
+    directionsRenderer.setMap(null);
+
+    //Get Radio Button Answers
+   var flexRadioDefault1 = document.getElementById("flexRadioDefault1");
+   var flexRadioDefault2 = document.getElementById("flexRadioDefault2");
+   var flexRadioDefault3 = document.getElementById("flexRadioDefault3");
+   var flexRadioDefault4 = document.getElementById("flexRadioDefault4");
+   var flexRadioDefault5 = document.getElementById("flexRadioDefault5");
+
+   if (flexRadioDefault1.checked == false && flexRadioDefault2.checked == false && flexRadioDefault3.checked == false){
+       alert("Please Enter a Ticket Type.");
+	   return;
+   }
+
+   if (flexRadioDefault4.checked == false && flexRadioDefault5.checked == false){
+       alert("Please Enter Whether You have a Leap Card or Not");
+	   return;
+   }
+
+	//request to Google Directions API
+	const request = {
+		origin: start,
+		destination: end,
+		travelMode: 'TRANSIT',
+		transitOptions: {
+			modes: ['BUS'],
+			routingPreference: 'FEWER_TRANSFERS',
+			departureTime: new Date(time),
+		},
+		unitSystem: google.maps.UnitSystem.METRIC
+	}
+
+	//make request and render route on map
+	//need to fix to make sure agency is Dublin Bus?
+	directionsService.route(request, function(response, status) {
+		if (status == "OK") {
+			directionsRenderer.setDirections(response);
+			directionsRenderer.setMap(map);
+
+
+			var route = document.getElementById("route_suggestions");
+			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+			var journeyDescription = "<br>";
+			var journeyCost = 0.00;
+
+
+			//extract useful journey info from response and post to journey planner
+			for (var i=0; i<journey.length; i++) {
+				if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
+    				journeyDescription += "<br>Bus Route: " + journey[i].transit.line.short_name + "<br>";
+    				if (journey[i].transit.num_stops <= 3) {
+
+                        if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €1.55 <br>";
+                        journeyCost += 1.55;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €2.15 <br>";
+                        journeyCost += 2.15;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+    			    else if (4 <= journey[i].transit.num_stops && journey[i].transit.num_stops <= 13) {
+    				if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €2.25 <br>";
+                        journeyCost += 2.25;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €3.00 <br>";
+                        journeyCost += 3.00;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+    				else if (journey[i].transit.num_stops && journey[i].transit.num_stops > 13) {
+    				if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €2.50 <br>";
+                        journeyCost += 2.50;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €3.30 <br>";
+                        journeyCost += 3.30;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+
+
+    				var routeDetails = {};
+    				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
+    				routeDetails['line'] = journey[i].transit.line.short_name;
+    				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
+    				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
+    				routeDetails['num_stops'] = journey[i].transit.num_stops;
+    				routeDetails['dep_stop_lat'] = journey[i].transit.departure_stop.location.lat();
+    				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
+    				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
+    				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
+    				routeDetails['google_pred'] = journey[i].duration.value;
+    				var journeyPrediction;
+
+				} else if (journey[i].travel_mode == "WALKING") {
+				route.innerHTML += journeyDescription;
+
+				} else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
+				    journeyDescription += "<br>Bus Route: " + journey[i].transit.line.short_name;
+    				journeyDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations.<br>";
+    				route.innerHTML = journeyDescription;
+
+				}
+
+				else
+				{
+    				journeyDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations. <br>";
+ 					route.innerHTML = journeyDescription;
+ 				}
+			}
+
+			route.innerHTML =  journeyDescription + "<br> Total Calculated Fare is: €" + journeyCost;
+
+		}
+	});
+}
+
+//Press submit button
+function submitRoute2() {
+
+   var route = getRouteData();
+
+	if (route){
+		var destinationLatLon = {
+			lat: route['origin_lat'],
+			lng: route['origin_lon'] ,
+		};
+		var originLatLon = {
+			lat: route['destin_lat'] ,
+			lng: route['destin_lon'] ,
+		}
+}
+    clearMarkers();
+
+	//Get DepartureTime Here
+	var time = inputTime.value;
+	if (!time){
+		time = currentTime();
+	}
+
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		//Get Destination
+		var destination = autocompleteDestin.getPlace();
+		if (destination == undefined) {
+			alert("Please use a valid destination.");
+			return;
+		}
+		var destinationLatLon = {
+			lat: destination.geometry.location.lat(),
+			lng: destination.geometry.location.lng(),
+		};
+
+		//Check if Origin is Current Location
+		if (currentLocationOrigin){
+			getRouteFromCurrentPosition(destinationLatLon, time, false);
+			return;
+		// If Origin is not current Location Check Origin
+		} else {
+			var origin = autocompleteOrigin.getPlace();
+
+			if (origin == undefined){
+				alert("Please use a valid starting point.");
+				return;
+			}
+
+			var originLatLon = {
+				lat: origin.geometry.location.lat(),
+				lng: origin.geometry.location.lng(),
+			}
+		}
+	} else {
+		var origin = inputFirstStop.value;
+		var destination = inputLastStop.value;
+
+		var originLatLon = getStopData(origin, stops);
+		var destinationLatLon = getStopData(destination, stops);
+
+		if (!originLatLon) {
+			alert("Please input a valid First Stop")
+			return;
+		} else if (!destinationLatLon) {
+			alert("Please input a valid Last Stop")
+			return;
+		}
+
+
+	}
+	//Get New Route
+	getRoute2(originLatLon, destinationLatLon, time);
+};
+
 
 function toggleFavourite(){
 	//Remove From Favourites
