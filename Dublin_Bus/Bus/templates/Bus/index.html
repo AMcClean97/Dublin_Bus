@@ -75,13 +75,15 @@
 							</div>
 							<div class= "input-group mb-3">
 								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+								{% if user.is_authenticated %}
 								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()"><i class="fas fa-star"></i></button>
+								{% endif %}
 								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()"><i class="fa fa-euro"></i></button>
 
 
-							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
-							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
-								</div>
+								<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
+								<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
+							</div>
 						</div>
 
 							<!-- Fare Calculator -->
@@ -165,7 +167,9 @@
 	var create_favourite_URL = "{% url 'addFavourite' %}";
 	var remove_favourite_URL = "{% url 'removeFavourite' %}";
 	var query_model_URL = "{% url 'model' %}";
-	var current_user = {{ request.user.id }};
+	{% if user.is_authenticated %}
+	current_user = {{ request.user.id }};
+	{% endif %}
 
 
 	var stopOptions = document.getElementById("stopOptions");

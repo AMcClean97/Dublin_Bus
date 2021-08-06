@@ -38,6 +38,8 @@ let startIcon;
 let endIcon;
 let startMarker;
 let endMarker;
+//Check if Logged in
+let current_user = null;
 
 //enable tooltips
 //enable tooltips
@@ -1091,32 +1093,34 @@ function toggleFavourite() {
 
 //Checks if the current input is a favourite and alters DOM elements accordingly
 var checkFavourite = function(evt) {
-    var currentRoute = getRouteData(false);
-    var match = false;
-    var co_ords = {
-        origin_lat: currentRoute.origin_lat,
-        origin_lon: currentRoute.origin_lon,
-        destin_lat: currentRoute.destin_lat,
-        destin_lon: currentRoute.destin_lon
-    }
-    for (var i = 0; i < favourites.length; i++) {
-        var fav_co_ords = {
-            origin_lat: favourites[i].origin_lat,
-            origin_lon: favourites[i].origin_lon,
-            destin_lat: favourites[i].destin_lat,
-            destin_lon: favourites[i].destin_lon
+    if (current_user != null){
+        var currentRoute = getRouteData(false);
+        var match = false;
+        var co_ords = {
+            origin_lat: currentRoute.origin_lat,
+            origin_lon: currentRoute.origin_lon,
+            destin_lat: currentRoute.destin_lat,
+            destin_lon: currentRoute.destin_lon
         }
-        if (JSON.stringify(co_ords) === JSON.stringify(fav_co_ords)) {
-            match = true;
-            currentFavourite = favourites[i].id;
-            isFavourite = true;
-            $('#favouriteButton').attr('class', 'btn btn-info');
-            break;
+        for (var i = 0; i < favourites.length; i++) {
+            var fav_co_ords = {
+                origin_lat: favourites[i].origin_lat,
+                origin_lon: favourites[i].origin_lon,
+                destin_lat: favourites[i].destin_lat,
+                destin_lon: favourites[i].destin_lon
+            }
+            if (JSON.stringify(co_ords) === JSON.stringify(fav_co_ords)) {
+                match = true;
+                currentFavourite = favourites[i].id;
+                isFavourite = true;
+                $('#favouriteButton').attr('class', 'btn btn-info');
+                break;
+            }
         }
-    }
-    if (!match) {
-        isFavourite = false;
-        $('#favouriteButton').attr('class', 'btn btn-secondary');
+        if (!match) {
+            isFavourite = false;
+            $('#favouriteButton').attr('class', 'btn btn-secondary');
+        }
     }
 }
 
