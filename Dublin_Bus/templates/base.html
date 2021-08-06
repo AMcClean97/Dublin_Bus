@@ -70,7 +70,7 @@
     <span class="navbar-toggler-icon"></span>
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title">Navbar</h5>
+            <h5 class="offcanvas-title"><img src="{% static 'Bus/logo.png' %}" class="img-fluid"> Bustimates</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
     
@@ -91,13 +91,7 @@
                     <a class= "nav-link hover-shadow" href ="{% url 'favourites' %}"><i class="fas fa-star"></i> Favourites</a>
                 </li>
                 <li class="list-group-item">
-                    <a class= "nav-link hover-shadow" href ="#"><i class="far fa-credit-card"></i> Leap card</a>
-                </li>
-                <li class="list-group-item">
                      <a class= "nav-link hover-shadow" href ="{% url 'twitter' %}"><i class="fa fa-twitter" aria-hidden="true"></i> Twitter </a>
-                </li>
-                <li class="list-group-item">
-                    <a class= "nav-link hover-shadow" href ="#"><i class="fas fa-cog"></i> Settings</a>
                 </li>
             </ul>
         </div>

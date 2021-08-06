@@ -4,15 +4,11 @@
   	max-width: 100%;
 }
 
-.fa {
+#twittericon {
   	font-size: 25px;
   	color: #FFFFFF;
 }
-.panel-title {
- 	font-size: 25px;
- 	color: #FFFFFF;
-	font-family: 'Open Sans', sans-serif;
-}
+
 .card-header {
   	background-color: #1da1f2 !important;
 	font-size: 25px;
