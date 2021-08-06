@@ -96,8 +96,6 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
         with open('json/avg' + route + '.json') as f:
             historical_averages = json.load(f)
 
-
-
             stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
             if len(stop_num_list) == 0:
                 return None
@@ -108,10 +106,18 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                     if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
                         # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
                         if rush_hour:
-                            proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
+                            try:
+                                proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
+                            except IndexError as e:
+                                print(e)
+                                return None
                         else:
-                            proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
-                        print("proportion of route", proportion_total)
+                            try:
+                                proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
+                                print("proportion of route", proportion_total)
+                            except IndexError as e:
+                                print(e)
+                                return None
                         return proportion_total / 100
     else:
         return None
