@@ -5,8 +5,8 @@
     {% csrf_token %} <!-- to fix this error Forbidden (CSRF cookie not set.): /bus/ajax/ -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bustimates - {% block title %}{% endblock %}</title>
-    <meta name="application-name" content="Bustimates">
+    <title>Bustimate - {% block title %}{% endblock %}</title>
+    <meta name="application-name" content="Bustimate">
     <meta name="description" content="A Web Application Capable of predicting Dublin Bus journey times">
     <meta name ="keywords" content= "Bus, Dublin Bus, Dublin">
     <meta name="author" content="RC, AMcC, AH">
@@ -52,7 +52,7 @@
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
             <div class="col text-center">
-                <h2>Bustimates
+                <h2>Bustimate
                 <img src="{% static 'Bus/logo.png' %}" class="img-fluid"></h2>
             </div>
             <div class="col text-end">
@@ -92,6 +92,13 @@
                 </li>
                 <li class="list-group-item">
                      <a class= "nav-link hover-shadow" href ="{% url 'twitter' %}"><i class="fa fa-twitter" aria-hidden="true"></i> Twitter </a>
+                </li>
+                <li class="list-group-item">
+                    {% if user.is_authenticated %}
+                    <a class= "nav-link hover-shadow" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    {% else %}
+                    <a class= "nav-link hover-shadow" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    {% endif %}
                 </li>
             </ul>
         </div>
