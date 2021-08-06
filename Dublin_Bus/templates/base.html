@@ -5,19 +5,20 @@
     {% csrf_token %} <!-- to fix this error Forbidden (CSRF cookie not set.): /bus/ajax/ -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Dublin Bus Application</title>
-    <meta name="Dublin Bus Application" content="A Web Application Capable of predicting Dublin Bus journey times">
-    <meta name="RC, AMcC, AH">
+    <title>Bustimates - {% block title %}{% endblock %}</title>
+    <meta name="application-name" content="Bustimates">
+    <meta name="description" content="A Web Application Capable of predicting Dublin Bus journey times">
+    <meta name ="keywords" content= "Bus, Dublin Bus, Dublin">
+    <meta name="author" content="RC, AMcC, AH">
 
     <link rel="icon" href="/favicon.ico">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="apple-touch-icon" href="/custom_icon.png"/>
 
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap CSS and JS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     <!-- FontAwesome Icons -->
     <script src="https://kit.fontawesome.com/808765887f.js" crossorigin="anonymous"></script>
@@ -35,6 +36,8 @@
     <link rel="icon" type="image/png" href="{% static 'Bus/logo.png' %}">
 
 
+    {% load static %}
+    <script src="{% static 'Bus/scripts.js' %}" ></script>
 
     {% block head %}
     {% endblock %}
@@ -48,15 +51,12 @@
             <div class="col text-start">
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
-            <!--<div class="col text-center">
-                <img src="{% static "Bus/logo.png" %}" alt="Dublin Bus logo" class="img-fluid">
-
-            </div>-->
+            <div class="col text-center">
+                <h1>Bustimates</h1>
+            </div>
             <div class="col text-end">
                 {% if user.is_authenticated %}
-                <span class="d-none d-sm-inline">{{request.user}}</span>
-                <span><a class="btn btn-secondary" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i></a></span>
-
+                <span><a class="btn btn-secondary" href="{% url 'logout' %}">{{request.user}} <i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
                 <a class ="btn btn-secondary" href="{% url 'login' %}">Login</a>
@@ -104,11 +104,5 @@
 
     {% block content %}
     {% endblock %}
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
-
-
 </body>
 </html>

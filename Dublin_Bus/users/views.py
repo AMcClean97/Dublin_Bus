@@ -1,8 +1,12 @@
 from django.contrib import auth
+from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.forms.models import model_to_dict
+from .models import favourite
+import json
 
 from .forms import CreateUserForm
 
@@ -39,9 +43,7 @@ def loginPage(request):
                 return redirect('index')
             else:
                 messages.info(request, 'Username OR Password is incorrect')
-
-        context = {}
-        return render(request, 'users/login.html', context)
+        return render(request, 'users/login.html')
 
 def logoutUser(request):
     logout(request)
@@ -49,7 +51,62 @@ def logoutUser(request):
 
 @login_required(login_url='login')
 def favourites(request):
-    context = {}
+    current_user = request.user
+    favourites = favourite.objects.filter(user_id=current_user.id)
+    context = {'favourites': favourites}
     return render(request, 'users/favourites.html', context)
 
 
+def addFavourite(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        #Check if Favourite with same user and co-ordinates exists
+        if favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
+            return_info = {
+                'success' : False,
+                'result' : 'Duplicate Favourite Already Exists'
+            }
+        else:
+            try:
+                new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
+                new_favourite.save()
+                favourite_dict = model_to_dict(new_favourite)
+                return_info = {
+                    'success' : True,
+                    'result' : "favourite added",
+                    'favourite' : favourite_dict
+                }
+                return JsonResponse(return_info)
+            except:
+                return_info = {
+                    'success' : False,
+                    'result' : "ERROR unable to save new favourite"
+                }
+                return JsonResponse(return_info)
+        
+        return JsonResponse(return_info)
+    else:
+        return redirect('index')
+
+def removeFavourite(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        try:
+            favourite.objects.get(pk=data['id']).delete()
+            response = { 'success': True }
+        except:
+            response = { 'success': False }
+        return JsonResponse(response)
+    else:
+        return redirect('index')
+
+def renameFavourite(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        renamed_favourite = favourite.objects.get(pk=data['id'])
+        renamed_favourite.favourite_name = data['new_name']
+        renamed_favourite.save(update_fields=['favourite_name'])
+        return JsonResponse({ 'new_name': renamed_favourite.favourite_name })
+    else:
+        return redirect('index')

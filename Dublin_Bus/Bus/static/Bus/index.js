@@ -21,7 +21,15 @@ let autocompleteOrigin;
 let autocompleteDestin;
 //Geolocation
 let currentLocationOrigin = false;
-//journey planner
+let PositionOptions = {
+		enableHighAccuracy: true,
+		timeout: 5000,
+		maximumAge: 0,
+};
+//Favourites
+let isFavourite = false;
+let currentFavourite;
+//Journey planner
 let predictionDisplay;
 let journeyDescription;
 //Polyline and icon options
@@ -31,56 +39,11 @@ let endIcon;
 let startMarker;
 let endMarker;
 
-
-//store csrftoken in a constant
-const csrftoken = getCookie('csrftoken');
-
+//enable tooltips
 //enable tooltips
 $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
-
-
-
-
-
-
-
-//function to retrieve Django CSRF token for POST requests - adapted from https://engineertodeveloper.com/how-to-use-ajax-with-django/
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-
-//function to post data from frontend to Django
-async function postData(url="", data={}) {
-
-  	const response = await fetch(url, {
-    	method: "POST",
-    	headers: {
-    		"X-CSRFToken": csrftoken,
-    	},
-    	body: JSON.stringify(data),
-    });
-
-    return response.json();
-}
-
-
-
-
-
 function initMap (){
 
 	let myLatLng = {lat: 53.350140, lng: -6.266155};//set the latitude and longitude to Dublin
@@ -206,13 +169,6 @@ function initMap (){
     	preserveViewport: false,
   	});
 
-
-
-  	// Make Directions Renderer object for getRoute
-  	//directionsRenderer = new google.maps.DirectionsRenderer(
-    //	{preserveViewport: false,
-  	//});
-
   	//make geocoder object for geolocation/journey planner feature
   	geocoder = new google.maps.Geocoder();
 
@@ -221,7 +177,66 @@ function initMap (){
   	//set minimum date field to current date so user can't plan journeys in the past
 	var today = currentTime();
     document.getElementById("time-dropdown").setAttribute("min", today);
+
+	//autocomplete listeners
+	autocompleteOrigin.addListener("place_changed", checkFavourite, false);
+	autocompleteDestin.addListener("place_changed", checkFavourite, false);
+
+	if (typeof loadFavourite === "function") {
+		loadFavourite()
+	}
 }
+
+function getRouteData(warning=true){
+	var active_tab = document.querySelector('.tab-content .active');
+	var route = {
+		user : current_user
+	}
+	if (active_tab['id'] == "locations-tab"){
+		route['stops'] = 0;
+		route['origin_name'] = inputOrigin.value;
+		route['destin_name'] = inputDestination.value;
+
+		var destination = autocompleteDestin.getPlace();
+		var origin = autocompleteOrigin.getPlace();
+		if (!origin) {
+			if (warning) {alert("Please use a valid starting point.")};
+			return false;
+		} else if (!destination){
+			if (warning) {alert("Please use a valid destination.")};
+			return false;
+		}
+
+		route['origin_lat'] = origin.geometry.location.lat();
+		route['origin_lon'] = origin.geometry.location.lng();
+
+		route['destin_lat'] = destination.geometry.location.lat();
+		route['destin_lon'] = destination.geometry.location.lng();
+	} else {
+		route['stops'] = 1;
+		route['origin_name'] = inputFirstStop.value;
+		route['destin_name'] = inputLastStop.value;
+
+		var originLatLon = getStopData(route['origin_name'], stops);
+		var destinationLatLon = getStopData(route['destin_name'], stops);
+		if (!originLatLon) {
+			if (warning) {alert("Please input a valid First Stop")};
+			return false;
+		} else if (!destinationLatLon) {
+			if (warning) {alert("Please input a valid Last Stop")};
+			return false;
+		}
+
+		route['origin_lat'] = originLatLon['lat'];
+		route['origin_lon'] = originLatLon['lng'];
+
+		route['destin_lat'] = destinationLatLon['lat'];
+		route['destin_lon'] = destinationLatLon['lng'];
+	}
+	return route
+}
+
+
 
 function currentTime(){
     var today = new Date();
@@ -279,9 +294,6 @@ function getRoute(start, end, time) {
 	//clear markers from map so route can be seen
 	clearMarkers();
 
-
-
-
 	//make request and render route on map
 	//need to fix to make sure agency is Dublin Bus?
 	directionsService.route(request, function(response, status) {
@@ -310,64 +322,61 @@ function getRoute(start, end, time) {
 
 			//extract useful journey info from response and post to journey planner
 			async function processJourney(journey) {
-			journey.forEach(async (journey) => {
-			//increments id for each step of journey
-			i++;
-            //assigns id to p element
-            route_suggestions.innerHTML += "<p id='" + i + "'</p>";
+				journey.forEach(async (journey) => {
+					//increments id for each step of journey
+					i++;
+            		//assigns id to p element
+            		route_suggestions.innerHTML += "<p id='" + i + "'</p>";
 
 
             if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
                 journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
 
 
- 				var routeDetails = {};
- 				routeDetails['departure_time'] = journey.transit.departure_time.value;
- 				routeDetails['line'] = journey.transit.line.short_name;
- 				routeDetails['departure_stop'] = journey.transit.departure_stop.name;
- 				routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
- 				routeDetails['num_stops'] = journey.transit.num_stops;
- 				routeDetails['dep_stop_lat'] = journey.transit.departure_stop.location.lat();
- 				routeDetails['dep_stop_lng'] = journey.transit.departure_stop.location.lng();
- 				routeDetails['arr_stop_lat'] = journey.transit.arrival_stop.location.lat();
- 				routeDetails['arr_stop_lng'] = journey.transit.arrival_stop.location.lng();
- 				routeDetails['google_pred'] = journey.duration.value;
+ 						var routeDetails = {};
+ 						routeDetails['departure_time'] = journey.transit.departure_time.value;
+ 						routeDetails['line'] = journey.transit.line.short_name;
+ 						routeDetails['departure_stop'] = journey.transit.departure_stop.name;
+ 						routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
+ 						routeDetails['num_stops'] = journey.transit.num_stops;
+ 						routeDetails['dep_stop_lat'] = journey.transit.departure_stop.location.lat();
+ 						routeDetails['dep_stop_lng'] = journey.transit.departure_stop.location.lng();
+ 						routeDetails['arr_stop_lat'] = journey.transit.arrival_stop.location.lat();
+ 						routeDetails['arr_stop_lng'] = journey.transit.arrival_stop.location.lng();
+ 						routeDetails['google_pred'] = journey.duration.value;
 
-                var predictionSpace = i.toString();
-                document.getElementById(predictionSpace).innerHTML = journeyDescription;
-                var numStops = routeDetails['num_stops'];
-                var arrivalStop = routeDetails['arrival_stop'];
-                var departureStop = routeDetails['departure_stop'];
+                    var predictionSpace = i.toString();
+                    document.getElementById(predictionSpace).innerHTML = journeyDescription;
+                    var numStops = routeDetails['num_stops'];
+                    var arrivalStop = routeDetails['arrival_stop'];
+                    var departureStop = routeDetails['departure_stop'];
 
 
 
- 				//post details to Django view
- 				await postData('/send_to_model', routeDetails).then(async (data) =>
-                 await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}, {departureStop: departureStop}, {arrivalStop: arrivalStop}));
-                 document.getElementById(predictionSpace).innerHTML += divider;
+ 				    //post details to Django view
+ 				    await postData(query_model_URL, routeDetails).then(async (data) =>
+                    await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}, {departureStop: departureStop}, {arrivalStop: arrivalStop}));
 
-	} else if (journey.travel_mode == "WALKING") {
+	         } else if (journey.travel_mode == "WALKING") {
  				journeyDescription = "<i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>"
  				journeyDescription += journey.instructions;
  				journeyDescription += divider;
  				route_suggestions.innerHTML += journeyDescription;
 
-	} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
+	        } else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
 	            journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + "   |   " + journey.transit.num_stops + ' stops/' + journey.duration.text + '<i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i><br>';
  				journeyDescription += journey.transit.departure_stop.name + 'to ' + journey.transit.arrival_stop.name + "<br>";
  				journeyDescription += divider;
  				route_suggestions.innerHTML += journeyDescription;
-	} else {
-			journeyDescription = "This route is not served by Dublin Bus.<br>";
-			journeyDescription += divider;
-			route_suggestions.innerHTML += journeyDescription;
+	        } else {
+			    journeyDescription = "This route is not served by Dublin Bus.<br>";
+			    journeyDescription += divider;
+			    route_suggestions.innerHTML += journeyDescription;
 		   }
+        })
 
-
-            })
-
-			}
-			}
+	}
+}
 
 
 
@@ -389,95 +398,102 @@ function getRoute(start, end, time) {
 
  			    document.getElementById(predictionSpace).innerHTML += pred;
  			    document.getElementById(predictionSpace).innerHTML += 'From ' + departureStop.departureStop + ' to ' + arrivalStop.arrivalStop;
- 			    //document.getElementById(predictionSpace).innerHTML += "From " + departureStop.departureStop + ' to ' arrivalStop.arrivalStop + '<br>';'
-				}
+			}
 
-		})
-	}
+	})
+}
 
 //Press submit button
-function submitRoute() {
+function submitRoute(){
+   //Get rid of Fare Calculator
+   document.getElementById("flexRadioDefault1").checked = false;
+   document.getElementById("flexRadioDefault2").checked = false;
+   document.getElementById("flexRadioDefault3").checked = false;
+   document.getElementById("flexRadioDefault4").checked = false;
+   document.getElementById("flexRadioDefault5").checked = false;
+   fare_suggestions.style.display = "none";
 
-
-
-	//Get DepartureTime Here
 	var time = inputTime.value;
 	if (!time){
 		time = currentTime();
 	}
 
-	var id = $('.tab-content .active').attr('id');
-	if(id == "locations-tab"){
-		//Get Destination
-		var destination = autocompleteDestin.getPlace();
-		if (destination == undefined) {
-			alert("Please use a valid destination.");
-			return;
-		}
+	var route = getRouteData();
+
+	if (route){
 		var destinationLatLon = {
-			lat: destination.geometry.location.lat(),
-			lng: destination.geometry.location.lng(),
+			lat: route['origin_lat'],
+			lng: route['origin_lon'] ,
 		};
-
-		//Check if Origin is Current Location
-		if (currentLocationOrigin){
-			getRouteFromCurrentPosition(destinationLatLon, time, false);
-			return;
-		// If Origin is not current Location Check Origin
-		} else {
-			var origin = autocompleteOrigin.getPlace();
-
-			if (origin == undefined){
-				alert("Please use a valid starting point.");
-				return;
-			}
-
-			var originLatLon = {
-				lat: origin.geometry.location.lat(),
-				lng: origin.geometry.location.lng(),
-			}
+		var originLatLon = {
+			lat: route['destin_lat'] ,
+			lng: route['destin_lon'] ,
 		}
-	} else {
-		var origin = inputFirstStop.value;
-		var destination = inputLastStop.value;
+		getRoute(originLatLon, destinationLatLon, time);
+	}
+}
 
-		var originLatLon = getStopData(origin, stops);
-		var destinationLatLon = getStopData(destination, stops);
+//swaps tabs
+function changeTabs(tab_id){
+	var active_tab = document.querySelector('.tab-content .active');
+	//
+	if (active_tab['id'] == tab_id){
+		return
+	}else {
+		var tab_list = document.querySelectorAll('.tab-content .tab-pane');
+		var tab_valid = false;
+		tab_list.forEach( function(tab){
+			if (tab_id == tab['id']){
+				tab_valid = true;
+			}
+		})
+		if (tab_valid){
 
-		if (!originLatLon) {
-			alert("Please input a valid First Stop")
-			return;
-		} else if (!destinationLatLon) {
-			alert("Please input a valid Last Stop")
-			return;
+			var new_tab = document.getElementById(tab_id)
+			//Change tabs
+			new_tab.classList.add("active");
+			new_tab.classList.add("show");
+			active_tab.classList.remove("active");
+			active_tab.classList.remove("show");
+
+			//Change buttons
+			var new_tab_button = document.getElementById(tab_id+"-btn");
+			var active_tab_button = document.getElementById(active_tab['id']+"-btn");
+
+			new_tab_button.classList.add("active");
+			active_tab_button.classList.remove("active");
+
+			new_tab_button.setAttribute("aria-selected", "true");
+			active_tab_button.setAttribute("aria-selected", "false");
+
+
+		}else{
+			console.log("ERROR: "+ tab + " not found");
 		}
         endMarker.setVisible(false);
         startMarker.setVisible(false);
 
 	}
-
-
-	//Get New Route
-	getRoute(originLatLon, destinationLatLon, time);
-};
+	checkFavourite();
+}
 
 //adds markers to map
 function addMarkers(stops_data) {
 
     infoWindow = new google.maps.InfoWindow();
     //create stop icon
-     var busStopIcon = {
+    var busStopIcon = {
         url: '../static/Bus/bus-stop.png',
         scaledSize: new google.maps.Size(30, 30),
-      };
+    };
 
     for (var i=0; i<stops_data.length; i++) {
         const marker = new google.maps.Marker({
-        icon: busStopIcon,
-        position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
-        map: map,
-        title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
-    });
+        	icon: busStopIcon,
+        	position: {lat: stops_data[i].fields.stop_lat, lng: stops_data[i].fields.stop_lon},
+        	map: map,
+        	title: stops_data[i].pk + ":" + stops_data[i].fields.stop_name, //store stop_id and stop_name as title in marker for access
+    	});
 
     	//add reference to each marker in stopMarkers
     	stopMarkers[stops_data[i].pk] = marker;
@@ -494,72 +510,55 @@ function addMarkers(stops_data) {
 
     //clusters added, need to be styles
     clusterStyles = {
-    ignoreHidden: true,
-    gridSize: 70,
-    maxZoom: 15,
-    styles: [{
-    height: 30,
-    width: 30,
-    anchorText: [10, 15],
-    textColor: 'white',
-    textSize: 10,
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-30.png",
-},
-{ height: 50,
-    width: 50,
-    anchorText: [18, 24],
-    textColor: 'white',
-    textSize: 12,
-    fontWeight: 'bold',
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-50.png",
-    },
+    	ignoreHidden: true,
+    	gridSize: 70,
+    	maxZoom: 15,
+    	styles: [
+			{	height: 30,
+    			width: 30,
+    			anchorText: [10, 15],
+    			textColor: 'white',
+    			textSize: 10,
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-30.png",
+			},
+			{ 	height: 50,
+    			width: 50,
+    			anchorText: [18, 24],
+    			textColor: 'white',
+    			textSize: 12,
+    			fontWeight: 'bold',
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-50.png",
+    		},
+ 			{	height: 65,
+    			width: 65,
+    			anchorText: [25, 33],
+    			textColor: 'white',
+    			textSize: 14,
+    			url: "../static/Bus/marker_clusters/icons8-filled-circle-70.png",
+    		},
+		],
+	};
 
- { height: 65,
-    width: 65,
-    anchorText: [25, 33],
-    textColor: 'white',
-    textSize: 14,
-    url: "../static/Bus/marker_clusters/icons8-filled-circle-70.png",
-    },
-
-],
-};
-
-
-    markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
+	markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
-//Swaps Origin and Destination
 function swapInputs(){
-	var id = $('.tab-content .active').attr('id');
+	var active_tab = $('.tab-content .active').attr('id');
 
-	//if origin is current location, use geocoder to get Place
-	if(id == "locations-tab" && currentLocationOrigin){
-        var temp = inputOrigin.value;
-		geocoder.geocode({ address: temp}, (results, status) => {
-	    if (status === "OK") {
-	        //swap input values
-		    inputOrigin.value = inputDestination.value;
-		    inputDestination.value = temp;
+	if(active_tab == "locations-tab"){
 
-            //swap autocomplete Places
-	        var tempPlace = results[0];
-	        autocompleteOrigin.set('place', autocompleteDestin.getPlace());
-		    autocompleteDestin.set('place', tempPlace);
-            }
-            });
-            //switch off currentLocation button (as current location is no longer origin)
-            toggleCurrentLocation();
-	}
-
-	else if(id == "locations-tab"){
-		//Swap Input values
+		//Store Origin Locations
 		var temp = inputOrigin.value;
+		var tempPlace = autocompleteOrigin.getPlace();
+
+		//Turn off geo-location button
+		if(currentLocationOrigin){
+			toggleCurrentLocation();
+		}
+
 		inputOrigin.value = inputDestination.value;
 		inputDestination.value = temp;
 
-		//Swap autocomplete Places
-		var tempPlace = autocompleteOrigin.getPlace();
 		autocompleteOrigin.set('place', autocompleteDestin.getPlace());
 		autocompleteDestin.set('place', tempPlace);
 	} else {
@@ -567,13 +566,13 @@ function swapInputs(){
 		inputFirstStop.value = inputLastStop.value;
 		inputLastStop.value = temp;
 	}
+	checkFavourite();
 }
 
 
 //Activates Current Location as origin
 function toggleCurrentLocation(){
 	if('geolocation' in navigator){
-
         currentLocationOrigin = !currentLocationOrigin;
         inputOrigin.disabled = !inputOrigin.disabled;
 
@@ -582,65 +581,49 @@ function toggleCurrentLocation(){
 		    $('#currentLocationButton').attr('class','btn btn-info');
 		    inputOrigin.value = "";
 		    inputOrigin.placeholder = "retrieving current location...";
-			getRouteFromCurrentPosition(null, null, true);
+			var geo_promise = getPosition()
+			if (!geo_promise){
+				alert("Browser is unable to use Geolocation services");
+			} else {
+				geo_promise.then(
+					function(value){
+						var originLatLon = {
+							lat: value['coords']['latitude'],
+							lng: value['coords']['longitude']
+						}
+
+						geocoder.geocode({ location: originLatLon }, (results, status) => {
+							if (status === "OK") {
+								var location_description = results[0].address_components[0].long_name + ' ' + results[0].address_components[1].long_name;
+								inputOrigin.value = location_description;
+								autocompleteOrigin.set('place', results[0]);
+								checkFavourite();
+							}
+						});
+					},
+					function(error){
+						console.log(error)
+					}
+				)
+			}
 		} else {
             inputOrigin.value = "";
             inputOrigin.placeholder = "Enter your start point";
+			autocompleteOrigin.set('place', null);
 			$('#currentLocationButton').attr('class','btn btn-secondary');
 		}
-
+		//checkFavourite() //Check if current values are a favourite
 	} else{
 		alert("Browser is unable to use Geolocation services");
 	}
-
 }
 
-//Handle Geo Location
-function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false){
-
-	//var return_value;
-	//Options regarding accuracy and speed
-	var options = {
-		enableHighAccuracy: true,
-		timeout: 5000,
-		maximumAge: 0,
-	};
-
-	function success(pos){
-		var originLatLon = {
-			lat: pos.coords.latitude,
-			lng: pos.coords.longitude,
-		}
-
-		geocoder.geocode({ location: originLatLon }, (results, status) => {
-	    	if (status === "OK") {
-	        	const location_description = results[0].address_components[0].long_name + ' ' + results[0].address_components[1].long_name;
-            	inputOrigin.value = location_description;
-        	}
-		});
-
-
-        if (positionOnly) {
-            return;
-        } else {
-			getRoute(originLatLon, destinationLatLon, time);
-		}
-	}
-
-
-	function error(err){
-		console.warn(`ERROR(${err.code}): ${err.message}`);
-	}
-
-	if('geolocation' in navigator) {
-		inputOrigin.placeholder = "retrieving current location...";
-		navigator.geolocation.getCurrentPosition(success, error, options);
-	} else {
-		alert("Browser is unable to use Geolocation services");
-	}
-
+//Get Promise for current location
+function getPosition(options = PositionOptions) {
+    return new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, options)
+    );
 }
-
 
 //displays infoWindow content
 function displayInfoWindow(timetable, delays, stop_id) {
@@ -731,10 +714,357 @@ function resetJourneyPlanner() {
 		toggleCurrentLocation();
 	}
 
-
-
+   //reset journey planner
+	document.getElementById("flexRadioDefault1").checked = false;
+    document.getElementById("flexRadioDefault2").checked = false;
+    document.getElementById("flexRadioDefault3").checked = false;
+    document.getElementById("flexRadioDefault4").checked = false;
+    document.getElementById("flexRadioDefault5").checked = false;
+    fare_suggestions.style.display = "none";
 }
 
+function displayFareButtons() {
+    var fare_suggestions = document.getElementById('fare_suggestions');
+    fare_suggestions.style.display = "block";
+}
+
+function getRoute2(start, end, time) {
+	//Clear Previous Route
+	directionsRenderer.set('directions', null);
+    directionsRenderer.setMap(null);
+
+    //Get Radio Button Answers
+   var flexRadioDefault1 = document.getElementById("flexRadioDefault1");
+   var flexRadioDefault2 = document.getElementById("flexRadioDefault2");
+   var flexRadioDefault3 = document.getElementById("flexRadioDefault3");
+   var flexRadioDefault4 = document.getElementById("flexRadioDefault4");
+   var flexRadioDefault5 = document.getElementById("flexRadioDefault5");
+
+   if (flexRadioDefault1.checked == false && flexRadioDefault2.checked == false && flexRadioDefault3.checked == false){
+       alert("Please Enter a Ticket Type.");
+	   return;
+   }
+
+   if (flexRadioDefault4.checked == false && flexRadioDefault5.checked == false){
+       alert("Please Enter Whether You have a Leap Card or Not");
+	   return;
+   }
+
+	//request to Google Directions API
+	const request = {
+		origin: start,
+		destination: end,
+		travelMode: 'TRANSIT',
+		transitOptions: {
+			modes: ['BUS'],
+			routingPreference: 'FEWER_TRANSFERS',
+			departureTime: new Date(time),
+		},
+		unitSystem: google.maps.UnitSystem.METRIC
+	}
+
+	//make request and render route on map
+	//need to fix to make sure agency is Dublin Bus?
+	directionsService.route(request, function(response, status) {
+		if (status == "OK") {
+			directionsRenderer.setDirections(response);
+			directionsRenderer.setMap(map);
+
+
+			var route = document.getElementById("route_suggestions");
+			var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+			var journeyDescription = "<br>";
+			var journeyCost = 0.00;
+
+
+			//extract useful journey info from response and post to journey planner
+			for (var i=0; i<journey.length; i++) {
+				if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
+    				journeyDescription += "<br>Bus Route: " + journey[i].transit.line.short_name + "<br>";
+    				if (journey[i].transit.num_stops <= 3) {
+
+                        if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €1.55 <br>";
+                        journeyCost += 1.55;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €2.15 <br>";
+                        journeyCost += 2.15;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+    			    else if (4 <= journey[i].transit.num_stops && journey[i].transit.num_stops <= 13) {
+    				if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €2.25 <br>";
+                        journeyCost += 2.25;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €3.00 <br>";
+                        journeyCost += 3.00;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+    				else if (journey[i].transit.num_stops && journey[i].transit.num_stops > 13) {
+    				if(flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
+                        journeyDescription += "Cost for this Journey is €2.50 <br>";
+                        journeyCost += 2.50;
+                        } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true){
+                        journeyDescription += "Cost for this Journey is €3.30 <br>";
+                        journeyCost += 3.30;
+                        } else if (flexRadioDefault3.checked == true){
+                        journeyDescription += "Children Under 5 Travel Free <br>";
+                        journeyCost += 0.00;
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €0.80 <br>";
+                            journeyCost += 0.80;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            }
+                        }
+                        else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true){
+                            if (new Date(time).getHours() > 19) {
+                            journeyDescription += "Cost for this Journey is €1.00 <br>";
+                            journeyCost += 1.00;
+                            } else {
+                            journeyDescription += "Cost for this Journey is €1.30 <br>";
+                            journeyCost += 1.30;
+                            }
+                        }
+    				}
+
+
+    				var routeDetails = {};
+    				routeDetails['departure_time'] = journey[i].transit.departure_time.value;
+    				routeDetails['line'] = journey[i].transit.line.short_name;
+    				routeDetails['departure_stop'] = journey[i].transit.departure_stop.name;
+    				routeDetails['arrival_stop'] = journey[i].transit.arrival_stop.name;
+    				routeDetails['num_stops'] = journey[i].transit.num_stops;
+    				routeDetails['dep_stop_lat'] = journey[i].transit.departure_stop.location.lat();
+    				routeDetails['dep_stop_lng'] = journey[i].transit.departure_stop.location.lng();
+    				routeDetails['arr_stop_lat'] = journey[i].transit.arrival_stop.location.lat();
+    				routeDetails['arr_stop_lng'] = journey[i].transit.arrival_stop.location.lng();
+    				routeDetails['google_pred'] = journey[i].duration.value;
+    				var journeyPrediction;
+
+				} else if (journey[i].travel_mode == "WALKING") {
+				route.innerHTML += journeyDescription;
+
+				} else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
+				    journeyDescription += "<br>Bus Route: " + journey[i].transit.line.short_name;
+    				journeyDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations.<br>";
+    				route.innerHTML = journeyDescription;
+
+				}
+
+				else
+				{
+    				journeyDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations. <br>";
+ 					route.innerHTML = journeyDescription;
+ 				}
+			}
+
+			route.innerHTML =  journeyDescription + "<br> Total Calculated Fare is: €" + journeyCost;
+
+		}
+	});
+}
+
+//Press submit button
+function submitRoute2() {
+
+   var route = getRouteData();
+
+	if (route){
+		var destinationLatLon = {
+			lat: route['origin_lat'],
+			lng: route['origin_lon'] ,
+		};
+		var originLatLon = {
+			lat: route['destin_lat'] ,
+			lng: route['destin_lon'] ,
+		}
+}
+    clearMarkers();
+
+	//Get DepartureTime Here
+	var time = inputTime.value;
+	if (!time){
+		time = currentTime();
+	}
+
+	var id = $('.tab-content .active').attr('id');
+	if(id == "locations-tab"){
+		//Get Destination
+		var destination = autocompleteDestin.getPlace();
+		if (destination == undefined) {
+			alert("Please use a valid destination.");
+			return;
+		}
+		var destinationLatLon = {
+			lat: destination.geometry.location.lat(),
+			lng: destination.geometry.location.lng(),
+		};
+
+		//Check if Origin is Current Location
+		if (currentLocationOrigin){
+			getRouteFromCurrentPosition(destinationLatLon, time, false);
+			return;
+		// If Origin is not current Location Check Origin
+		} else {
+			var origin = autocompleteOrigin.getPlace();
+
+			if (origin == undefined){
+				alert("Please use a valid starting point.");
+				return;
+			}
+
+			var originLatLon = {
+				lat: origin.geometry.location.lat(),
+				lng: origin.geometry.location.lng(),
+			}
+		}
+	} else {
+		var origin = inputFirstStop.value;
+		var destination = inputLastStop.value;
+
+		var originLatLon = getStopData(origin, stops);
+		var destinationLatLon = getStopData(destination, stops);
+
+		if (!originLatLon) {
+			alert("Please input a valid First Stop")
+			return;
+		} else if (!destinationLatLon) {
+			alert("Please input a valid Last Stop")
+			return;
+		}
+
+
+	}
+	//Get New Route
+	getRoute2(originLatLon, destinationLatLon, time);
+};
+
+
+function toggleFavourite(){
+	//Remove From Favourites
+	if(isFavourite){
+		var data = {
+			id : currentFavourite
+		}
+		var promise = postData(remove_favourite_URL, data);
+
+		promise.then(
+			function(value){
+				if (value['success'] == true){
+					for(var i = 0; i < favourites.length; i++){
+						if(favourites[i].id == currentFavourite){
+							favourites.splice(i, 1);
+							break;
+						}
+					}
+					checkFavourite()
+				}
+			}
+		)
+	//Add to favourites
+	}else{
+		var promise = postData(create_favourite_URL, getRouteData(false));
+
+		if (typeof promise.then === "function"){
+			promise.then(
+				function(value){
+					if (value['success'] == true){
+						favourites.push( value['favourite'])
+						checkFavourite()
+					}
+				}
+			)
+		}
+	}
+};
 
 
 
+//Checks if the current input is a favourite and alters DOM elements accordingly
+var checkFavourite = function(evt) {
+	var currentRoute = getRouteData(false);
+	var match = false;
+	var co_ords = {
+		origin_lat : currentRoute.origin_lat,
+		origin_lon : currentRoute.origin_lon,
+		destin_lat : currentRoute.destin_lat,
+		destin_lon : currentRoute.destin_lon
+	}
+	for(var i = 0; i < favourites.length; i++){
+		var fav_co_ords = {
+			origin_lat : favourites[i].origin_lat,
+			origin_lon : favourites[i].origin_lon,
+			destin_lat : favourites[i].destin_lat,
+			destin_lon : favourites[i].destin_lon
+		}
+		if(JSON.stringify(co_ords) === JSON.stringify(fav_co_ords)){
+			match = true;
+			currentFavourite = favourites[i].id;
+			isFavourite = true;
+			$('#favouriteButton').attr('class','btn btn-info');
+			break;
+		}
+	}
+	if (!match){
+		isFavourite = false;
+		$('#favouriteButton').attr('class','btn btn-secondary');
+	}
+}
+
+//Check if current values are on the favourites list, triggered on changes to bus inputs
+inputFirstStop.addEventListener('input', checkFavourite, false);
+inputLastStop.addEventListener('input', checkFavourite, false);
+
+//When
+$('#locations-tab-btn').on('shown.bs.tab', function() {
+	checkFavourite();
+})
+$('#stops-tab-btn').on('shown.bs.tab', function() {
+	checkFavourite();
+})

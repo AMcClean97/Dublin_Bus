@@ -1,11 +1,15 @@
 {% extends 'base.html' %}
 
+{% block title %} Journey Planner {% endblock %}
 
 {% block head %}
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+
+<!-- Load markerClusterer library -->
+<script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
 
 {% endblock %}
 {% block content %}
@@ -21,17 +25,16 @@
 				<!--Map-->
 				<div class="card-img-top" id="map"></div>
 
-
 				<!--Body-->
 				<div id="main-card" class="card-body">
 					<div id="route-planner" class="row justify-content-center">
-						<div class="col-12 col-md-4 collapse show" id="journey_planner">
-							<ul class="nav nav-tabs"  role="tablist">
+						<div class="col-12 col-md-4" id="journey_planner">
+							<ul class="nav nav-tabs" id="journeyPlannerTabs" role="tablist">
 								<li class="nav-item" role="presentation">
-									<button class="nav-link active"  data-bs-toggle="tab" data-bs-target="#locations-tab" type="button" role="tab" aria-controls="location" aria-selected="true"><i class="fas fa-globe-americas"></i> Locations</button>
+									<button id="locations-tab-btn" class="nav-link active"  data-bs-toggle="tab" data-bs-target="#locations-tab" type="button" role="tab" aria-controls="location" aria-selected="true"><i class="fas fa-globe-americas"></i> Locations</button>
 								</li>
 								<li class="nav-item" role="presentation">
-								  	<button class="nav-link"  data-bs-toggle="tab" data-bs-target="#stops-tab" type="button" role="tab" aria-controls="stop" aria-selected="false"><i class="fas fa-map-pin"></i> Stops</button>
+								  	<button id="stops-tab-btn" class="nav-link"  data-bs-toggle="tab" data-bs-target="#stops-tab" type="button" role="tab" aria-controls="stop" aria-selected="false"><i class="fas fa-map-pin"></i> Stops</button>
 								</li>
 							</ul>
 							<div class="tab-content">
@@ -67,6 +70,7 @@
 									<datalist id="stopOptions"></datalist>
 								</div>
 							</div>
+
 							<!-- Start Time -->
 							<div class="input-group mb-3">
 								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
@@ -74,45 +78,152 @@
 							</div>
 							<div class= "input-group mb-3">
 								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()"><i class="fas fa-star"></i></button>
+								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()"><i class="fa fa-euro"></i></button>
+
 							</div>
 							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 						</div>
+
+							<!-- Fare Calculator -->
+							<div class="col-12 col-md-8" id="fare_suggestions" style="display:none">
+								<div class= "input-group mb-3">
+									<h4>Fare Calculator</h4>
+									<p> <b>Disclaimer:</b> This fare calculator should be considered as an <u><b> estimation only</b></u> and may not represent true costs. </p>
+									Select Ticket Type:
+									<br>
+								</div>
+								<div class= "input-group mb-3">
+									<div class="form-check">
+										  <input type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Adult">
+										  <label  for="flexRadioDefault1">
+											Adult
+										  </label>
+									</div>
+									<div class="form-check">
+										<input type="radio" name="flexRadioDefault" id="flexRadioDefault2" value="Child">
+										<label  for="flexRadioDefault2">
+											Child: 5-16 Years OR 5-19 years (with Leap Card)
+										</label>
+									</div>
+									<div class="form-check">
+										<input  type="radio" name="flexRadioDefault" id="flexRadioDefault3" value="U5">
+										<label  for="flexRadioDefault3">
+											Child: Under 5yrs
+										</label>
+									</div>
+								</div>
+
+								<div class= "input-group mb-3">
+									Do you have a Leap Card?:
+									<br>
+								</div>
+								<div class= "input-group mb-3">
+									<div class="form-check">
+										  <input  type="radio" name="flexRadioDefault6" id="flexRadioDefault4" value="Yes">
+										  <label for="flexRadioDefault4">
+											Yes
+										  </label>
+									</div>
+									<div class="form-check">
+										<input  type="radio" name="flexRadioDefault6" id="flexRadioDefault5" value="No">
+										<label class="form-check-label" for="flexRadioDefault5">
+											No
+										</label>
+									</div>
+								</div>
+								<button class="btn btn-success" id="calculateFare" onclick="submitRoute2()">Calculate Fare</button>
+
+							</div>
 						<div class="col-12 col-md-8" id="route_suggestions">
-						</div>
 
 						</div>
 						</div>
-
 						</div>
 					</div>
 
 				</div>
 			</div>
 		</div>
-    </div>
-</div>
 
 {% load static %}
 <script src="{% static '/Bus/index.js' %}" ></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
+
+
 <script>
-
 	//Process bus stops
-	var stops = JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"'))
+	var stops = JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"'));
 
-	//Add Stop Markers
-	window.onpageshow = function () {
-		addMarkers(stops);
-	};
+	//Process Favourite list
+	var favourites = JSON.parse('{{ favourites }}'.replace(/&quot;/g,'"'));
+	for(var i = 0; i < favourites.length; i++){
+		x = favourites[i]['fields']
+		x['id'] = favourites[i]['pk']
+		favourites[i] = x;
+	}
 
-	var stopOptions = document.getElementById("stopOptions")
+	//get urls:
+	var create_favourite_URL = "{% url 'addFavourite' %}";
+	var remove_favourite_URL = "{% url 'removeFavourite' %}";
+	var query_model_URL = "{% url 'model' %}";
+	var current_user = {{ request.user.id }};
+
+
+	var stopOptions = document.getElementById("stopOptions");
+
 	stops.forEach(function(stop){
 		var option = document.createElement('option');
 		option.value = stop['fields']['stop_name'].replace("&#x27;","'");
 		stopOptions.appendChild(option);
 	});
+	
+</script>
 
+{% if request.method == "POST" %}
+{% if journey.stops == 1 %}
+<script>
+	changeTabs('stops-tab');
+	inputFirstStop.value = '{{ journey.origin_name }}'.replace("&#x27;","'");
+	inputLastStop.value = '{{ journey.destin_name }}'.replace("&#x27;","'");
+	checkFavourite()
+</script>
+{% else %}
+<script>
+
+	function loadFavourite() {
+		inputOrigin.value = '{{ journey.origin_name }}'.replace("&#x27;","'");
+		inputDestination.value = '{{ journey.destin_name }}'.replace("&#x27;","'");
+		var originLatLon = {
+			lat: {{ journey.origin_lat }},
+			lng: {{ journey.origin_lon }},
+		}
+		var destinLatLon = {
+			lat: {{ journey.destin_lat }},
+			lng: {{ journey.destin_lon }},
+		}
+
+		geocoder.geocode({ location: originLatLon }, (results, status) => {
+			if (status === "OK") {
+				autocompleteOrigin.set("place", results[0])
+			}
+		})
+		geocoder.geocode({ location: destinLatLon }, (results, status) => {
+			if (status === "OK") {
+				autocompleteDestin.set("place", results[0])
+			}
+		})
+		checkFavourite()
+	}
+</script>
+{% endif %}
+{% endif %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUnOAYJK7uiwm6gb13arHL97d_oZicwCo&callback=initMap&libraries=places&v=weekly" async defer></script>
+<script>
+	//Add Stop Markers
+	window.onpageshow = function () {
+		addMarkers(stops);
+	};
 </script>
 
 

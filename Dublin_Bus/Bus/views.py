@@ -8,23 +8,22 @@ from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
 from .bus_models import get_prediction
 from .serializers import StopTimeSerializer
 from .gtfs_realtime import is_trip_affected, start_thread
+from users.models import favourite
 
 
 # Create your views here.
 def index(request):
-    bus_stops_dict = bus_stops()
-    ##MAP_KEY = APIKeys.MAP_API_KEY
-    return render(request, 'Bus/index.html', bus_stops_dict)
-
-
-# grabs bus stop data (id, name, lat, lon) for map/markers
-def bus_stops():
+    favourites_json = serializers.serialize("json", favourite.objects.filter(user_id= request.user.id))
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
-    bus_stops_dict = {}
-    bus_stops_dict['bus_stops'] = bus_stops_json
+    context = {
+        'bus_stops': bus_stops_json,
+        'favourites' : favourites_json
+    }
+    if request.method == 'POST':
+        favourite_id = request.POST.get('favourite_id')
+        context['journey'] = favourite.objects.get(id=favourite_id)
     start_thread()
-    return bus_stops_dict
-
+    return render(request, 'Bus/index.html', context)
 
 # handle request for stop_data
 def fetch_arrivals(request):
