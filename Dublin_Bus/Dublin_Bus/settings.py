@@ -12,8 +12,11 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import environ
+# Initialise environment variables
 env = environ.Env()
 environ.Env.read_env()
+MAP_API_KEY = env('MAP_API_KEY')
+GTFS_API_KEY = env('GTFS_API_KEY')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,17 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = 'django-insecure-j04ekjnhy+s2+%&9vq$j88kvt4h+w6a_clxn3vde1&slb7co=#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-# Other API KEYS
-MAP_API_KEY = env('MAP_API_KEY')
-GTFS_API_KEY = env('GTFS_API_KEY')
-WEATHER_API_KEY = env('WEATHER_API_KEY')
 
 # Application definition
 
@@ -90,12 +88,12 @@ WSGI_APPLICATION = 'Dublin_Bus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': env('ENGINE'),
-        'NAME': env('DATABASE'),
-        'USER': env('USERNAME'),
-        'PASSWORD': env('PASSWORD'),
-        'HOST': env('HOST'),
-        'PORT': env('PORT'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django',
+        'USER': 'dublinbus',
+        'PASSWORD': 'the3amigos',
+        'HOST': 'dublinbus.casbkjuzj0uj.eu-west-1.rds.amazonaws.com',
+        'PORT': '3306',
     }
 }
 
