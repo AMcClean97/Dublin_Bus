@@ -6,7 +6,7 @@ import threading
 real_time_data_update_frequency = 300
 
 def update_real_time_json():
-    """scrapes real time GTFS data and write to json file"""
+    """scrapes real time GTFS data and writes to json file"""
     headers = {'x-api-key': '5759586fcee940a4bc539d0222de0690','Cache-control': 'no-cache'}
     ploads = { 'format' : 'json' }
 

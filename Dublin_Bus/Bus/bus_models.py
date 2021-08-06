@@ -99,6 +99,8 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
 
 
             stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
+            if len(stop_num_list) == 0:
+                return None
 
             ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
             for i in range(0, len(stop_num_list)):
@@ -134,6 +136,7 @@ def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
             stop_num_list.append(int(stop_num_str))
         else:
             stop_num_list.append(stop_num_str)
+
     return stop_num_list
 
 def get_stop_num(stop_lat, stop_lng, stop_name, integer=False):

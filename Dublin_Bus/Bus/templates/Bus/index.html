@@ -8,9 +8,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 
-<!-- Load markerClusterer library -->
-<script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
-
 {% endblock %}
 {% block content %}
 
@@ -81,9 +78,10 @@
 								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()"><i class="fas fa-star"></i></button>
 								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()"><i class="fa fa-euro"></i></button>
 
-							</div>
+
 							<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 							<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
+								</div>
 						</div>
 
 							<!-- Fare Calculator -->

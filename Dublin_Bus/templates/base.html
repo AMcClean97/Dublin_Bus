@@ -52,11 +52,12 @@
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
             <div class="col text-center">
-                <h1>Bustimates</h1>
+                <h2>Bustimates
+                <img src="{% static 'Bus/logo.png' %}" class="img-fluid"></h2>
             </div>
             <div class="col text-end">
                 {% if user.is_authenticated %}
-                <span><a class="btn btn-secondary" href="{% url 'logout' %}">{{request.user}} <i class="fas fa-sign-out-alt"></i></a></span>
+                <span><a class="btn btn-secondary" href="{% url 'logout' %}"><span class="d-none d-sm-block">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
                 <a class ="btn btn-secondary" href="{% url 'login' %}">Login</a>
