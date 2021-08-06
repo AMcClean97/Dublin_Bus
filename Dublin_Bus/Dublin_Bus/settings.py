@@ -11,23 +11,28 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
-
+import environ
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j04ekjnhy+s2+%&9vq$j88kvt4h+w6a_clxn3vde1&slb7co=#'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Other API KEYS
+MAP_API_KEY = env('MAP_API_KEY')
+GTFS_API_KEY = env('GTFS_API_KEY')
+WEATHER_API_KEY = env('WEATHER_API_KEY')
 
 # Application definition
 
@@ -40,15 +45,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Bus',
     'users',
-    #'debug_toolbar',
+    # 'debug_toolbar',
     'rest_framework',
 ]
 
-#INTERNAL_IPS = [
-    # ...
-  #  '127.0.0.1',
-    # ...
-#]
+# INTERNAL_IPS = [
+# ...
+#  '127.0.0.1',
+# ...
+# ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -80,21 +85,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Dublin_Bus.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django',
-        'USER': 'dublinbus',
-        'PASSWORD': 'the3amigos',
-        'HOST': 'dublinbus.casbkjuzj0uj.eu-west-1.rds.amazonaws.com',
-        'PORT': '3306',
+        'ENGINE': env('ENGINE'),
+        'NAME': env('DATABASE'),
+        'USER': env('USERNAME'),
+        'PASSWORD': env('PASSWORD'),
+        'HOST': env('HOST'),
+        'PORT': env('PORT'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -114,7 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -127,7 +129,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/

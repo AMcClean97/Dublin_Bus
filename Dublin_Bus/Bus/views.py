@@ -9,6 +9,7 @@ from .bus_models import get_prediction
 from .serializers import StopTimeSerializer
 from .gtfs_realtime import is_trip_affected, start_thread
 from users.models import favourite
+from django.conf import settings
 
 
 # Create your views here.
@@ -17,7 +18,8 @@ def index(request):
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
     context = {
         'bus_stops': bus_stops_json,
-        'favourites' : favourites_json
+        'favourites' : favourites_json,
+        'MAP_API_KEY': settings.MAP_API_KEY
     }
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
