@@ -1,23 +1,67 @@
 #map {
     position: relative;
-    height: 50vh;
+    height: 60vh;
     margin-left:auto;
     margin-right:auto;
     width: 100%;
     object-fit: cover;
+
 }
 
-.fa-bus-alt{
-    color:#05386B;
- }
-
-.fa-walking{
-    color:#05386B;
+#user {
+    font-size: 14px;
 }
+
+#info_window {
+    color: #05386B;
+}
+
+#header {
+    background-color: #FFAE42;
+}
+
+
+
+#journey_planner {
+    background-color: #05386B;
+    padding: 5px;
+}
+
+.small-route-suggestions {
+    font-size: 12px;
+}
+
+#route_suggestions {
+    padding: 10px;
+    background-color: #05386B;
+    color: white;
+    text-align: left;
+}
+
+
+
+.fa-walking, .fa-info-circle, .fa-bus-alt{
+    color: #FFAE42;
+}
+
+.divider {
+    border: 3px solid white;
+}
+
 
 
 .content-row{
     height: 300px;
+}
+
+#map-planner-container{
+    background-color: #05386B;
+    width: 100%;
+    margin: 0;
+}
+
+#central-card{
+   background-color: #05386B;
 }
 
 html,body{
@@ -25,5 +69,13 @@ html,body{
     padding: 0;
     min-height: 100%;
     width: 100%;
+    background-color: #05386B;
+    font-family: 'Raleway', sans-serif;
+
 }
+
+
+
+
+
 

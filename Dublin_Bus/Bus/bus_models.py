@@ -111,11 +111,8 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                             proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
                         print("proportion of route", proportion_total)
                         return proportion_total / 100
-
-        #if json file doesn't exist? For the moment returning full journey prediction, but will have to handle differently
-        #first going to revisit historical averages with full leavetimes data and see what (if any routes) are missing data
     else:
-        return 1
+        return None
 
 def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
     """function takes stop lat and lng and returns stoppoint id/number match
@@ -193,7 +190,7 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
         return route
 
 def get_prediction(details):
-    """takes journey planner input / Google reponse and returns predicted travel time """
+    """takes journey planner input / Google response and returns predicted travel time """
     ## find out which route, and therefore which model is required
     route = find_route(details['arr_stop_lat'], details['arr_stop_lng'], details['dep_stop_lat'], details['dep_stop_lng'], details['departure_stop'], details['arrival_stop'], details['line'])
 
@@ -220,10 +217,14 @@ def get_prediction(details):
             proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
                                                           details['dep_stop_lat'], details['dep_stop_lng'])
 
-        partial_prediction = proportion_of_route * predicted_tt
-        predicted_tt_mins = partial_prediction / 60
-        print("prediction", predicted_tt_mins)
-        predicted_tt = json.dumps(str(predicted_tt_mins))
+        if proportion_of_route is None:
+            #We have no historical averages for 20 out of the 190 routes, at the moment we are returning Google prediction instead, but would prefer we came up with a simple backup
+            predicted_tt = details['google_pred']
+        else:
+            partial_prediction = proportion_of_route * predicted_tt
+            predicted_tt_mins = partial_prediction / 60
+            print("prediction", predicted_tt_mins)
+            predicted_tt = json.dumps(str(predicted_tt_mins))
 
     return predicted_tt
 

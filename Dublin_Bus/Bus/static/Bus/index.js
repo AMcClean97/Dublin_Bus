@@ -24,10 +24,27 @@ let currentLocationOrigin = false;
 //journey planner
 let predictionDisplay;
 let journeyDescription;
+//Polyline and icon options
+let polylineCustomOptions;
+let startIcon;
+let endIcon;
+let startMarker;
+let endMarker;
 
 
 //store csrftoken in a constant
 const csrftoken = getCookie('csrftoken');
+
+//enable tooltips
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+
+
+
+
+
+
 
 //function to retrieve Django CSRF token for POST requests - adapted from https://engineertodeveloper.com/how-to-use-ajax-with-django/
 function getCookie(name) {
@@ -115,7 +132,25 @@ function initMap (){
     //will be used to restrict autocomplete search box options, radius can be increased or decreased as needed
     var dublin_bounds = new google.maps.Circle({ center: myLatLng, radius: 30000 });
 
+    //set up Polyline
+    polylineCustomOptions = {
+    strokeColor: '#FFAE42',
+    strokeOpacity: 1.0,
+    strokeWeight: 4,
+    };
 
+    //set up startMarker
+     startMarker = new google.maps.Marker({ label: {
+            text: 'A',
+            color: "white",
+            fontSize: "12px",
+            fontWeight: "bold",}});
+    //set up endIcon
+     endMarker = new google.maps.Marker({ label: {
+            text: 'B',
+            color: "white",
+            fontSize: "12px",
+            fontWeight: "bold",}});
 
   	// Setup Places Autocomplete Service
   	// Set options for service
@@ -142,10 +177,41 @@ function initMap (){
 
 	//Make Directions Service object for getRoute
 	directionsService = new google.maps.DirectionsService();
+	//make start icon
+	startIcon = {
+	    path: "M0-48c-9.8 0-17.7 7.8-17.7 17.4 0 15.5 17.7 30.6 17.7 30.6s17.7-15.4 17.7-30.6c0-9.6-7.9-17.4-17.7-17.4z",
+	    fillColor: '#05386B',
+	    fillOpacity: 1,
+	    scale: 0.65,
+	    labelOrigin: new google.maps.Point(0, -30),
+
+	}
+    //make end icon
+	endIcon = {
+	    path: "M0-48c-9.8 0-17.7 7.8-17.7 17.4 0 15.5 17.7 30.6 17.7 30.6s17.7-15.4 17.7-30.6c0-9.6-7.9-17.4-17.7-17.4z",
+	    fillColor: '#05386B',
+	    fillOpacity: 1,
+	    scale: 0.65,
+	    labelOrigin: new google.maps.Point(0, -30),
+
+	}
+
+
+
   	// Make Directions Renderer object for getRoute
-  	directionsRenderer = new google.maps.DirectionsRenderer({
+  	directionsRenderer = new google.maps.DirectionsRenderer(
+  	    {
+  	    polylineOptions: polylineCustomOptions,
+        suppressMarkers:true,
     	preserveViewport: false,
   	});
+
+
+
+  	// Make Directions Renderer object for getRoute
+  	//directionsRenderer = new google.maps.DirectionsRenderer(
+    //	{preserveViewport: false,
+  	//});
 
   	//make geocoder object for geolocation/journey planner feature
   	geocoder = new google.maps.Geocoder();
@@ -191,6 +257,9 @@ function getRoute(start, end, time) {
 	//Clear Previous Route
 	directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
+    document.getElementById('route_suggestions').innerHTML = "";
+
+
 
 	//request to Google Directions API
 	const request = {
@@ -210,10 +279,21 @@ function getRoute(start, end, time) {
 	//clear markers from map so route can be seen
 	clearMarkers();
 
+
+
+
 	//make request and render route on map
 	//need to fix to make sure agency is Dublin Bus?
 	directionsService.route(request, function(response, status) {
 		if (status == "OK") {
+
+            startMarker.setPosition(start);
+            startMarker.setIcon(startIcon);
+            startMarker.setMap(map);
+            endMarker.setPosition(end);
+            endMarker.setIcon(endIcon);
+            endMarker.setMap(map);
+
 			directionsRenderer.setDirections(response);
 			directionsRenderer.setMap(map);
             infoWindow.close();
@@ -223,8 +303,7 @@ function getRoute(start, end, time) {
 			console.log(journey);
 
             var route_suggestions = document.getElementById('route_suggestions');
-            route_suggestions.innerHTML = "<h4>Directions</h4>";
-
+            var divider = "<hr class='divider'>"
             //this variable is used to create ids for each step in a journey
             var i = 0;
             processJourney(journey);
@@ -239,9 +318,7 @@ function getRoute(start, end, time) {
 
 
             if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
-                journeyDescription = "<br>Ride the " + journey.transit.line.short_name + " from ";
- 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign + "<br>";
- 				journeyDescription += "Get off at " + journey.transit.arrival_stop.name;
+                journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
 
 
  				var routeDetails = {};
@@ -259,28 +336,30 @@ function getRoute(start, end, time) {
                 var predictionSpace = i.toString();
                 document.getElementById(predictionSpace).innerHTML = journeyDescription;
                 var numStops = routeDetails['num_stops'];
+                var arrivalStop = routeDetails['arrival_stop'];
+                var departureStop = routeDetails['departure_stop'];
+
 
 
  				//post details to Django view
  				await postData('/send_to_model', routeDetails).then(async (data) =>
-                 await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}));
+                 await displayRoute(JSON.parse(data.current_pred), predictionSpace, {numStops: numStops}, {departureStop: departureStop}, {arrivalStop: arrivalStop}));
+                 document.getElementById(predictionSpace).innerHTML += divider;
 
 	} else if (journey.travel_mode == "WALKING") {
- 				journeyDescription = journey.instructions;
- 				journeyDescription += "<br><i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>";
- 				journeyDescription += '-----------------------------';
+ 				journeyDescription = "<i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>"
+ 				journeyDescription += journey.instructions;
+ 				journeyDescription += divider;
  				route_suggestions.innerHTML += journeyDescription;
 
 	} else if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name != "Dublin Bus") {
-	            journeyDescription = "Ride the " + journey.transit.line.short_name + " from ";
- 				journeyDescription += journey.transit.departure_stop.name + " toward " + journey.transit.headsign;
- 				journeyDescription += "<br>Get off at " + journey.transit.arrival_stop.name;
- 				journeyDescription += '<br><i class="fas fa-bus-alt"></i> ' + journey.transit.num_stops + ' stops/' + journey.duration.text + ' GOOGLE PREDICTION<br>';
- 				journeyDescription += '-----------------------------';
+	            journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + "   |   " + journey.transit.num_stops + ' stops/' + journey.duration.text + '<i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i><br>';
+ 				journeyDescription += journey.transit.departure_stop.name + 'to ' + journey.transit.arrival_stop.name + "<br>";
+ 				journeyDescription += divider;
  				route_suggestions.innerHTML += journeyDescription;
 	} else {
-			journeyDescription = "<br> This route is not served by Dublin Bus.";
-			journeyDescription += '-----------------------------';
+			journeyDescription = "This route is not served by Dublin Bus.<br>";
+			journeyDescription += divider;
 			route_suggestions.innerHTML += journeyDescription;
 		   }
 
@@ -294,22 +373,23 @@ function getRoute(start, end, time) {
 
 
 
- 				async function displayRoute(journeyPrediction, predictionSpace, numStops) {
-
+ 				async function displayRoute(journeyPrediction, predictionSpace, numStops, departureStop, arrivalStop) {
+                    var pred;
 
  				    if (typeof journeyPrediction == 'string') {
  				        journeyPrediction = journeyPrediction.slice(1,-1);
  				        var predictionMins = parseInt(journeyPrediction);
- 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<br>';
- 				    }
+ 				        pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Bustimate" data-placement="auto"></i><br>';
 
- 				    else {
+ 				    } else {
  				        var predictionMins = Math.round(journeyPrediction / 60);
- 				        journeyPrediction = '<br><i class="fas fa-bus-alt"></i> ' + numStops.numStops + ' stops/' + predictionMins.toString() + ' mins GOOGLE PREDICTION<br>';
+ 				        pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins<i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"><br>';
  				    }
 
- 				journeyPrediction += '-----------------------------';
- 			    document.getElementById(predictionSpace).innerHTML += journeyPrediction;
+
+ 			    document.getElementById(predictionSpace).innerHTML += pred;
+ 			    document.getElementById(predictionSpace).innerHTML += 'From ' + departureStop.departureStop + ' to ' + arrivalStop.arrivalStop;
+ 			    //document.getElementById(predictionSpace).innerHTML += "From " + departureStop.departureStop + ' to ' arrivalStop.arrivalStop + '<br>';'
 				}
 
 		})
@@ -371,7 +451,8 @@ function submitRoute() {
 			alert("Please input a valid Last Stop")
 			return;
 		}
-
+        endMarker.setVisible(false);
+        startMarker.setVisible(false);
 
 	}
 
@@ -408,7 +489,7 @@ function addMarkers(stops_data) {
     //add listener: when marker is clicked, the stop_id is sent to the front end to grab latest arrival details
     marker.addListener("click", () =>
     postData('/fetch_arrivals/', marker.title.split(":")[0]).then((data) =>
-    displayInfoWindow(data.timetable, marker.title.split(":")[0])))
+    displayInfoWindow(data.timetable, data.delays, marker.title.split(":")[0])))
     }
 
     //clusters added, need to be styles
@@ -562,10 +643,23 @@ function getRouteFromCurrentPosition(destinationLatLon, time, positionOnly=false
 
 
 //displays infoWindow content
-function displayInfoWindow(timetable, stop_id) {
+function displayInfoWindow(timetable, delays, stop_id) {
 	var arrivals = timetable;
     const marker = stopMarkers[stop_id];
-    let infoWindowContent = "<h4>" + marker.title.split(":")[1] + "</h4>";
+    var arrival_time;
+
+    function factorDelay(duration, delay){
+    //takes time as string, converts it to seconds, adds delay, reconverts to string and returns
+    let [hours, minutes, seconds] = duration.split(':');
+    seconds = (Number(hours) * 60 * 60 + Number(minutes) * 60 + Number(seconds)) + delay;
+    var date = new Date(1970,0,1);
+    date.setSeconds(seconds);
+    return date.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
+};
+
+
+
+    let infoWindowContent = "<div id='info_window'><h6>" + marker.title.split(":")[1] + "</h6>";
 
     //if no buses are due at the stop in next 2 hours
     if (arrivals.length == 0) {
@@ -574,18 +668,19 @@ function displayInfoWindow(timetable, stop_id) {
 	//if less than 3 buses due to stop in next 2 hours
     } else if (arrivals.length <= 3) {
     	for (var each in arrivals) {
-			infoWindowContent += "<br>Line: " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ")<br>";
-			infoWindowContent += "Arrival time: " + arrivals[each].arrival_time + "<br>";
+			infoWindowContent += "<br><i class='fas fa-bus-alt'></i> " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ") - ";
+			if (delays[each] != 0) {
+			    arrival_time = factorDelay(arrivals[each].arrival_time, delays[each])
+                console.log(arrival_time);
+            } else {
+                arrival_time = arrivals[each].arrival_time;
+            }
+
+			infoWindowContent += arrival_time.slice(0,5) + "<br>";
 		}
 
-	//else list 3 buses? Maybe more?
-	} else {
-    	for (var i=0; i<3; i++) {
-        	infoWindowContent += "<br>Line: " + arrivals[i].trip_id.route_id.route_short_name + " (to " + arrivals[i].stop_headsign + ")<br>";
-        	infoWindowContent += "Arrival time: " + arrivals[i].arrival_time + "<br>";
-    	}
-    }
-
+	}
+    infoWindowContent += "</div>"
     infoWindow.setContent(infoWindowContent);
     infoWindow.open(map, marker);
 }
@@ -611,6 +706,8 @@ function resetJourneyPlanner() {
     document.getElementById('route_suggestions').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
+    endMarker.setVisible(false);
+    startMarker.setVisible(false);
 
 	//Reset Inputs
 	inputOrigin.placeholder = "Enter your start point";
@@ -637,6 +734,7 @@ function resetJourneyPlanner() {
 
 
 }
+
 
 
 
