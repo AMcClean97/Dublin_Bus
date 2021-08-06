@@ -134,7 +134,7 @@ function initMap (){
 
     //set up Polyline
     polylineCustomOptions = {
-    strokeColor: '#FFAE42',
+    strokeColor: '#05386B',
     strokeOpacity: 1.0,
     strokeWeight: 4,
     };
@@ -180,7 +180,7 @@ function initMap (){
 	//make start icon
 	startIcon = {
 	    path: "M0-48c-9.8 0-17.7 7.8-17.7 17.4 0 15.5 17.7 30.6 17.7 30.6s17.7-15.4 17.7-30.6c0-9.6-7.9-17.4-17.7-17.4z",
-	    fillColor: '#05386B',
+	    fillColor: '#FFAE42',
 	    fillOpacity: 1,
 	    scale: 0.65,
 	    labelOrigin: new google.maps.Point(0, -30),
@@ -189,7 +189,7 @@ function initMap (){
     //make end icon
 	endIcon = {
 	    path: "M0-48c-9.8 0-17.7 7.8-17.7 17.4 0 15.5 17.7 30.6 17.7 30.6s17.7-15.4 17.7-30.6c0-9.6-7.9-17.4-17.7-17.4z",
-	    fillColor: '#05386B',
+	    fillColor: '#FFAE42',
 	    fillOpacity: 1,
 	    scale: 0.65,
 	    labelOrigin: new google.maps.Point(0, -30),
