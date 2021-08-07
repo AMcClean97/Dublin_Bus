@@ -16,10 +16,6 @@
     color: #05386B;
 }
 
-#fare_suggestions {
-    color: white;
-}
-
 #journey_planner {
     padding: 5px;
 }
@@ -30,7 +26,6 @@
 
 #route_suggestions {
     padding: 10px;
-    color: white;
     text-align: left;
 }
 
@@ -48,6 +43,7 @@
 .content-row{
     height: 300px;
 }
+
 
 #journeyPlannerTabs .nav-link {
     color: white;

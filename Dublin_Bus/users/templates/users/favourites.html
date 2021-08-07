@@ -4,30 +4,35 @@
 
 {% block head %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+{% load static %}
+<link href="{% static '/users/favourites.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class ="col-auto text-center">
-            <div class="card">
+            <div id="central-card" class="card">
                 <h3 class="card-header">Favourites for {{ request.user }}</h3>
-                <ul class="list-group list-group-flush">
-                    {% for favourite in favourites %}
-                    <li id='{{ favourite.id }}' class="list-group-item">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text"><i class="fas fa-pen"></i></span>
-                            <input id='{{ favourite.id }}Name' class="form-control text-center" value="{{ favourite.favourite_name }}" onchange="changeName('{{ favourite.id }}')">
-                        </div>
-                        <p>{{ favourite.origin_name }} --> {{ favourite.destin_name}}</p>
-                            <form method="POST", action="{% url 'index' %}">
-                                {% csrf_token %}
-                                <button type="submit" name="favourite_id" value="{{ favourite.id }}" class="btn btn-success" ><i class="fas fa-walking"></i></button>
-                                <button type="button" class="btn btn-danger" onclick="removeFavourite({{ favourite.id }})"><i class="far fa-trash-alt"></i></button>
-                            </form>
-                    </li>
-                    {% endfor %}
-                </ul>
+                <div class="card-body">
+                    <ul id="favourite-list" class="list-group list-group-flush">
+                        {% for favourite in favourites %}
+                        <li id='{{ favourite.id }}' class="list-group-item">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fas fa-pen"></i></span>
+                                <input id='{{ favourite.id }}Name' class="form-control text-center" value="{{ favourite.favourite_name }}" onchange="changeName('{{ favourite.id }}')">
+                            </div>
+                            <p>{{ favourite.origin_name }} --> {{ favourite.destin_name}}</p>
+                                <form method="POST", action="{% url 'index' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" name="favourite_id" value="{{ favourite.id }}" class="btn btn-success" ><i class="fas fa-walking"></i></button>
+                                    <button type="button" class="btn btn-danger" onclick="removeFavourite({{ favourite.id }})"><i class="far fa-trash-alt"></i></button>
+                                </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

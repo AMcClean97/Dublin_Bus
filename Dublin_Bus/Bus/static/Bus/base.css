@@ -12,6 +12,12 @@ html,body{
 
 #central-card{
     background-color: #05386B;
+    color: white;
+}
+
+#central-card .card-header{
+    background-color: #FFAE42;
+    color: black;
 }
 
 #header {
