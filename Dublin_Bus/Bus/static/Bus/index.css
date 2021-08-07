@@ -1,6 +1,6 @@
 #map {
     position: relative;
-    height: 60vh;
+    height: 50vh;
     margin-left:auto;
     margin-right:auto;
     width: 100%;
@@ -16,16 +16,11 @@
     color: #05386B;
 }
 
-#header {
-    background-color: #FFAE42;
-}
-
 #fare_suggestions {
     color: white;
 }
 
 #journey_planner {
-    background-color: #05386B;
     padding: 5px;
 }
 
@@ -35,7 +30,6 @@
 
 #route_suggestions {
     padding: 10px;
-    background-color: #05386B;
     color: white;
     text-align: left;
 }
@@ -51,32 +45,21 @@
 }
 
 
-
 .content-row{
     height: 300px;
 }
 
+/*
 #map-planner-container{
-    background-color: #05386B;
     width: 100%;
+}*/
+
+#journeyPlannerTabs .nav-link {
+    color: white;
 }
-
-#central-card{
-   background-color: #05386B;
+#journeyPlannerTabs .active {
+    color: #353935;
 }
-
-html,body{
-    margin: 0;
-    padding: 0;
-    min-height: 100%;
-    width: 100%;
-    background-color: #05386B;
-    font-family: 'Raleway', sans-serif;
-
-}
-
-
-
 
 
 
