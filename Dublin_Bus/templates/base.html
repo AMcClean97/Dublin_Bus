@@ -48,14 +48,14 @@
     <!--Header-->
     <div class="container-fluid" id="header">
         <div class="row justify-content-center">
-            <div class="col text-start">
+            <div class="col text-start" style="margin-top:10px;">
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
-            <div class="col text-center">
+            <div class="col text-center" style="margin-top:10px;">
                 <h2>Bustimate
                 <img src="{% static 'Bus/logo.png' %}" class="img-fluid"></h2>
             </div>
-            <div class="col text-end">
+            <div class="col text-end" style="margin-top:10px;">
                 {% if user.is_authenticated %}
                 <span><a class="btn btn-secondary" href="{% url 'logout' %}"><span class="d-none d-sm-block">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
                 
