@@ -1148,6 +1148,7 @@ var checkFavourite = function(evt) {
 inputFirstStop.addEventListener('input', checkFavourite, false);
 inputLastStop.addEventListener('input', checkFavourite, false);
 
+//Listeners that trigger on input change
 $('#locations-tab-btn').on('shown.bs.tab', function() {
     checkFavourite();
 })

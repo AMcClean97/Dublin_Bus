@@ -111,5 +111,12 @@
 
     {% block content %}
     {% endblock %}
+
+    <script>
+        //Enable tooltips on buttons
+        $(function () {
+	    $('[data-bs-toggle="tooltip"]').tooltip()
+        })
+    </script>
 </body>
 </html>
