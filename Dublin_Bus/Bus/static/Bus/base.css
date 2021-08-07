@@ -49,3 +49,11 @@ html,body{
 .breadcrumb .nav-link {
     display: inline;
 }
+
+#greeting {
+    color: #5b6269
+}
+
+#greeting span {
+    color: #05386B;
+}

@@ -73,11 +73,11 @@
 
 							<!-- Buttons -->
 							<div class= "input-group my-3">
-								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Swap Inputs"><i class="fas fa-exchange-alt"></i></button>
 								{% if user.is_authenticated %}
-								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()"><i class="fas fa-star"></i></button>
+								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Favourite"><i class="fas fa-star"></i></button>
 								{% endif %}
-								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()"><i class="fa fa-euro"></i></button>
+								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Fare Calculator"><i class="fa fa-euro"></i></button>
 
 
 								<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
@@ -171,13 +171,20 @@
 	{% endif %}
 
 
+	//get data list
 	var stopOptions = document.getElementById("stopOptions");
 
+	//add bus-stops to the autocomplete input
 	stops.forEach(function(stop){
 		var option = document.createElement('option');
 		option.value = stop['fields']['stop_name'].replace("&#x27;","'");
 		stopOptions.appendChild(option);
 	});
+
+	//Enable tooltips on buttons
+	$(function () {
+    	$('[data-bs-toggle="tooltip"]').tooltip()
+	})
 	
 </script>
 
