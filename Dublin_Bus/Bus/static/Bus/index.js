@@ -225,6 +225,7 @@ function initMap() {
     }
 }
 
+//Returns Data from origin/FirstStop and destination/LastStop inputs
 function getRouteData(warning = true) {
     var active_tab = document.querySelector('.tab-content .active');
     var route = {
@@ -239,12 +240,12 @@ function getRouteData(warning = true) {
         var origin = autocompleteOrigin.getPlace();
         if (!origin) {
             if (warning) {
-                alert("Please use a valid starting point.")
+                showWarning("Please use a valid starting point.")
             };
             return false;
         } else if (!destination) {
             if (warning) {
-                alert("Please use a valid destination.")
+                showWarning("Please use a valid destination.")
             };
             return false;
         }
@@ -263,12 +264,12 @@ function getRouteData(warning = true) {
         var destinationLatLon = getStopData(route['destin_name'], stops);
         if (!originLatLon) {
             if (warning) {
-                alert("Please input a valid First Stop")
+                showWarning("Please input a valid First Stop")
             };
             return false;
         } else if (!destinationLatLon) {
             if (warning) {
-                alert("Please input a valid Last Stop")
+                showWarning("Please input a valid Last Stop")
             };
             return false;
         }
@@ -282,8 +283,7 @@ function getRouteData(warning = true) {
     return route
 }
 
-
-
+//Provides currentTime in a format usable by date time input
 function currentTime() {
     var today = new Date();
     var date = today.getDate();
@@ -309,6 +309,14 @@ function currentTime() {
     return today;
 }
 
+//Displays a warning message beneath button-group
+function showWarning(text){
+    var warningBox = document.getElementById('warning');
+    warningBox.innerHTML = text;
+    warningBox.style.display = 'block';
+}
+
+//Returns Co-ordinates of a stop when given it's name
 function getStopData(name, stop_list) {
     for (var i = 0; i < stop_list.length; i++) {
         if (stop_list[i]['fields']['stop_name'].replace("&#x27;", "'") == name) {
@@ -322,6 +330,7 @@ function getStopData(name, stop_list) {
     return false;
 };
 
+//Displays route and time estimates 
 function getRoute(start, end, time) {
     //Clear Previous Route
     directionsRenderer.set('directions', null);
@@ -469,8 +478,11 @@ function getRoute(start, end, time) {
     })
 }
 
-//Press submit button
+//Triggerd by pressing submit button. Gets route and current time and sends it to getRoute
 function submitRoute() {
+    //get rid of warning
+    document.getElementById('warning').style.display = 'none';
+
     //Get rid of Fare Calculator
     document.getElementById("flexRadioDefault1").checked = false;
     document.getElementById("flexRadioDefault2").checked = false;
@@ -499,7 +511,7 @@ function submitRoute() {
     }
 }
 
-//swaps tabs
+//Swaps active tabs
 function changeTabs(tab_id) {
     var active_tab = document.querySelector('.tab-content .active');
     //
@@ -613,6 +625,7 @@ function addMarkers(stops_data) {
     markerCluster = new MarkerClusterer(map, stopMarkersArr, clusterStyles);
 }
 
+//Swaps Input values
 function swapInputs() {
     var active_tab = $('.tab-content .active').attr('id');
 
@@ -764,6 +777,9 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
     endMarker.setVisible(false);
     startMarker.setVisible(false);
+    
+    //Delete Warning
+    document.getElementById('warning').style.display = 'none';
 
     //Reset Inputs
     inputOrigin.placeholder = "Enter your start point";
@@ -1050,41 +1066,45 @@ function submitRoute2() {
     getRoute2(originLatLon, destinationLatLon, time);
 };
 
-
+//Triggered on pressing Favourite button. Removes or adds current input as favourite
 function toggleFavourite() {
     //Remove From Favourites
-    if (isFavourite) {
-        var data = {
-            id: currentFavourite
-        }
-        var promise = postData(remove_favourite_URL, data);
-
-        promise.then(
-            function(value) {
-                if (value['success'] == true) {
-                    for (var i = 0; i < favourites.length; i++) {
-                        if (favourites[i].id == currentFavourite) {
-                            favourites.splice(i, 1);
-                            break;
-                        }
-                    }
-                    checkFavourite()
-                }
+    if (current_user != null){
+        if (isFavourite) {
+            var data = {
+                id: currentFavourite
             }
-        )
-        //Add to favourites
-    } else {
-        var promise = postData(create_favourite_URL, getRouteData(false));
+            var promise = postData(remove_favourite_URL, data);
 
-        if (typeof promise.then === "function") {
             promise.then(
                 function(value) {
                     if (value['success'] == true) {
-                        favourites.push(value['favourite'])
+                        for (var i = 0; i < favourites.length; i++) {
+                            if (favourites[i].id == currentFavourite) {
+                                favourites.splice(i, 1);
+                                break;
+                            }
+                        }
                         checkFavourite()
                     }
                 }
             )
+        //Add to favourites
+        } else {
+            //remove warning
+            document.getElementById('warning').style.display = 'none';
+            var promise = postData(create_favourite_URL, getRouteData());
+
+            if (typeof promise.then === "function") {
+                promise.then(
+                    function(value) {
+                        if (value['success'] == true) {
+                            favourites.push(value['favourite'])
+                            checkFavourite()
+                        }
+                    }
+                )
+            }
         }
     }
 };
@@ -1128,7 +1148,6 @@ var checkFavourite = function(evt) {
 inputFirstStop.addEventListener('input', checkFavourite, false);
 inputLastStop.addEventListener('input', checkFavourite, false);
 
-//When
 $('#locations-tab-btn').on('shown.bs.tab', function() {
     checkFavourite();
 })

@@ -70,6 +70,8 @@
 								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
 								<input type="datetime-local" class="form-control" id="time-dropdown">
 							</div>
+
+							<!-- Buttons -->
 							<div class= "input-group my-3">
 								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
 								{% if user.is_authenticated %}
@@ -81,6 +83,8 @@
 								<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 								<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 							</div>
+
+							<div id="warning" class="alert alert-warning" role="alert"></div>
 						</div>
 
 							<!-- Fare Calculator -->

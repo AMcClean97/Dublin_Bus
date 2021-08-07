@@ -44,7 +44,6 @@
     height: 300px;
 }
 
-
 #journeyPlannerTabs .nav-link {
     color: white;
 }
@@ -53,5 +52,12 @@
     color: #313638;
 }
 
+#warning {
+    background-color: #FFAE42;
+    border: none;
+    display: none;
+    font-weight: bold;
+    color: black;
+}
 
 

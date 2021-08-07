@@ -28,9 +28,7 @@
                     <div class="login-info-box">
                         <p>Don't have an account? Create one <a href="{% url 'register' %}">here</a></p>
                         {% for message in messages %}
-                        <div id="messagebox" class="card">
-                            <div  id="messages" class="card-body">{{message}}</div>
-                        </div>
+                        <div id="messagebox" class="alert alert-warning">{{message}}</div>
                         {% endfor %}
                     </div>
                 </div>

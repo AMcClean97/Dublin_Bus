@@ -45,3 +45,7 @@ html,body{
 #navbar a:hover{
     color: lightgray;
 }
+
+.breadcrumb .nav-link {
+    display: inline;
+}

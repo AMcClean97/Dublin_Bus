@@ -1,5 +1,6 @@
 #messagebox {
     background-color: #FFAE42;
-    color: black;
+    border: none;
     font-weight: bold;
+    color: black;
 }
