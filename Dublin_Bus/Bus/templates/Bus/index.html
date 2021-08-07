@@ -11,11 +11,8 @@
 {% endblock %}
 {% block content %}
 
-<div class ="col-auto text-center">
-
-</div>
-<div class="container-fluid" id="map-planner-container">
- 	<div class="row justify-content-center" id="map-row">
+<div class="container-fluid">
+ 	<div class="row justify-content-center">
 		<div class ="col-12 text-center">
 			<!--Central Card-->
 			<div id="central-card" class="card">
@@ -136,16 +133,14 @@
 								<button class="btn btn-success" id="calculateFare" onclick="submitRoute2()">Calculate Fare</button>
 
 							</div>
-						<div class="col-12 col-md-8" id="route_suggestions">
-
-						</div>
-						</div>
-						</div>
+						<div class="col-12 col-md-8" id="route_suggestions"></div>
 					</div>
-
 				</div>
 			</div>
+
 		</div>
+	</div>
+</div>
 
 {% load static %}
 <script src="{% static '/Bus/index.js' %}" ></script>
