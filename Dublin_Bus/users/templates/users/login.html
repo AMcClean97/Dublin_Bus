@@ -4,9 +4,8 @@
 
 {% block head%}
 {% load static %}
-<link href="{% static '/users/users.css' %}" rel="stylesheet">
+<link href="{% static '/users/login.css' %}" rel="stylesheet">
 {% endblock %}
-
 {% block content %}
 
 <div class="row justify-content-center">
@@ -28,10 +27,12 @@
                 <button type="submit" form="loginForm" class="btn btn-success">Submit</button>
                 <div class="login-info-box">
                     <p>Don't have an account? Create one <a href="{% url 'register' %}">here</a></p>
+                    {% for message in messages %}
+                    <div id="messagebox" class="card">
+                        <div  id="messages" class="card-body">{{message}}</div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% for message in messages %}
-                <p id="messages">{{message}}</p>
-                {% endfor %}
             </div>
         </div>
     </div>
