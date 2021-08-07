@@ -16,4 +16,26 @@ html,body{
 
 #header {
     background-color: #FFAE42;
+    width: 100%;
+}
+
+.offcanvas-header {
+    background-color: #FFAE42;
+}
+
+.offcanvas-body {
+    background-color: #05386B;
+}
+
+
+#navbar .list-group-item{
+    background-color: #05386B;
+}
+
+#navbar a{
+    color: white;
+}
+
+#navbar a:hover{
+    color: lightgray;
 }
