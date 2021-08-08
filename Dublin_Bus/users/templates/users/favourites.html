@@ -15,9 +15,6 @@
                 <h3 class="card-header">Favourites</h3>
                 <div class="card-body">
                     <ul id="favourite-list" class="list-group list-group-flush">
-                        {% if favourites|length == 0 %}
-                        <p>No favourites are saved</p>
-                        {% else %}
                         {% for favourite in favourites %}
                         <li id='{{ favourite.id }}' class="list-group-item">
                         
@@ -58,7 +55,6 @@
                             </form>
                         </li>
                         {% endfor %}
-                        {% endif %}
                     </ul>
                 </div>
             </div>
