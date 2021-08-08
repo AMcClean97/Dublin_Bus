@@ -3,8 +3,6 @@
 {% block title %} Favourites {% endblock %}
 
 {% block head %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
 {% load static %}
 <link href="{% static '/users/favourites.css' %}" rel="stylesheet">
 {% endblock %}
@@ -17,6 +15,9 @@
                 <h3 class="card-header">Favourites</h3>
                 <div class="card-body">
                     <ul id="favourite-list" class="list-group list-group-flush">
+                        {% if favourites|length == 0 %}
+                        <p>No favourites are saved</p>
+                        {% else %}
                         {% for favourite in favourites %}
                         <li id='{{ favourite.id }}' class="list-group-item">
                         
@@ -57,6 +58,7 @@
                             </form>
                         </li>
                         {% endfor %}
+                        {% endif %}
                     </ul>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 from django.contrib import auth
+from django.contrib.messages.api import error
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
@@ -19,10 +20,18 @@ def registerPage(request):
         #New user Registered
         if request.method == 'POST':
             form = CreateUserForm(request.POST)
-            if form.is_valid():
+            if not form.is_valid():
+                error_dict = form.errors.as_data()
+                field_list = list(error_dict.values())
+                for error_list in field_list:
+                    for error in error_list:
+                        #Send form errors as messages
+                        messages.error(request, str(error)[2:-2])
+                return redirect('register')
+            else:
                 form.save()
                 user = form.cleaned_data.get('username')
-                messages.success(request, 'Account created for ' + user )
+                messages.success(request, 'Account created for ' + user + '.' )
                 return redirect('login')
         
         context = {'form': form}
@@ -42,7 +51,8 @@ def loginPage(request):
                 login(request, user)
                 return redirect('index')
             else:
-                messages.info(request, 'Username OR Password is incorrect')
+                messages.info(request, 'Username OR Password is incorrect.')
+                return redirect('login')
         return render(request, 'users/login.html')
 
 def logoutUser(request):
