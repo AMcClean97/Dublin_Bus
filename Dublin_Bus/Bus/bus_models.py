@@ -108,14 +108,14 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                         if rush_hour:
                             try:
                                 proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
-                            except IndexError as e:
+                            except (IndexError, TypeError) as e:
                                 print(e)
                                 return None
                         else:
                             try:
                                 proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
                                 print("proportion of route", proportion_total)
-                            except IndexError as e:
+                            except (IndexError, TypeError) as e:
                                 print(e)
                                 return None
                         return proportion_total / 100
