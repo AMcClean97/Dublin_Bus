@@ -492,6 +492,7 @@ function getRoute(start, end, time) {
 
         for (var i = 0; i < journey.length; i++) {
             if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
+            fareDescription += "<br>Bus Route: " + journey[i].transit.line.short_name + "<br>";
                 if (journey[i].transit.num_stops <= 3) {
         if (flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
                                     fareDescription += "Cost for this Journey is €1.55 <br>";
