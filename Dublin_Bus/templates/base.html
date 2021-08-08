@@ -31,6 +31,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway&display=swap" rel="stylesheet">
 
+    <!-- Ajax -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
     {% load static %}
     <link rel="icon" type="image/png" href="{% static 'Bus/DBIcon.png' %}">
     <link rel="icon" type="image/png" href="{% static 'Bus/logo.png' %}">
@@ -38,6 +41,7 @@
 
     {% load static %}
     <script src="{% static 'Bus/scripts.js' %}" ></script>
+    <link href="{% static '/Bus/base.css' %}" rel="stylesheet">
 
     {% block head %}
     {% endblock %}
@@ -52,15 +56,14 @@
                 <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
             </div>
             <div class="col text-center mt-2">
-                <h2>Bustimate
-                <img src="{% static 'Bus/logo.png' %}" class="img-fluid"></h2>
+                <h2><img src="{% static 'Bus/logo.png' %}" class="img-fluid">Bustimate</h2>
             </div>
             <div class="col text-end mt-2">
                 {% if user.is_authenticated %}
-                <span><a class="btn btn-secondary" href="{% url 'logout' %}"><span class="d-none d-sm-block">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
+                <span><a class="btn btn-secondary" href="{% url 'logout' %}"><span class="d-none d-md-inline">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
-                <a class ="btn btn-secondary" href="{% url 'login' %}">Login</a>
+                <a class ="btn btn-secondary" href="{% url 'login' %}"><span class="d-none d-md-inline">Login </span><i class="fas fa-sign-in-alt"></i></a>
                 {% endif %}
             </div>
         </div>
@@ -69,12 +72,12 @@
     <!--Sidebar-->
     <span class="navbar-toggler-icon"></span>
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar">
-        <div class="offcanvas-header">
+        <div id class="offcanvas-header">
             <h5 class="offcanvas-title"><img src="{% static 'Bus/logo.png' %}" class="img-fluid"> Bustimate</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
     
-        <div class = "offcanvas-body px-0">
+        <div class = "offcanvas-body p-0">
             <!-- Weather -->
             <!-- https://weatherwidget.io -->
             <a class="weatherwidget-io" href="https://forecast7.com/en/53d35n6d26/dublin/" data-label_1="DUBLIN" data-label_2="WEATHER" data-font="Ubuntu" data-icons="Climacons Animated" data-days="5" data-theme="weather_one" >DUBLIN WEATHER</a>
@@ -83,7 +86,7 @@
             </script>
 
             <!--Navbar-->
-            <ul class="list-group list-group-flush">
+            <ul id="navbar" class="list-group list-group-flush">
                 <li class="list-group-item">
                     <a class= "nav-link hover-shadow" href="{% url 'index' %}"><i class="fas fa-map-marked-alt"></i> Map</a>
                 </li>
@@ -97,7 +100,12 @@
                     {% if user.is_authenticated %}
                     <a class= "nav-link hover-shadow" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     {% else %}
-                    <a class= "nav-link hover-shadow" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <div class="nav-link px-0">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a class= "nav-link hover-shadow" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                            <li class="breadcrumb-item"><a class= "nav-link hover-shadow" href="{% url 'register' %}"> Register</a></li>
+                        </ol>
+                    </div>
                     {% endif %}
                 </li>
             </ul>
@@ -106,5 +114,12 @@
 
     {% block content %}
     {% endblock %}
+
+    <script>
+        //Enable tooltips on buttons
+        $(function () {
+	    $('[data-bs-toggle="tooltip"]').tooltip()
+        })
+    </script>
 </body>
 </html>

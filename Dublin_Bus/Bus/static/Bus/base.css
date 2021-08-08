@@ -1,0 +1,59 @@
+html,body{
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    width: 100%;
+    /*background-color: #353935;*/
+    background-color: #313638;
+    font-family: 'Raleway', sans-serif;
+ 
+}
+
+
+#central-card{
+    background-color: #05386B;
+    color: white;
+}
+
+#central-card .card-header{
+    background-color: #FFAE42;
+    color: black;
+}
+
+#header {
+    background-color: #FFAE42;
+    width: 100%;
+}
+
+.offcanvas-header {
+    background-color: #FFAE42;
+}
+
+.offcanvas-body {
+    background-color: #05386B;
+}
+
+
+#navbar .list-group-item{
+    background-color: #05386B;
+}
+
+#navbar a{
+    color: white;
+}
+
+#navbar a:hover{
+    color: lightgray;
+}
+
+.breadcrumb .nav-link {
+    display: inline;
+}
+
+#greeting {
+    color: #5b6269
+}
+
+#greeting span {
+    color: #05386B;
+}

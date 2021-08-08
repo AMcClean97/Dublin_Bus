@@ -5,17 +5,11 @@
 {% block head %}
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-
 {% endblock %}
 {% block content %}
 
-<div class ="col-auto text-center">
-
-</div>
-<div class="container-fluid" id="map-planner-container">
- 	<div class="row justify-content-center" id="map-row">
+<div class="container-fluid">
+ 	<div class="row justify-content-center">
 		<div class ="col-12 text-center">
 			<!--Central Card-->
 			<div id="central-card" class="card">
@@ -38,14 +32,14 @@
 								<!-- Google Locations Tab -->
 								<div class="tab-pane fade show active" id="locations-tab" role="tabpanel">
 									<!--Start Point -->
-									<div class="input-group mb-3">
+									<div class="input-group my-3">
 										<span class="input-group-text">A</span>
 										<input id="inputOrigin" class="form-control" placeholder="Enter your start point" type="text" />
 										<button id ="currentLocationButton" class="btn btn-secondary" onclick="toggleCurrentLocation()"><i class="fas fa-male"></i></button>
 									</div>
 
 									<!-- End Point -->
-									<div class="input-group mb-3">
+									<div class="input-group my-3">
 										<span class="input-group-text">B</span>
 										<input id="inputDestin" class="form-control" placeholder="Enter your destination" type="text" />
 									</div>
@@ -54,13 +48,13 @@
 								<!-- Bus Stops Tab-->
 								<div class="tab-pane fade" id="stops-tab" role="tabpanel">
 									<!--Starting Stop -->
-									<div class="input-group mb-3">
+									<div class="input-group my-3">
 										<span class="input-group-text">A</span>
 										<input id="inputFirstStop" class="form-control" placeholder="First Stop" list = "stopOptions" type="text" />
 									</div>
 
 									<!-- End Stop -->
-									<div class="input-group mb-3">
+									<div class="input-group my-3">
 										<span class="input-group-text">B</span>
 										<input id="inputLastStop" class="form-control" placeholder="Last Stop" list = "stopOptions" type="text" />
 									</div>
@@ -69,21 +63,25 @@
 							</div>
 
 							<!-- Start Time -->
-							<div class="input-group mb-3">
+							<div class="input-group my-3">
 								<span class="input-group-text"><i class="fas fa-hourglass-start"></i></span>
 								<input type="datetime-local" class="form-control" id="time-dropdown">
 							</div>
-							<div class= "input-group mb-3">
-								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()"><i class="fas fa-exchange-alt"></i></button>
+
+							<!-- Buttons -->
+							<div class= "input-group my-3">
+								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Swap Inputs"><i class="fas fa-exchange-alt"></i></button>
 								{% if user.is_authenticated %}
-								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()"><i class="fas fa-star"></i></button>
+								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Favourite"><i class="fas fa-star"></i></button>
 								{% endif %}
-								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()"><i class="fa fa-euro"></i></button>
+								<button id="fareCalculator" class="btn btn-secondary" onclick="displayFareButtons()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Fare Calculator"><i class="fa fa-euro"></i></button>
 
 
 								<button class="btn btn-success" id="submitJourneyPlanner" onclick="submitRoute()">Submit</button>
 								<button class="btn btn-danger" id="resetJourneyPlanner" onclick="resetJourneyPlanner()">Reset</button>
 							</div>
+
+							<div id="warning" class="alert alert-warning" role="alert"></div>
 						</div>
 
 							<!-- Fare Calculator -->
@@ -135,14 +133,13 @@
 								</div>
 							</div>
 						<div class="col-12 col-md-8" id="route_suggestions"></div>
-						<div class="col-12 col-md-8" id="fare_suggestions_output"></div>
-						</div>
-						</div>
+						<div class="col-12 col-md-8" id="fare_suggestions_output"></div>>
 					</div>
-
 				</div>
 			</div>
 		</div>
+	</div>
+</div>
 
 {% load static %}
 <script src="{% static '/Bus/index.js' %}" ></script>
@@ -169,8 +166,10 @@
 	{% endif %}
 
 
+	//get data list
 	var stopOptions = document.getElementById("stopOptions");
 
+	//add bus-stops to the autocomplete input
 	stops.forEach(function(stop){
 		var option = document.createElement('option');
 		option.value = stop['fields']['stop_name'].replace("&#x27;","'");
