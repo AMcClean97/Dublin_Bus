@@ -114,13 +114,20 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                         else:
                             try:
                                 proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
-                                print("proportion of route", proportion_total)
                             except (IndexError, TypeError) as e:
                                 print(e)
                                 return None
                         return proportion_total / 100
     else:
-        return None
+        # calculate proportion of route by number of stops, read in routes csv
+        df = pd.read_csv('df_routes.csv')
+
+        # retrieve records for a particular line
+        df = df.loc[(df['routeid'] == route)]
+
+        total_stops = (len(df))
+        proportion_total = num_stops / total_stops
+        return proportion_total
 
 def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
     """function takes stop lat and lng and returns stoppoint id/number match
@@ -166,7 +173,6 @@ def get_stop_num(stop_lat, stop_lng, stop_name, integer=False):
     if len(stop_num_list) == 0:
         stop_num_list = get_stop_num_lat_lng(stop_lat, stop_lng)
 
-    print(stop_num_list)
     return stop_num_list
 
 
@@ -195,7 +201,6 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
         route = None
     else:
         route = max(route, key=route.count)
-        print("route", route)
         return route
 
 def get_prediction(details):
@@ -227,12 +232,11 @@ def get_prediction(details):
                                                           details['dep_stop_lat'], details['dep_stop_lng'])
 
         if proportion_of_route is None:
-            #We have no historical averages for 20 out of the 190 routes, at the moment we are returning Google prediction instead, but would prefer we came up with a simple backup
+            #In case proportion_of_route_fails, i.e. if the arrival or departure stop was not part of the route in 2018
             predicted_tt = details['google_pred']
         else:
             partial_prediction = proportion_of_route * predicted_tt
             predicted_tt_mins = partial_prediction / 60
-            print("prediction", predicted_tt_mins)
             predicted_tt = json.dumps(str(predicted_tt_mins))
 
     return predicted_tt
