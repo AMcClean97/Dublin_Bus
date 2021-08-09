@@ -503,12 +503,12 @@ function getRoute(start, end, time) {
 
                 //Check if Radio Buttons are Entered
                 if (fare_suggestions.style.display === "block" && flexRadioDefault1.checked == false && flexRadioDefault2.checked == false && flexRadioDefault3.checked == false) {
-                    alert("Please Enter a Ticket Type.");
+                    showWarning("Enter Enter Ticket Type.")
                     return;
                 }
 
                 if (fare_suggestions.style.display === "block" && flexRadioDefault4.checked == false && flexRadioDefault5.checked == false) {
-                    alert("Please Enter Whether You have a Leap Card or Not");
+                    showWarning("Do you have a leap card?")
                     return;
                 }
 
