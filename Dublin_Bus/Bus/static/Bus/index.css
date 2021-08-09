@@ -8,10 +8,6 @@
 
 }
 
-#user {
-    font-size: 14px;
-}
-
 #info_window {
     color: #05386B;
 }
@@ -48,66 +44,30 @@
     color: white;
 }
 #journeyPlannerTabs .active {
-    /*color: #353935;*/
     color: #313638;
 }
 
 #warning {
-    background-color: #FFAE42;
+    background-color: #dc3545;
     border: none;
     display: none;
     font-weight: bold;
     color: black;
 }
 
+
 #fare_suggestions {
     background-color: #FFAE42;
-    border-radius: 25px;
     color: black;
-    padding: 20px;
+    display: none;
 }
 
 .input-group.mb-3 {
-     display: inline-block;
-     text-align:left;
-}
-/* The Modal (background) */
-.modal {
-    overflow: hidden;
-    position:relative;
-    margin-bottom: 10px;
+    display: inline-block;
+    text-align:left;
 }
 
-/* Modal Content */
-.modal-content {
-  background-color: #fefefe;
-  margin: auto;
-  padding: 5px;
-  border: 1px solid #888;
-  border-radius: 20px;
-  width: 90%;
-  font-size: 12px;
-}
-
-/* The Close Button */
-.close {
-  color: #aaaaaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-.close:hover,
-.close:focus {
-  color: #000;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-#myBtn {
-background-color: #FFAE42;
-border-style: none!important;
-}
-
-#fare_title {
-background-color: #FFAE42;
+#info {
+    color: black;
+    text-decoration: none;
 }
