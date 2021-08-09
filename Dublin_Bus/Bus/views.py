@@ -7,7 +7,7 @@ import json
 from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
 from .bus_models import get_prediction
 from .serializers import StopTimeSerializer
-from .gtfs_realtime import is_trip_affected, start_thread
+from .gtfs_realtime import is_trip_affected, update_real_time_json
 from users.models import favourite
 from django.conf import settings
 
@@ -24,7 +24,7 @@ def index(request):
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
         context['journey'] = favourite.objects.get(id=favourite_id)
-    start_thread()
+    update_real_time_json()
     return render(request, 'Bus/index.html', context)
 
 # handle request for stop_data
