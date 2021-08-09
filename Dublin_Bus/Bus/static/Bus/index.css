@@ -66,3 +66,8 @@
     color: black;
     padding: 10px;
 }
+
+.input-group.mb-3 {
+     display: inline-block;
+     text-align:left;
+    }
