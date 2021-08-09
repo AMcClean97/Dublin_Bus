@@ -16,32 +16,34 @@
                 <div class="card-body">
                     <ul id="favourite-list" class="list-group list-group-flush">
                         {% for favourite in favourites %}
-                        <li id='{{ favourite.id }}' class="list-group-item mb-4">
+                        <li id='{{ favourite.id }}' class="list-group-item mb-4 text-start">
                         
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-pen"></i></span>
                                 <input id='{{ favourite.id }}Name' class="form-control text-center" value="{{ favourite.favourite_name }}" onchange="changeName('{{ favourite.id }}')">
                             </div>
-                            <!--
-                            <p>{{ favourite.origin_name }} -> {{ favourite.destin_name}}</p>-->
-                            <div style="--bs-breadcrumb-divider: '>';">
-                                <ol class="breadcrumb justify-content-center">
-                                    <li class="breadcrumb-item">
-                                        {% if favourite.origin_name|length < 35 %}
-                                            {{ favourite.origin_name }}
-                                        {% else %}
-                                            {{ favourite.origin_name|slice:":35" }}...
-                                        {% endif %}
-                                    </li>
-                                    <li class="breadcrumb-item">
-                                        {% if favourite.destin_name|length < 35 %}
-                                            {{ favourite.destin_name }}
-                                        {% else %}
-                                            {{ favourite.destin_name|slice:":35" }}...
-                                        {% endif %}
-                                    </li>
-                                </ol>
-                            </div>
+
+                            <blockquote class="blockquote">
+                                <p5>
+                                    {% if favourite.origin_name|length < 35 %}
+                                    {{ favourite.origin_name }}
+                                    {% else %}
+                                    {{ favourite.origin_name|slice:":35" }}...
+                                    {% endif %}
+                                </p>
+                                <footer class="blockquote-footer">Origin</footer>
+                            </blockquote>
+
+                            <blockquote class="blockquote">
+                                <p>
+                                    {% if favourite.destin_name|length < 35 %}
+                                    {{ favourite.destin_name }}
+                                    {% else %}
+                                    {{ favourite.destin_name|slice:":35" }}...
+                                    {% endif %}
+                                </p>
+                                <footer class="blockquote-footer">Destination</footer>
+                            </blockquote>
                             <form method="POST", action="{% url 'index' %}">
                                 {% csrf_token %}
                                 <div class="row">
