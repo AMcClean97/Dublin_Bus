@@ -24,7 +24,7 @@ def index(request):
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
         context['journey'] = favourite.objects.get(id=favourite_id)
-    update_real_time_json()
+   # update_real_time_json()
     return render(request, 'Bus/index.html', context)
 
 # handle request for stop_data
