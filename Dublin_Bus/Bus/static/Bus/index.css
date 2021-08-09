@@ -60,4 +60,9 @@
     color: black;
 }
 
-
+#fare_suggestions {
+    background-color: #FFAE42;
+    border-radius: 25px;
+    color: black;
+    padding: 10px;
+}

@@ -330,7 +330,7 @@ function getStopData(name, stop_list) {
     return false;
 };
 
-//Displays route and time estimates 
+//Displays route and time estimates
 function getRoute(start, end, time) {
     //Clear Previous Route
     directionsRenderer.set('directions', null);
@@ -473,138 +473,174 @@ function getRoute(start, end, time) {
             document.getElementById(predictionSpace).innerHTML += departureStop.departureStop + ' to ' + arrivalStop.arrivalStop + "<br>" + divider;
         }
 
-         // Fare Calculator
-        var fareCalculator =  document.getElementById("fareCalculator");
-        var fare_suggestions = document.getElementById("fare_suggestions");
-        var fare_suggestions_output = document.getElementById("fare_suggestions_output");
+        // Fare Calculator
+        // When the € sign button is pressed.
         if (fare_suggestions.style.display === "block") {
-        var fareDescription = "";
+        // Read in JSON file getting fare values based on radio button choice
+            $.getJSON("./static/Bus/fare_calculator.json", function(data) {
 
-        //Get Radio Button Answers
-        var flexRadioDefault1 = document.getElementById("flexRadioDefault1");
-        var flexRadioDefault2 = document.getElementById("flexRadioDefault2");
-        var flexRadioDefault3 = document.getElementById("flexRadioDefault3");
-        var flexRadioDefault4 = document.getElementById("flexRadioDefault4");
-        var flexRadioDefault5 = document.getElementById("flexRadioDefault5");
+                //Initialise Variables
+                var fare_suggestions = document.getElementById("fare_suggestions");
+                var fareSuggestionsOutput = document.getElementById("fare_suggestions_output");
+                var fareDescription = "";
+                var weekday = [1, 2, 3, 4, 5];
+                var journeyCost = 0.00;
+                var person;
+                var cash;
+                var leapCard;
+                var Xpresso;
+                var leapChild;
+                var cashChild;
 
-            if (fare_suggestions.style.display === "block" && flexRadioDefault1.checked == false && flexRadioDefault2.checked == false && flexRadioDefault3.checked == false) {
-                alert("Please Enter a Ticket Type.");
-                return;
-            }
 
-            if (fare_suggestions.style.display === "block" && flexRadioDefault4.checked == false && flexRadioDefault5.checked == false) {
-                alert("Please Enter Whether You have a Leap Card or Not");
-                return;
-            }
+                //Get Radio Button Answers
+                var flexRadioDefault1 = document.getElementById("flexRadioDefault1");
+                var flexRadioDefault2 = document.getElementById("flexRadioDefault2");
+                var flexRadioDefault3 = document.getElementById("flexRadioDefault3");
+                var flexRadioDefault4 = document.getElementById("flexRadioDefault4");
+                var flexRadioDefault5 = document.getElementById("flexRadioDefault5");
 
-            var journeyCost = 0.00;
+                //Check if Radio Buttons are Entered
+                if (fare_suggestions.style.display === "block" && flexRadioDefault1.checked == false && flexRadioDefault2.checked == false && flexRadioDefault3.checked == false) {
+                    alert("Please Enter a Ticket Type.");
+                    return;
+                }
 
-        for (var i = 0; i < journey.length; i++) {
-            if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
-            fareDescription += "<br>Bus Route: " + journey[i].transit.line.short_name + "<br>";
-                if (journey[i].transit.num_stops <= 3) {
-        if (flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
-                                    fareDescription += "Cost for this Journey is €1.55 <br>";
-                                    journeyCost += 1.55;
-                                } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true) {
-                                     fareDescription += "Cost for this Journey is €2.15 <br>";
-                                    journeyCost += 2.15;
-                                } else if (flexRadioDefault3.checked == true) {
-                                     fareDescription += "Children Under 5 Travel Free <br>";
-                                    journeyCost += 0.00;
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                         fareDescription += "Cost for this Journey is €0.80 <br>";
-                                        journeyCost += 0.80;
+                if (fare_suggestions.style.display === "block" && flexRadioDefault4.checked == false && flexRadioDefault5.checked == false) {
+                    alert("Please Enter Whether You have a Leap Card or Not");
+                    return;
+                }
+
+                //Cycle through journey planner bus route instructions
+                for (var i = 0; i < journey.length; i++) {
+                    // message if bus route given is not a dublin bus.
+                    if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
+                        fareDescription += "<br>Bus Route: " + journey[i].transit.line.short_name;
+                        fareDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations.<br>";
+                        fare_suggestions_output.innerHTML += fareDescription;
+                    } else {
+                        if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name == "Dublin Bus") {
+                            fareDescription += "<br>Bus Route: " + journey[i].transit.line.short_name + "<br>";
+                            // Check to see if route is an Xpresso one or not
+                            if (journey[i].transit.line.short_name.charAt(journey[i].transit.line.short_name.length - 1) === "X") {
+                                Xpresso = true;
+                            } else {
+                                Xpresso = false;
+                            }
+
+                            // Adult Fare
+                            if (flexRadioDefault1.checked == true) {
+                                // Set Values for any Xpresso Routes
+                                if (Xpresso == true) {
+                                    if (flexRadioDefault4.checked == true) {
+                                        fareDescription += "Cost for this Journey is €3.00 <br>";
+                                        journeyCost += 3.00;
                                     } else {
-                                         fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
+                                        fareDescription += "Cost for this Journey is €3.80 <br>";
+                                        journeyCost += 3.80;
                                     }
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                         fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
+                                // Determine fare based on radio button choice
+                                } else {
+                                    person = data["adult"];
+                                    leapCard = person["leapCard"];
+                                    cash = person["cash"];
+                                    var leapPricePoint = leapCard["journeyLength"];
+                                    var cashPricePoint = cash["journeyLength"];
+                                    // compare number of stops to zone length and determine price
+                                    if (journey[i].transit.num_stops <= 3) {
+                                        leapCard = leapPricePoint[0]["priceOne"];
+                                        cash = cashPricePoint[0]["priceOne"];
+                                    } else if (journey[i].transit.num_stops <= 13) {
+                                        leapCard = leapPricePoint[1]["priceTwo"];
+                                        cash = cashPricePoint[1]["priceTwo"];
                                     } else {
-                                         fareDescription += "Cost for this Journey is €1.30 <br>";
-                                        journeyCost += 1.30;
+                                        leapCard = leapPricePoint[2]["priceThree"];
+                                        cash = cashPricePoint[2]["priceThree"];
                                     }
+
+                                // Display Results
+                                if (flexRadioDefault4.checked == true) {
+                                    fareDescription += "Cost for this Journey is €" + leapCard + "<br>";
+                                    journeyCost += leapCard;
+                                } else {
+                                    fareDescription += "Cost for this Journey is €" + cash + "<br>";
+                                    journeyCost += cash;
                                 }
-                            } else if (4 <= journey[i].transit.num_stops && journey[i].transit.num_stops <= 13) {
-                                if (flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
-                                     fareDescription += "Cost for this Journey is €2.25 <br>";
-                                    journeyCost += 2.25;
-                                } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true) {
-                                     fareDescription += "Cost for this Journey is €3.00 <br>";
-                                    journeyCost += 3.00;
-                                } else if (flexRadioDefault3.checked == true) {
-                                     fareDescription += "Children Under 5 Travel Free <br>";
-                                    journeyCost += 0.00;
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                         fareDescription += "Cost for this Journey is €0.80 <br>";
-                                        journeyCost += 0.80;
-                                    } else {
-                                         fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
-                                    }
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                        fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
-                                    } else {
-                                         fareDescription += "Cost for this Journey is €1.30 <br>";
-                                        journeyCost += 1.30;
-                                    }
-                                }
-                            } else if (journey[i].transit.num_stops && journey[i].transit.num_stops > 13) {
-                                if (flexRadioDefault1.checked == true && flexRadioDefault4.checked == true) {
-                                     fareDescription += "Cost for this Journey is €2.50 <br>";
-                                    journeyCost += 2.50;
-                                } else if (flexRadioDefault1.checked == true && flexRadioDefault5.checked == true) {
-                                     fareDescription += "Cost for this Journey is €3.30 <br>";
-                                    journeyCost += 3.30;
-                                } else if (flexRadioDefault3.checked == true) {
-                                     fareDescription += "Children Under 5 Travel Free <br>";
-                                    journeyCost += 0.00;
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault4.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                         fareDescription += "Cost for this Journey is €0.80 <br>";
-                                        journeyCost += 0.80;
-                                    } else {
-                                         fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
-                                    }
-                                } else if (flexRadioDefault2.checked == true && flexRadioDefault5.checked == true) {
-                                    if (new Date(time).getHours() > 19) {
-                                         fareDescription += "Cost for this Journey is €1.00 <br>";
-                                        journeyCost += 1.00;
-                                    } else {
-                                         fareDescription += "Cost for this Journey is €1.30 <br>";
-                                        journeyCost += 1.30;
-                                    }
                                 }
                             }
 
-                        } else if (journey[i].travel_mode == "WALKING") {
+                            // If child fare chosen
+                            if (flexRadioDefault2.checked == true) {
+                                if (Xpresso) {
+                                    if (flexRadioDefault4.checked == true) {
+                                        fareDescription += "Cost for this Journey is €1.26 <br>";
+                                        journeyCost += 1.26;
+                                    } else {
+                                        fareDescription += "Cost for this Journey is €1.60 <br>";
+                                        journeyCost += 1.60;
+                                    }
+                                } else {
+                                    person = data["child"];
+                                    leapCard = person["leapCard"];
+                                    cash = person["cash"];
+                                    var day = new Date(time).getDay();
+                                    var travelTime = new Date(time).getHours();
 
-                        } else if (journey[i].travel_mode == "TRANSIT" && journey[i].transit.line.agencies[0].name != "Dublin Bus") {
-                             fareDescription += "<br>Bus Route: " + journey[i].transit.line.short_name;
-                             fareDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations.<br>";
-                           fare_suggestions_output.innerHTML +=  fareDescription;
+                                    //Determine whether it is a school day and within school hours
+                                    if (weekday.includes(day)) {
+                                        leapChild = leapCard["schoolDay"];
+                                        cashChild = cash["schoolDay"];
+                                        if (travelTime < 19) {
+                                            cash = cashChild[0]["schoolHours"];
+                                            leapCard = leapChild[0]["schoolHours"];
+                                        } else {
+                                            cash = cashChild[1]["OutOfSchoolHours"];
+                                            leapCard = leapChild[1]["OutOfSchoolHours"];
+                                        }
+                                    } else if (day === 6) {
+                                        leapChild = leapCard["saturday"];
+                                        cashChild = cash["saturday"];
 
-                        } else {
-                            journeyDescription += "<br> This route is not served by Dublin Bus and will not be included in fare calculations. <br>";
-                           fare_suggestions_output.innerHTML +=  fareDescription;
+                                        if (travelTime < 13) {
+                                            console.log("school hours saturday");
+                                            cash = cashChild[0]["schoolHours"];
+                                            leapCard = leapChild[0]["schoolHours"];
+                                        } else {
+                                            cash = cashChild[1]["OutOfSchoolHours"];
+                                            leapCard = leapChild[1]["OutOfSchoolHours"];
+                                        }
+                                    } else {
+                                        leapCard = leapCard["sunday"];
+                                        cash = cash["sunday"];
+                                    }
+
+                                //Display Results
+                                if (flexRadioDefault4.checked == true) {
+                                    fareDescription += "Cost for this Journey is €" + leapCard + "<br>";
+                                    journeyCost += leapCard;
+                                } else {
+                                    fareDescription += "Cost for this Journey is €" + cash + "<br>";
+                                    journeyCost += cash;
+                                }
+                                }
+                            }
+
+                            // If Under 5YRS Chosen
+                            if (flexRadioDefault3.checked == true) {
+                                fareDescription = "";
+                                fareDescription += "Children Under 5 Travel Free <br>";
+                            }
                         }
+                        // Display total cost of the whole journey.
+                        fare_suggestions_output.innerHTML = fareDescription + "<br> Total Calculated Fare is: €" + journeyCost;
                     }
-
-                    fare_suggestions_output.innerHTML =  fareDescription + "<br> Total Calculated Fare is: €" + journeyCost;
-
+                }
+            })
         }
     })
 }
 
-//Triggerd by pressing submit button. Gets route and current time and sends it to getRoute
+//Triggered by pressing submit button. Gets route and current time and sends it to getRoute
 function submitRoute() {
 
     //get rid of warning

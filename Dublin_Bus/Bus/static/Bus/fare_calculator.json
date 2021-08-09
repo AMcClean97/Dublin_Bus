@@ -1,0 +1,30 @@
+{
+    "child": {
+        "leapCard": {
+            "schoolDay": [{"schoolHours": 0.80}, {"OutOfSchoolHours": 1.00}],
+            "saturday": [{"schoolHours": 0.80}, {"OutOfSchoolHours": 1.00}],
+            "sunday": 1.00
+        },
+        "cash": {
+            "schoolDay": [{"schoolHours": 1.00}, {"OutOfSchoolHours": 1.30}],
+            "saturday": [{"schoolHours": 1.00}, {"OutOfSchoolHours": 1.30}],
+            "sunday": 1.30
+        }
+    },
+    "adult": {
+        "leapCard": {
+            "journeyLength": [
+                {"priceOne": 1.55},
+                {"priceTwo": 2.25},
+                {"priceThree": 2.50}
+            ]
+        },
+        "cash": {
+            "journeyLength": [
+                {"priceOne": 2.15},
+                {"priceTwo": 3.00},
+                {"priceThree": 3.30}
+            ]
+        }
+    }
+}
