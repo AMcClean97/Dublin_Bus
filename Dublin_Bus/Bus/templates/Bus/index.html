@@ -185,18 +185,27 @@
 			lat: {{ journey.destin_lat }},
 			lng: {{ journey.destin_lon }},
 		}
-
 		geocoder.geocode({ location: originLatLon }, (results, status) => {
 			if (status === "OK") {
 				autocompleteOrigin.set("place", results[0])
+				geocoder.geocode({ location: destinLatLon }, (results, status) => {
+					if (status === "OK") {
+						autocompleteDestin.set("place", results[0])
+						favourites.forEach(fav => {
+							if (fav.id == {{ journey.pk }}) {
+								var destination = autocompleteDestin.getPlace();
+        						var origin = autocompleteOrigin.getPlace();
+								fav.origin_lat = origin.geometry.location.lat();
+								fav.origin_lon = origin.geometry.location.lng();
+								fav.destin_lat = destination.geometry.location.lat();
+								fav.destin_lon = destination.geometry.location.lng();
+							}
+						});
+						checkFavourite()
+					}
+				})
 			}
 		})
-		geocoder.geocode({ location: destinLatLon }, (results, status) => {
-			if (status === "OK") {
-				autocompleteDestin.set("place", results[0])
-			}
-		})
-		checkFavourite()
 	}
 </script>
 {% endif %}
