@@ -68,9 +68,43 @@
 								<input type="datetime-local" class="form-control" id="time-dropdown">
 							</div>
 
+							<!-- Fare Calculator -->
+							<div class="card" id="fare_suggestions" style="display: none;">
+								<h4 class="card-header">Fare Calculator 
+									<a id="info" tabindex="0" class="fa fa-info-circle fa-xs" role="button" data-bs-toggle="popover" data-bs-trigger="focus" title="Disclaimer" data-bs-content="This fare calculator is just an estimation and may not represent true costs. Children under 5 travel free." data-bs-placement="bottom"></a>
+								</h4>
+
+								<div class="card-body">
+									<div class= "input-group mb-3">
+										<h5>Age:</h5>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="age" id="age-adult" value="adult" checked>
+											<label class="form-check-label" for="age-adult">Adult/Student</label>
+										</div>
+	
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="age" id="age-child" value="child">
+											<label class="form-check-label" for="age-child">5-16 OR 5-19 (Leap Card)</label>
+										</div>
+									</div>
+	
+									<div class= "input-group mb-3">
+										<h5>Leap Card:</h5>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="payment" id="payment-leapCard" value="leapCard" checked>
+											<label class="form-check-label" for="payment-leapCard">Yes</label>
+										</div>
+	
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="payment" id="payment-cash" value="cash">
+											<label class="form-check-label" for="payment-cash">No</label>
+										</div>
+									</div>
+								</div>
+							</div>
 							<!-- Buttons -->
-							<div class= "input-group my-3">
-								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()" data-bs-toggle="tooltip" data-bs-placement="top" title data-bs-original-title="Swap Inputs"><i class="fas fa-exchange-alt"></i></button>
+							<div class= "btn-group my-3">
+								<button id="swapButton" class="btn btn-secondary" onclick="swapInputs()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Swap Inputs"><i class="fas fa-exchange-alt"></i></button>
 								{% if user.is_authenticated %}
 								<button id="favouriteButton" class="btn btn-secondary" onclick="toggleFavourite()" data-bs-toggle="tooltip" data-bs-placement="bottom" title data-bs-original-title="Favourite"><i class="fas fa-star"></i></button>
 								{% endif %}
@@ -82,68 +116,6 @@
 							</div>
 
 							<div id="warning" class="alert alert-warning" role="alert"></div>
-
-							<!-- Fare Calculator -->
-							<div id="fare_suggestions" style="display:none">
-								<div id=fare_title>
-									<h4><u>Fare Calculator</u>
-									<button id="myBtn"><i class="fa fa-info-circle fa-xs" style="color:black"></i></button></h4>
-
-								<!-- The Modal -->
-								<div id="myModal" class="modal">
-
-								  <!-- Modal content -->
-								  <div class="modal-content">
-									<span class="close">&times;</span>
-									  <p><b>Disclaimer:</b> This fare calculator is an <b><u>ESTIMATION</u></b> and may not represent true costs.</p>
-								  </div>
-
-								</div>
-
-								</div>
-									<div class= "input-group mb-3">
-									Select Ticket Type:
-									</div>
-								<div class= "input-group mb-3">
-									<div class="form-check">
-										  <input type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Adult">
-										  <label  for="flexRadioDefault1">
-											Adult
-										  </label>
-									</div>
-									<div class="form-check">
-										<input type="radio" name="flexRadioDefault" id="flexRadioDefault2" value="Child">
-										<label  for="flexRadioDefault2">
-											Child: 5-16 OR 5-19 (Leap Card)
-										</label>
-									</div>
-									<div class="form-check">
-										<input  type="radio" name="flexRadioDefault" id="flexRadioDefault3" value="U5">
-										<label  for="flexRadioDefault3">
-											Child: Under 5
-										</label>
-									</div>
-								</div>
-
-								<div class= "input-group mb-3">
-									Do you have a Leap Card?
-								</div>
-								<div class= "input-group mb-3">
-									<div class="form-check">
-										  <input  type="radio" name="flexRadioDefault6" id="flexRadioDefault4" value="Yes">
-										  <label for="flexRadioDefault4">
-											Yes
-										  </label>
-									</div>
-									<div class="form-check">
-										<input  type="radio" name="flexRadioDefault6" id="flexRadioDefault5" value="No">
-										<label class="form-check-label" for="flexRadioDefault5">
-											No
-										</label>
-									</div>
-								</div>
-								<div class="row justify-content-center" id="fare_suggestions_output"></div>
-								</div>
 
 						</div>
 						<div class="col-12 col-md-8" id="route_suggestions"></div>

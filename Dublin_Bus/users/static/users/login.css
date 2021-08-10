@@ -1,6 +1,21 @@
-#messagebox {
-    background-color: #FFAE42;
+#errorBox {
+    background-color: #dc3545;
     border: none;
     font-weight: bold;
     color: black;
+}
+
+#successBox{
+    background-color: #0dcaf0;
+    border: none;
+    font-weight: bold;
+    color: white;
+}
+
+#link {
+    color: #0dcaf0;
+}
+
+#link:hover {
+    color: #85d5e5;
 }
