@@ -881,7 +881,7 @@ function resetJourneyPlanner() {
     infoWindow.close();
     inputFirstStop.value = "";
     inputLastStop.value = "";
-
+    inputTime.value = "";
     //reset map center and zoom
 
     map.setZoom(14);
@@ -899,8 +899,7 @@ function resetJourneyPlanner() {
         toggleCurrentLocation();
     }
 
-    //reset journey planner
-
+    //reset fare calculator
     document.getElementById('fare_suggestions').style.display = "none";
     $('#fareCalculator').attr('class', 'btn btn-secondary');
 }
