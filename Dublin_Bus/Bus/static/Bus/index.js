@@ -364,7 +364,6 @@ function getRoute(start, end, time) {
             showWarning("Unable to access fare data")
             return;  
         }
-        //var fare_suggestions_output = document.getElementById("fare_suggestions_output");
 
         var age = $('input[name="age"]:checked').val();
         var payment = $('input[name="payment"]:checked').val();
@@ -854,7 +853,6 @@ function showMarkers() {
 //function to reset journey planner - should also reset time dropdown???
 function resetJourneyPlanner() {
     document.getElementById('route_suggestions').innerHTML = "";
-    document.getElementById('fare_suggestions_output').innerHTML = "";
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
     endMarker.setVisible(false);
@@ -889,10 +887,6 @@ function resetJourneyPlanner() {
     }
 
     //reset journey planner
-    document.getElementById("flexRadioDefault1").checked = false;
-    document.getElementById("flexRadioDefault2").checked = false;
-    document.getElementById("flexRadioDefault4").checked = false;
-    document.getElementById("flexRadioDefault5").checked = false;
 
     document.getElementById('fare_suggestions').style.display = "none";
     $('#fareCalculator').attr('class', 'btn btn-secondary');
