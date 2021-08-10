@@ -161,6 +161,8 @@
 		stopOptions.appendChild(option);
 	});
 	
+	//set max value for datetime-local input
+	document.getElementById("time-dropdown").setAttribute("max", formatTime(new Date({{ last_time }} * 1000)));
 </script>
 
 {% if journey %}

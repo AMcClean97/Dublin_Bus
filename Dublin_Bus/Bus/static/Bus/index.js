@@ -212,9 +212,6 @@ function initMap() {
 
 
     //This should not be in init_map
-    //set minimum date field to current date so user can't plan journeys in the past
-    var today = currentTime();
-    document.getElementById("time-dropdown").setAttribute("min", today);
 
     //autocomplete listeners
     autocompleteOrigin.addListener("place_changed", checkFavourite, false);
@@ -294,14 +291,12 @@ function getRouteData(warning = true) {
     return route
 }
 
-//Provides currentTime in a format usable by date time input
-function currentTime() {
-    var today = new Date();
-    var date = today.getDate();
-    var month = today.getMonth() + 1;
-    var year = today.getFullYear();
-    var hour = today.getHours();
-    var minute = today.getMinutes();
+function formatTime(time){
+    var date = time.getDate();
+    var month = time.getMonth() + 1;
+    var year = time.getFullYear();
+    var hour = time.getHours();
+    var minute = time.getMinutes();
 
     if (date < 10) {
         date = '0' + date
@@ -316,8 +311,8 @@ function currentTime() {
         minute = '0' + minute
     };
 
-    today = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
-    return today;
+    time = year + '-' + month + '-' + date + 'T' + hour + ':' + minute;
+    return time;
 }
 
 //Displays a warning message beneath button-group
@@ -589,7 +584,7 @@ function submitRoute() {
 
     var time = inputTime.value;
     if (!time) {
-        time = currentTime();
+        time = formatTime(new Date());
     }
 
     var route = getRouteData();
@@ -992,6 +987,8 @@ var checkFavourite = function(evt) {
         }
     }
 }
+//set minimum date field to current date so user can't plan journeys in the past
+document.getElementById("time-dropdown").setAttribute("min", formatTime(new Date()));
 
 //Check if current values are on the favourites list, triggered on changes to bus inputs
 inputFirstStop.addEventListener('input', checkFavourite, false);
