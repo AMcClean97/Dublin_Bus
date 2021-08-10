@@ -238,6 +238,7 @@ function getRouteData(warning = true) {
 
         var destination = autocompleteDestin.getPlace();
         var origin = autocompleteOrigin.getPlace();
+
         if (!origin) {
             if (warning) {
                 showWarning("Please use a valid starting point.")
@@ -246,6 +247,11 @@ function getRouteData(warning = true) {
         } else if (!destination) {
             if (warning) {
                 showWarning("Please use a valid destination.")
+            };
+            return false;
+        } else if (origin.place_id == destination.place_id) {
+            if (warning) {
+                showWarning("Origin and destination are identical.")
             };
             return false;
         }
@@ -264,14 +270,19 @@ function getRouteData(warning = true) {
         var destinationLatLon = getStopData(route['destin_name'], stops);
         if (!originLatLon) {
             if (warning) {
-                showWarning("Please input a valid First Stop")
+                showWarning("Please input a valid first stop.")
             };
             return false;
         } else if (!destinationLatLon) {
             if (warning) {
-                showWarning("Please input a valid Last Stop")
+                showWarning("Please input a valid last stop.")
             };
             return false;
+        } else if (route['origin_name'] == route['destin_name']){
+            if (warning) {
+                showWarning("First and last stops are identical.")
+            };
+            return false;            
         }
 
         route['origin_lat'] = originLatLon['lat'];
@@ -633,9 +644,6 @@ function changeTabs(tab_id) {
         } else {
             console.log("ERROR: " + tab + " not found");
         }
-        endMarker.setVisible(false);
-        startMarker.setVisible(false);
-
     }
     checkFavourite();
 }
