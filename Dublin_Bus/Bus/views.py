@@ -23,7 +23,10 @@ def index(request):
     }
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
-        context['journey'] = favourite.objects.get(id=favourite_id)
+        try:
+            context['journey'] = favourite.objects.get(id=favourite_id)
+        except:
+            pass
    # update_real_time_json()
     return render(request, 'Bus/index.html', context)
 
