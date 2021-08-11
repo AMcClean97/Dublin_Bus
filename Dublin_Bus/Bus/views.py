@@ -7,7 +7,7 @@ import json
 from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
 from .bus_models import get_prediction
 from .serializers import StopTimeSerializer
-from .gtfs_realtime import is_trip_affected, update_real_time_json
+from .gtfs_realtime import is_trip_affected
 from users.models import favourite
 from django.conf import settings
 
@@ -24,7 +24,7 @@ def index(request):
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
         context['journey'] = favourite.objects.get(id=favourite_id)
-   # update_real_time_json()
+
     return render(request, 'Bus/index.html', context)
 
 # handle request for stop_data
@@ -91,7 +91,7 @@ def get_arrivals(stop_pk):
     stop_time = stop_time_query.filter(trip_id__in=list(trip_query)).order_by('arrival_time')
 
     delays = []
-    trip = stop_time_query.values('trip_id')
+    trip = stop_time.values('trip_id')
     if len(trip) < 3:
         upper_range = len(trip)
     else:
@@ -100,7 +100,7 @@ def get_arrivals(stop_pk):
         delay = is_trip_affected(trip[i]['trip_id'], stop_pk)
         delays.append(delay)
 
-    arrivals = StopTimeSerializer(stop_time_query[:3], many=True)
+    arrivals = StopTimeSerializer(stop_time[:3], many=True)
     results['timetable'] = arrivals.data
     results['delays'] = delays
     return results
