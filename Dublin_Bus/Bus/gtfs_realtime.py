@@ -1,36 +1,8 @@
 import json
 import requests
-import threading
 from django.conf import settings
 
-real_time_data_update_frequency = 300
 
-
-def update_real_time_json():
-    """scrapes real time GTFS data and writes to json file"""
-    headers = {'x-api-key': settings.GTFS_API_KEY, 'Cache-control': 'no-cache'}
-    ploads = {'format': 'json'}
-
-    try:
-        r = requests.get('https://gtfsr.transportforireland.ie/v1', headers=headers, params=ploads).json()
-    except Exception as e:
-        print(e)
-
-    # write data to json file
-    with open('json/real_time_data.json', 'w') as f:
-        json.dump(r, f)
-
-    # starts timer object again so it will run again in 5 mins
-    start_thread()
-
-
-def start_thread():
-    """Creates and starts a timer object that will run the update_real_time_json() function
-    The frequency with which the timer is scheduled is controlled by the real_time_data_update_frequency variable
-    """
-    update_data_thread = threading.Timer(real_time_data_update_frequency, update_real_time_json)
-    update_data_thread.daemon = True
-    update_data_thread.start()
 
 
 def is_trip_affected(tripid, stopid):
