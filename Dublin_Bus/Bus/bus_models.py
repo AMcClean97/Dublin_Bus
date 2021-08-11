@@ -22,6 +22,12 @@ def get_current_weather():
     return df
 
 
+def get_future_weather(departure_time):
+    """ retrieves future weather info
+        formats for model and returns dataframe"""
+
+
+
 def encode_features(departure_time):
     """encodes actualtime_dep, weekday, term, holiday & rush hour features for the model
     returns a dataframe"""
@@ -109,13 +115,11 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                             try:
                                 proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
                             except (IndexError, TypeError) as e:
-                                print(e)
                                 return None
                         else:
                             try:
                                 proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
                             except (IndexError, TypeError) as e:
-                                print(e)
                                 return None
                         return proportion_total / 100
     else:
