@@ -111,3 +111,20 @@ class CurrentWeather(models.Model):
     class Meta:
         managed = False
         db_table = 'current_weather'
+
+
+class WeatherPrediction(models.Model):
+    dt = models.IntegerField(primary_key=True)
+    temp = models.FloatField(blank=True, null=True)
+    feels_like = models.FloatField(blank=True, null=True)
+    temp_min = models.FloatField(blank=True, null=True)
+    temp_max = models.FloatField(blank=True, null=True)
+    humidity = models.FloatField(blank=True, null=True)
+    wind_speed = models.FloatField(blank=True, null=True)
+    weather_main = models.CharField(max_length=30, blank=True, null=True)
+    weather_description = models.CharField(max_length=60, blank=True, null=True)
+    weather_icon = models.CharField(max_length=10, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'weather_predictions'

@@ -132,10 +132,10 @@
 
 <script>
 	//Process bus stops
-	var stops = JSON.parse('{{ bus_stops }}'.replace(/&quot;/g,'"'));
+	var stops = JSON.parse('{{ bus_stops }}'.replaceAll(/&quot;/g,'"'));
 
 	//Process Favourite list
-	var favourites = JSON.parse('{{ favourites }}'.replace(/&quot;/g,'"'));
+	var favourites = JSON.parse('{{ favourites }}'.replaceAll(/&quot;/g,'"'));
 	for(var i = 0; i < favourites.length; i++){
 		x = favourites[i]['fields']
 		x['id'] = favourites[i]['pk']
@@ -157,26 +157,28 @@
 	//add bus-stops to the autocomplete input
 	stops.forEach(function(stop){
 		var option = document.createElement('option');
-		option.value = stop['fields']['stop_name'].replace("&#x27;","'");
+		option.value = stop['fields']['stop_name'].replaceAll("&#x27;","'");
 		stopOptions.appendChild(option);
 	});
 	
+	//set max value for datetime-local input
+	document.getElementById("time-dropdown").setAttribute("max", formatTime(new Date({{ last_time }} * 1000)));
 </script>
 
-{% if request.method == "POST" %}
+{% if journey %}
 {% if journey.stops == 1 %}
 <script>
 	changeTabs('stops-tab');
-	inputFirstStop.value = '{{ journey.origin_name }}'.replace("&#x27;","'");
-	inputLastStop.value = '{{ journey.destin_name }}'.replace("&#x27;","'");
+	inputFirstStop.value = '{{ journey.origin_name }}'.replaceAll("&#x27;","'");
+	inputLastStop.value = '{{ journey.destin_name }}'.replaceAll("&#x27;","'");
 	checkFavourite()
 </script>
 {% else %}
 <script>
 
 	function loadFavourite() {
-		inputOrigin.value = '{{ journey.origin_name }}'.replace("&#x27;","'");
-		inputDestination.value = '{{ journey.destin_name }}'.replace("&#x27;","'");
+		inputOrigin.value = '{{ journey.origin_name }}'.replaceAll("&#x27;","'");
+		inputDestination.value = '{{ journey.destin_name }}'.replaceAll("&#x27;","'");
 		var originLatLon = {
 			lat: {{ journey.origin_lat }},
 			lng: {{ journey.origin_lon }},
@@ -185,18 +187,27 @@
 			lat: {{ journey.destin_lat }},
 			lng: {{ journey.destin_lon }},
 		}
-
 		geocoder.geocode({ location: originLatLon }, (results, status) => {
 			if (status === "OK") {
 				autocompleteOrigin.set("place", results[0])
+				geocoder.geocode({ location: destinLatLon }, (results, status) => {
+					if (status === "OK") {
+						autocompleteDestin.set("place", results[0])
+						favourites.forEach(fav => {
+							if (fav.id == {{ journey.pk }}) {
+								var destination = autocompleteDestin.getPlace();
+        						var origin = autocompleteOrigin.getPlace();
+								fav.origin_lat = origin.geometry.location.lat();
+								fav.origin_lon = origin.geometry.location.lng();
+								fav.destin_lat = destination.geometry.location.lat();
+								fav.destin_lon = destination.geometry.location.lng();
+							}
+						});
+						checkFavourite()
+					}
+				})
 			}
 		})
-		geocoder.geocode({ location: destinLatLon }, (results, status) => {
-			if (status === "OK") {
-				autocompleteDestin.set("place", results[0])
-			}
-		})
-		checkFavourite()
 	}
 </script>
 {% endif %}

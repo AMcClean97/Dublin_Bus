@@ -4,27 +4,34 @@ from requests import get
 from django.core import serializers
 from datetime import datetime, date, timedelta
 import json
-from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
+from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate, WeatherPrediction
 from .bus_models import get_prediction
 from .serializers import StopTimeSerializer
 from .gtfs_realtime import is_trip_affected
 from users.models import favourite
 from django.conf import settings
+from django.db.models import Max
 
 
 # Create your views here.
 def index(request):
     favourites_json = serializers.serialize("json", favourite.objects.filter(user_id= request.user.id))
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
+    #last_time_json = serializers.serialize("json", WeatherPrediction.objects.aggregate(Max('dt')))
+    ans = WeatherPrediction.objects.aggregate(Max('dt'))
     context = {
         'bus_stops': bus_stops_json,
         'favourites' : favourites_json,
+        'last_time' : ans['dt__max'],#json.dumps(WeatherPrediction.objects.aggregate(Max('dt'))),
         'MAP_API_KEY': settings.MAP_API_KEY
     }
     if request.method == 'POST':
         favourite_id = request.POST.get('favourite_id')
-        context['journey'] = favourite.objects.get(id=favourite_id)
-
+        try:
+            context['journey'] = favourite.objects.get(id=favourite_id)
+        except:
+            pass
+   # update_real_time_json()
     return render(request, 'Bus/index.html', context)
 
 # handle request for stop_data

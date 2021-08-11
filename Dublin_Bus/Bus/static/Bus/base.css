@@ -6,13 +6,13 @@ html,body{
     /*background-color: #353935;*/
     background-color: #313638;
     font-family: 'Raleway', sans-serif;
- 
 }
 
 
 #central-card{
     background-color: #05386B;
     color: white;
+    z-index: 1;
 }
 
 #central-card .card-header{
@@ -23,6 +23,10 @@ html,body{
 #header {
     background-color: #FFAE42;
     width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    border-bottom: solid 1px #df983a;
 }
 
 .offcanvas-header {
@@ -56,4 +60,12 @@ html,body{
 
 #greeting span {
     color: #05386B;
+}
+
+.tooltip {
+    z-index: 2;
+}
+
+.popover {
+    z-index: 2;
 }

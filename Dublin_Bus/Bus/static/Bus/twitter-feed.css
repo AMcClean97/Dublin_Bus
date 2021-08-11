@@ -15,3 +15,7 @@
 	color: #FFFFFF;
 	font-family: 'Open Sans', sans-serif;
 }
+
+.card {
+	z-index: 1;
+}
