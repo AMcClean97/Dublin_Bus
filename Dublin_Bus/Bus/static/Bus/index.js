@@ -281,11 +281,11 @@ function getRouteData(warning = true) {
                 showWarning("Please input a valid last stop.")
             };
             return false;
-        } else if (route['origin_name'] == route['destin_name']){
+        } else if (route['origin_name'] == route['destin_name']) {
             if (warning) {
                 showWarning("First and last stops are identical.")
             };
-            return false;            
+            return false;
         }
 
         route['origin_lat'] = originLatLon['lat'];
@@ -297,7 +297,7 @@ function getRouteData(warning = true) {
     return route
 }
 
-function formatTime(time){
+function formatTime(time) {
     var date = time.getDate();
     var month = time.getMonth() + 1;
     var year = time.getFullYear();
@@ -348,7 +348,7 @@ async function getRoute(start, end, time) {
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
     document.getElementById('route_suggestions').innerHTML = "";
-    document.getElementById('route_suggestions').style.display = "none";
+    document.getElementById('route_suggestions').style.visibility = "hidden";
 
 
 
@@ -372,21 +372,21 @@ async function getRoute(start, end, time) {
 
     //Check if fare Calculator is on and get data if it is
     var CalcOn = (fare_suggestions.style.display === "block")
-    if (CalcOn){
-        if (!fares){
+    if (CalcOn) {
+        if (!fares) {
             showWarning("Unable to access fare data")
-            return;  
+            return;
         }
 
         var age = $('input[name="age"]:checked').val();
         var payment = $('input[name="payment"]:checked').val();
 
-        if (!age){
+        if (!age) {
             showWarning("Enter Ticket Type.")
             return;
-        } else if (!payment){
+        } else if (!payment) {
             showWarning("Do you have a leap card?")
-            return;                
+            return;
         }
 
         var total_cost = 0;
@@ -423,22 +423,23 @@ async function getRoute(start, end, time) {
             duration_tracker = {};
 
 
-           async function asyncForEach(array, callback) {
-              for (let i=0; i< array.length; i++) {
-             await callback(array[i], i, array);
-             }}
+            async function asyncForEach(array, callback) {
+                for (let i = 0; i < array.length; i++) {
+                    await callback(array[i], i, array);
+                }
+            }
 
-             //const waitFor = (ms) => new Promise(r => setTimeout(r,ms));
+            //const waitFor = (ms) => new Promise(r => setTimeout(r,ms));
 
-        await processJourney(entire_journey).then((travel_time_values) =>
-        displayEstimatedArrival(travel_time_values[0], travel_time_values[1]));
+            await processJourney(entire_journey).then((travel_time_values) =>
+                displayEstimatedArrival(travel_time_values[0], travel_time_values[1]));
 
 
 
 
             //extract useful journey info from response and post to journey planner
-             async function processJourney(entire_journey) {
-             await asyncForEach(entire_journey, async (journey) => {
+            async function processJourney(entire_journey) {
+                await asyncForEach(entire_journey, async (journey) => {
                     //increments id for each step of journey
 
                     i++;
@@ -470,7 +471,7 @@ async function getRoute(start, end, time) {
                         var departureTime = journey.transit.departure_time.value;
 
 
-                        if (CalcOn){
+                        if (CalcOn) {
                             var cost = fareCalc(age, payment, journey, time);
                             total_cost += cost;
                         } else {
@@ -486,7 +487,7 @@ async function getRoute(start, end, time) {
                                 departureStop: departureStop
                             }, {
                                 arrivalStop: arrivalStop
-                            },{
+                            }, {
                                 departureTime: departureTime
                             }, cost));
 
@@ -521,7 +522,9 @@ async function getRoute(start, end, time) {
 
 
 
-                        if (CalcOn){ journeyDescription += " €?";}
+                        if (CalcOn) {
+                            journeyDescription += " €?";
+                        }
                         journeyDescription += '<br>' + journey.transit.departure_stop.name + ' to ' + journey.transit.arrival_stop.name + "<br>";
                         journeyDescription += "<span id = 'not-db'>* Not a Dublin Bus Route</span>";
                         journeyDescription += divider;
@@ -538,12 +541,9 @@ async function getRoute(start, end, time) {
 
 
 
-
-
-
                 //Write Total Cost
-                if (CalcOn){ 
-                    route_suggestions.innerHTML += '<p>Total Fare: €' +  total_cost.toFixed(2).toString() + '</p>';
+                if (CalcOn) {
+                    route_suggestions.innerHTML += '<p>Total Fare: €' + total_cost.toFixed(2).toString() + '</p>';
                 }
 
                 return [latest_departure, duration_tracker];
@@ -552,8 +552,6 @@ async function getRoute(start, end, time) {
             showWarning("No route could be found. Please try again.");
             return;
         }
-
-
 
 
 
@@ -568,7 +566,7 @@ async function getRoute(start, end, time) {
 
                 time_tracker = new Date(departureTime.departureTime);
                 time_tracker.setSeconds(0);
-                time_tracker.setSeconds(time_tracker.getSeconds() + (predictionMins*60));
+                time_tracker.setSeconds(time_tracker.getSeconds() + (predictionMins * 60));
                 time_tracker.setSeconds(0);
                 latest_departure[predictionSpace] = time_tracker;
                 pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Bustimate" data-placement="auto"></i>';
@@ -588,7 +586,7 @@ async function getRoute(start, end, time) {
             }
 
 
-            if (cost){
+            if (cost) {
                 pred += ' €' + cost.toFixed(2).toString();
             }
             document.getElementById(predictionSpace).innerHTML += pred;
@@ -604,73 +602,75 @@ async function getRoute(start, end, time) {
 }
 
 
-    async function displayEstimatedArrival(latest_departure, duration_tracker) {
-            console.log(JSON.stringify(latest_departure))
-            console.log(JSON.stringify(duration_tracker));
-             var minutes_to_add = 0;
-             //get latest bus time_tracker (time of bus departure + time of prediction/duration)
+async function displayEstimatedArrival(latest_departure, duration_tracker) {
+    console.log(JSON.stringify(latest_departure))
+    console.log(JSON.stringify(duration_tracker));
+    var minutes_to_add = 0;
+    //get latest bus time_tracker (time of bus departure + time of prediction/duration)
 
-            var key;
-            var intKey;
-            var latest = 0;
+    var key;
+    var intKey;
+    var latest = 0;
 
-            for (key in latest_departure) {
-            intKey = parseInt(key);
-            if (intKey > latest) {
+    for (key in latest_departure) {
+        intKey = parseInt(key);
+        if (intKey > latest) {
             latest = intKey;
-            }
-            }
-            console.log(latest);
+        }
+    }
+    console.log(latest);
 
 
-               //find durations after latest departures
-            Object.keys(duration_tracker).forEach(key => {
-            if (key > latest) {
-            minutes_to_add += duration_tracker[key]}
-      });
+    //find durations after latest departures
+    Object.keys(duration_tracker).forEach(key => {
+        if (key > latest) {
+            minutes_to_add += duration_tracker[key]
+        }
+    });
 
 
-        //add walking durations after latest bus journey
+    //add walking durations after latest bus journey
 
-      latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
-      var min;
-      if (latest_departure[latest].getHours() > 11) {
-      min = 'pm';}
-      else {
-      min = 'am';
-      }
-      if (latest_departure[latest].getSeconds() > 30) {
-      var minutes = latest_departure[latest].getMinutes() + 1}
-      else {
-      minutes = latest_departure[latest].getMinutes()}
+    latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
+    var min;
+    if (latest_departure[latest].getHours() > 11) {
+        min = 'pm';
+    } else {
+        min = 'am';
+    }
+    if (latest_departure[latest].getSeconds() > 30) {
+        var minutes = latest_departure[latest].getMinutes() + 1
+    } else {
+        minutes = latest_departure[latest].getMinutes()
+    }
 
-      route_suggestions.innerHTML += 'Estimated arrival time: ' + latest_departure[latest].getHours() + ':' + String(minutes).padStart(2,'0') + min;
-      document.getElementById('route_suggestions').style.display = "block";
+    route_suggestions.innerHTML += 'Estimated arrival time: ' + latest_departure[latest].getHours() + ':' + String(minutes).padStart(2, '0') + min;
+    document.getElementById('route_suggestions').style.visibility = "visible";
 
 }
 
 
-function fareCalc(age, payment, journey, time){
+function fareCalc(age, payment, journey, time) {
     var ticket
 
     if (journey.transit.line.short_name.includes("X")) {
         ticket = "Xpresso"
-    //Check if 90 or 40E
-    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E"){
+        //Check if 90 or 40E
+    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E") {
         ticket = "90_OR_40E"
-    //If adult check route length
-    } else if (age === "adult"){
-        if (journey.transit.num_stops <= 3){
+        //If adult check route length
+    } else if (age === "adult") {
+        if (journey.transit.num_stops <= 3) {
             ticket = "1-3"
-        } else if (journey.transit.num_stops <= 13){
+        } else if (journey.transit.num_stops <= 13) {
             ticket = "4-13"
         } else {
             ticket = "13<"
         }
 
-    //If child check if it's school hours
+        //If child check if it's school hours
     } else {
-        if (schoolHours(time)){
+        if (schoolHours(time)) {
             ticket = "school"
         } else {
             ticket = "all"
@@ -681,10 +681,10 @@ function fareCalc(age, payment, journey, time){
 }
 
 
-function schoolHours(timeString){
+function schoolHours(timeString) {
     var date = new Date(timeString);
-    
-    switch (date.getDay()){
+
+    switch (date.getDay()) {
         case 0:
             return false;
         case 1:
@@ -692,17 +692,17 @@ function schoolHours(timeString){
         case 3:
         case 4:
         case 5:
-            if (date.getHours() < 19){
+            if (date.getHours() < 19) {
                 return true;
-            } else{
+            } else {
                 return false;
             }
-        default:
-            if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)){
-                return true;
-            } else{
-                return false;
-            }
+            default:
+                if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)) {
+                    return true;
+                } else {
+                    return false;
+                }
     }
 }
 
@@ -1134,7 +1134,7 @@ $('#stops-tab-btn').on('shown.bs.tab', function() {
 
 //Trigger all popovers
 var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
     return new bootstrap.Popover(popoverTriggerEl)
 })
 
