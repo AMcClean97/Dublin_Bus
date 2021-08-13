@@ -27,7 +27,7 @@
 
 
 
-.fa-walking, .fa-info-circle, .fa-bus-alt{
+.fa-walking, .fa-info-circle, .fa-bus-alt, .fa-clock{
     color: #FFAE42;
 }
 
@@ -58,6 +58,11 @@
 #not-db {
     color: #FFAE42;
     font-weight: bold;
+    font-size: 12px;
+}
+
+#laoder {
+    display: none;
 }
 
 #fare_suggestions {

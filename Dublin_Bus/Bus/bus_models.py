@@ -2,12 +2,14 @@ import pickle
 import pandas as pd
 import xgboost
 import sklearn
-from .models import CurrentWeather, Stop
-from datetime import datetime, date
+from .models import CurrentWeather, Stop, WeatherPrediction
+from datetime import datetime, date, timezone
 import holidays
 import numpy as np
 import json
 import os.path
+from dateparser import parse
+import pytz
 
 
 def get_current_weather():
@@ -25,25 +27,36 @@ def get_current_weather():
 def get_future_weather(departure_time):
     """ retrieves future weather info
         formats for model and returns dataframe"""
+    timestamp_obj = departure_time.timestamp()
+
+    # get nearest matching entry by timestamp, defaulting to nearest timestamp hour behind
+    try:
+        future_weather = WeatherPrediction.objects.filter(dt__lt=timestamp_obj).order_by('-dt')[0]
+
+
+        data = [[future_weather.temp, future_weather.wind_speed, future_weather.weather_main, future_weather.humidity]]
+        df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main', 'humidity'])
+        df['weather_main_precipitation'] = df['weather_main'].apply(
+            lambda x: 1 if x in ['Rain', 'Drizzle', 'Snow'] else 0)
+        df.drop('weather_main', axis=1, inplace=True)
+        return df
+    except IndexError as e:
+        print(e)
 
 
 
 def encode_features(departure_time):
     """encodes actualtime_dep, weekday, term, holiday & rush hour features for the model
     returns a dataframe"""
-    #get actualtime_dep in seconds
-    split_date = departure_time.split('T')
-    time = split_date[1][:8]
-    time_in_seconds = (int(str(time[0:2])) * 60 * 60) + (int(str(time[3:5])) * 60) + (int(str(time[6:8])))
 
-    #parse as datetime object to get weekday and additional features
-    string_date = ' '.join(split_date)[:19]
-    datetime_obj = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
+    #get time in seconds
+    midnight = departure_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    time_in_seconds = (departure_time - midnight).seconds
+
     #get day of week, monday=0, sunday=6
-    day_of_week = datetime_obj.date().weekday()
-    date = datetime_obj.date().strftime('%Y-%m-%d')
-    hour = datetime_obj.hour
-
+    day_of_week = departure_time.date().weekday()
+    date = departure_time.date().strftime('%Y-%m-%d')
+    hour = departure_time.hour
 
     data = [[time_in_seconds, day_of_week, date, hour]]
     df = pd.DataFrame(data, columns=['actualtime_dep', 'weekday', 'date', 'hour'])
@@ -217,10 +230,22 @@ def get_prediction(details):
         predicted_tt = details['google_pred']
 
     else:
-        ## encode features for our model
+        #time sent is UTC, changing time zone to Dublin (will account for daylight savings etc.)
         departure_time = details['departure_time']
+        dublin = pytz.timezone("Europe/Dublin")
+        dublin_time = parse(departure_time)
+        departure_time = dublin_time.astimezone(dublin)
+
+        ## encode features for our model
         df_bus = encode_features(departure_time)
-        df_weather = get_current_weather()
+
+        #if departure date and hour is the same, we get the current weather, else we get weather forecast for that time
+        now = datetime.now()
+        if departure_time.date() == now.date() and departure_time.hour == now.hour:
+            df_weather = get_current_weather()
+        else:
+            df_weather = get_future_weather(departure_time)
+
         df_all = pd.concat([df_bus, df_weather], axis=1)
 
         # load the model that corresponds to the route
