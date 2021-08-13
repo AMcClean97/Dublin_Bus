@@ -603,8 +603,6 @@ async function getRoute(start, end, time) {
 
 
 async function displayEstimatedArrival(latest_departure, duration_tracker) {
-    console.log(JSON.stringify(latest_departure))
-    console.log(JSON.stringify(duration_tracker));
     var minutes_to_add = 0;
     //get latest bus time_tracker (time of bus departure + time of prediction/duration)
 
@@ -618,7 +616,7 @@ async function displayEstimatedArrival(latest_departure, duration_tracker) {
             latest = intKey;
         }
     }
-    console.log(latest);
+
 
 
     //find durations after latest departures
@@ -643,8 +641,10 @@ async function displayEstimatedArrival(latest_departure, duration_tracker) {
     } else {
         minutes = latest_departure[latest].getMinutes()
     }
+    //convert hours from 24 hour to 12 hour clock
+    var hours =  ((latest_departure[latest].getHours() + 11) % 12 + 1);
 
-    route_suggestions.innerHTML += 'Estimated arrival time: ' + latest_departure[latest].getHours() + ':' + String(minutes).padStart(2, '0') + min;
+    route_suggestions.innerHTML += 'Estimated arrival time: ' + hours + ':' + String(minutes).padStart(2, '0') + min;
     document.getElementById('route_suggestions').style.visibility = "visible";
 
 }
