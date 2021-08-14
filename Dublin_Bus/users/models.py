@@ -20,5 +20,5 @@ class favourite(models.Model):
     stops = models.BooleanField(default=False)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'favourites'

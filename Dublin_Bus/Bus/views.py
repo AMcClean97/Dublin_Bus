@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from requests import get
 from django.core import serializers
 from datetime import datetime, date, timedelta
@@ -34,10 +34,7 @@ def fetch_arrivals(request):
         data = get_arrivals(stop_pk)
         return JsonResponse(data)
     else:
-        data = {
-            "msg": "It worked!!",
-        }
-        return JsonResponse(data)
+        return redirect('index')
 
 
 # handle parameters for predictions, returns whole journey prediction, currently hardcoded to use model for route 145_102 for all routes
@@ -48,10 +45,7 @@ def send_to_model(request):
         prediction['current_pred'] = get_prediction(model_params)
         return JsonResponse(prediction)
     else:
-        data = {
-            "msg": "It worked!!",
-        }
-        return JsonResponse(data)
+        return redirect('index')
 
 
 # get next 5 arrivals for a given stop
