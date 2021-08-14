@@ -19,7 +19,7 @@ class Route(models.Model):
     route_type = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'route'
 
 
@@ -37,7 +37,7 @@ class Calendar(models.Model):
     end_date = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'calendar'
 
 
@@ -47,7 +47,7 @@ class CalendarDate(models.Model):
     exception_type = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'calendar_dates'
         unique_together = (( 'service_id', 'date'))
 
@@ -62,7 +62,7 @@ class Stop(models.Model):
     stop_lon = models.FloatField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'stops'
 
 
@@ -76,7 +76,7 @@ class Trip(models.Model):
     direction_id = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'trips'
 
 
@@ -89,7 +89,7 @@ class StopTime(models.Model):
     stop_headsign = models.CharField(blank=True, null=True, max_length=225)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'stop_times'
         unique_together = (('trip_id', 'stop_sequence'))
 
@@ -109,7 +109,7 @@ class CurrentWeather(models.Model):
     weather_icon = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'current_weather'
 
 

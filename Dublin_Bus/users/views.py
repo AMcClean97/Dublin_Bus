@@ -66,16 +66,31 @@ def favourites(request):
     context = {'favourites': favourites}
     return render(request, 'users/favourites.html', context)
 
-
+@login_required(login_url='login')
 def addFavourite(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        
-        #Check if Favourite with same user and co-ordinates exists
-        if favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
+        try:
+            data = json.loads(request.body)
+        except:
             return_info = {
                 'success' : False,
-                'result' : 'Duplicate Favourite Already Exists'
+                'result' : "ERROR input not in JSON format."
+            }
+            return JsonResponse(return_info)
+        
+        expected_keys = [ 'user', 'origin_name', 'origin_lat', 'origin_lon','destin_name', 'destin_lat', 'destin_lon', 'stops']
+
+        #check if input is in correct format
+        if list(data.keys()) != expected_keys:
+            return_info = {
+                'success' : False,
+                'result' : "ERROR input keys are not correct."
+            }
+        #Check if Favourite with same user and co-ordinates exists
+        elif favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
+            return_info = {
+                'success' : False,
+                'result' : 'ERROR Duplicate favourite already exists.'
             }
         else:
             try:
@@ -84,14 +99,14 @@ def addFavourite(request):
                 favourite_dict = model_to_dict(new_favourite)
                 return_info = {
                     'success' : True,
-                    'result' : "favourite added",
+                    'result' : "Favourite added.",
                     'favourite' : favourite_dict
                 }
                 return JsonResponse(return_info)
             except:
                 return_info = {
                     'success' : False,
-                    'result' : "ERROR unable to save new favourite"
+                    'result' : "ERROR unable to save new favourite."
                 }
                 return JsonResponse(return_info)
         
@@ -99,24 +114,45 @@ def addFavourite(request):
     else:
         return redirect('index')
 
+@login_required(login_url='login')
 def removeFavourite(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
         try:
+            data = json.loads(request.body)
+
             favourite.objects.get(pk=data['id']).delete()
-            response = { 'success': True }
+            return_info = { 
+                'success': True, 
+                'result' : "Favourite dropped."
+            }
         except:
-            response = { 'success': False }
-        return JsonResponse(response)
+            return_info = { 
+                'success': False,
+                'result' : "ERROR could not delete."
+            }
+        return JsonResponse(return_info)
     else:
         return redirect('index')
 
+@login_required(login_url='login')
 def renameFavourite(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        renamed_favourite = favourite.objects.get(pk=data['id'])
-        renamed_favourite.favourite_name = data['new_name']
-        renamed_favourite.save(update_fields=['favourite_name'])
-        return JsonResponse({ 'new_name': renamed_favourite.favourite_name })
+        try:
+            data = json.loads(request.body)
+            renamed_favourite = favourite.objects.get(pk=data['id'])
+            renamed_favourite.favourite_name = data['new_name']
+            renamed_favourite.save(update_fields=['favourite_name'])
+            return_info = {
+                'success' : True,
+                'result' : "Rename successful.",
+                'name' : renamed_favourite.favourite_name
+            }
+            return JsonResponse(return_info)
+        except:
+            return_info = {
+                'success' : False,
+                'result' : "ERROR could not rename."
+            }
+            return JsonResponse(return_info)
     else:
         return redirect('index')
