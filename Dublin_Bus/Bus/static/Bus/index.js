@@ -46,6 +46,7 @@ let fares = false;
 let time_tracker;
 let duration_tracker = {};
 let latest_departure = {};
+let no_route = false;
 
 
 
@@ -397,20 +398,7 @@ async function getRoute(start, end, time) {
     directionsService.route(request, async function(response, status) {
         if (status == "OK") {
 
-            //set custom markers
-            startMarker.setPosition(start);
-            startMarker.setIcon(startIcon);
-            startMarker.setMap(map);
-            startMarker.setVisible(true);
-            endMarker.setPosition(end);
-            endMarker.setIcon(endIcon);
-            endMarker.setMap(map);
-            endMarker.setVisible(true);
 
-
-            directionsRenderer.setDirections(response);
-            directionsRenderer.setMap(map);
-            infoWindow.close();
 
             var entire_journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
             console.log(entire_journey);
@@ -423,16 +411,28 @@ async function getRoute(start, end, time) {
             duration_tracker = {};
 
 
+
+
+
             async function asyncForEach(array, callback) {
                 for (let i = 0; i < array.length; i++) {
-                    await callback(array[i], i, array);
+                if (no_route == true) {
+                journeyDescription = "This route is not served by Dublin Bus.<br>";
+                journeyDescription += divider;
+                route_suggestions.innerHTML = journeyDescription;
+                console.error("Doesn't Exist!");
+                break;
                 }
+                else {
+                    await callback(array[i], i, array);
+                }}
+
+
             }
 
-            //const waitFor = (ms) => new Promise(r => setTimeout(r,ms));
 
             await processJourney(entire_journey).then((travel_time_values) =>
-                displayEstimatedArrival(travel_time_values[0], travel_time_values[1]));
+                displayEstimatedArrival(travel_time_values[0], travel_time_values[1], no_route));
 
 
 
@@ -531,10 +531,10 @@ async function getRoute(start, end, time) {
                         route_suggestions.innerHTML += journeyDescription;
 
                     } else {
-                        journeyDescription = "This route is not served by Dublin Bus.<br>";
-                        journeyDescription += divider;
-                        route_suggestions.innerHTML += journeyDescription;
+                        no_route = true;
+
                     }
+
 
                 })
 
@@ -585,6 +585,20 @@ async function getRoute(start, end, time) {
 
             }
 
+            //set custom markers
+                startMarker.setPosition(start);
+                startMarker.setIcon(startIcon);
+                startMarker.setMap(map);
+                startMarker.setVisible(true);
+                endMarker.setPosition(end);
+                endMarker.setIcon(endIcon);
+                endMarker.setMap(map);
+                endMarker.setVisible(true);
+
+
+                directionsRenderer.setDirections(response);
+                directionsRenderer.setMap(map);
+                infoWindow.close();
 
             if (cost) {
                 pred += ' €' + cost.toFixed(2).toString();
@@ -602,7 +616,10 @@ async function getRoute(start, end, time) {
 }
 
 
-async function displayEstimatedArrival(latest_departure, duration_tracker) {
+async function displayEstimatedArrival(latest_departure, duration_tracker, no_route) {
+    if (no_route) {
+    document.getElementById('route_suggestions').style.visibility = "visible";
+    } else {
     var minutes_to_add = 0;
     //get latest bus time_tracker (time of bus departure + time of prediction/duration)
 
@@ -648,7 +665,7 @@ async function displayEstimatedArrival(latest_departure, duration_tracker) {
     document.getElementById('route_suggestions').style.visibility = "visible";
 
 }
-
+}
 
 function fareCalc(age, payment, journey, time) {
     var ticket
@@ -709,7 +726,7 @@ function schoolHours(timeString) {
 
 //Triggered by pressing submit button. Gets route and current time and sends it to getRoute
 function submitRoute() {
-
+    no_route =  false;
     //get rid of warning
     document.getElementById('warning').style.display = 'none';
 
@@ -995,6 +1012,7 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
     endMarker.setVisible(false);
     startMarker.setVisible(false);
+    no_route = false;
 
     //Delete Warning
     document.getElementById('warning').style.display = 'none';
