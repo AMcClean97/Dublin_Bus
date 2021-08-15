@@ -42,6 +42,12 @@ let endMarker;
 let current_user = null;
 //Bus fares for calculator
 let fares = false;
+//stores bus departure time and travel time values for estimate arrival time
+let time_tracker;
+let duration_tracker = {};
+let latest_departure = {};
+
+
 
 $.getJSON("./static/Bus/bus_fares.json", function(data) {
     fares = data
@@ -275,11 +281,11 @@ function getRouteData(warning = true) {
                 showWarning("Please input a valid last stop.")
             };
             return false;
-        } else if (route['origin_name'] == route['destin_name']){
+        } else if (route['origin_name'] == route['destin_name']) {
             if (warning) {
                 showWarning("First and last stops are identical.")
             };
-            return false;            
+            return false;
         }
 
         route['origin_lat'] = originLatLon['lat'];
@@ -291,7 +297,7 @@ function getRouteData(warning = true) {
     return route
 }
 
-function formatTime(time){
+function formatTime(time) {
     var date = time.getDate();
     var month = time.getMonth() + 1;
     var year = time.getFullYear();
@@ -337,11 +343,12 @@ function getStopData(name, stop_list) {
 };
 
 //Displays route and time estimates
-function getRoute(start, end, time) {
+async function getRoute(start, end, time) {
     //Clear Previous Route
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
     document.getElementById('route_suggestions').innerHTML = "";
+    document.getElementById('route_suggestions').style.visibility = "hidden";
 
 
 
@@ -365,21 +372,21 @@ function getRoute(start, end, time) {
 
     //Check if fare Calculator is on and get data if it is
     var CalcOn = (fare_suggestions.style.display === "block")
-    if (CalcOn){
-        if (!fares){
+    if (CalcOn) {
+        if (!fares) {
             showWarning("Unable to access fare data")
-            return;  
+            return;
         }
 
         var age = $('input[name="age"]:checked').val();
         var payment = $('input[name="payment"]:checked').val();
 
-        if (!age){
+        if (!age) {
             showWarning("Enter Ticket Type.")
             return;
-        } else if (!payment){
+        } else if (!payment) {
             showWarning("Do you have a leap card?")
-            return;                
+            return;
         }
 
         var total_cost = 0;
@@ -387,7 +394,7 @@ function getRoute(start, end, time) {
 
 
     //make request and render route on map
-    directionsService.route(request, function(response, status) {
+    directionsService.route(request, async function(response, status) {
         if (status == "OK") {
 
             //set custom markers
@@ -405,29 +412,47 @@ function getRoute(start, end, time) {
             directionsRenderer.setMap(map);
             infoWindow.close();
 
-            var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
-            console.log(journey);
-
+            var entire_journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+            console.log(entire_journey);
             var route_suggestions = document.getElementById('route_suggestions');
             var divider = "<hr class='divider'>"
             //this variable is used to create ids for each step in a journey
             var i = 0;
-            processJourney(journey);
+            // used to store values for estimated arrival time
+            latest_departure = {};
+            duration_tracker = {};
+
+
+            async function asyncForEach(array, callback) {
+                for (let i = 0; i < array.length; i++) {
+                    await callback(array[i], i, array);
+                }
+            }
+
+            //const waitFor = (ms) => new Promise(r => setTimeout(r,ms));
+
+            await processJourney(entire_journey).then((travel_time_values) =>
+                displayEstimatedArrival(travel_time_values[0], travel_time_values[1]));
+
+
+
 
             //extract useful journey info from response and post to journey planner
-            async function processJourney(journey) {
-                journey.forEach(async (journey) => {
+            async function processJourney(entire_journey) {
+                await asyncForEach(entire_journey, async (journey) => {
                     //increments id for each step of journey
+
                     i++;
                     //assigns id to p element
                     route_suggestions.innerHTML += "<p id='" + i + "'</p>";
 
 
                     if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
-                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
+                        journeyDescription = "<img src='../static/Bus/logo-smaller.png' class='img-fluid><i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
+                        journeyDescription += "<i class='fas fa-clock'></i> " + journey.transit.departure_time.text + '    |    ';
 
                         var routeDetails = {};
-                        routeDetails['departure_time'] = journey.transit.departure_time.value;
+                        routeDetails['departure_time'] = journey.transit.departure_time.value.toISOString();
                         routeDetails['line'] = journey.transit.line.short_name;
                         routeDetails['departure_stop'] = journey.transit.departure_stop.name;
                         routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
@@ -443,8 +468,10 @@ function getRoute(start, end, time) {
                         var numStops = routeDetails['num_stops'];
                         var arrivalStop = routeDetails['arrival_stop'];
                         var departureStop = routeDetails['departure_stop'];
+                        var departureTime = journey.transit.departure_time.value;
 
-                        if (CalcOn){
+
+                        if (CalcOn) {
                             var cost = fareCalc(age, payment, journey, time);
                             total_cost += cost;
                         } else {
@@ -460,8 +487,11 @@ function getRoute(start, end, time) {
                                 departureStop: departureStop
                             }, {
                                 arrivalStop: arrivalStop
-                            }, cost)
-                        );
+                            }, {
+                                departureTime: departureTime
+                            }, cost));
+
+
 
                     } else if (journey.travel_mode == "WALKING") {
                         journeyDescription = "<i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>"
@@ -469,28 +499,54 @@ function getRoute(start, end, time) {
                         journeyDescription += divider;
                         route_suggestions.innerHTML += journeyDescription;
 
+                        duration_tracker[i] = Math.round(journey.duration.value / 60);
+
+
+
+
                     } else if (journey.travel_mode == "TRANSIT" && journey.transit.line.vehicle.type == "BUS") {
                         if (!journey.transit.line.short_name) {
                             var name = journey.transit.line.name;
                         } else {
                             var name = journey.transit.line.short_name;
                         }
-                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + name + "   |   " + journey.transit.num_stops + ' stops/' + journey.duration.text + ' <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
-                        if (CalcOn){ journeyDescription += " €?";}
+                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + name + "   |   ";
+                        journeyDescription += "<i class='fas fa-clock'></i> " + journey.transit.departure_time.text + '    |    ';
+                        journeyDescription += journey.transit.num_stops + ' stops/' + journey.duration.text + ' <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
+                        time_tracker = new Date(journey.transit.departure_time.value);
+                        time_tracker.setSeconds(0);
+                        time_tracker.setSeconds(time_tracker.getSeconds() + journey.duration.value);
+                        time_tracker.setSeconds(0);
+                        latest_departure[i] = time_tracker;
+
+
+
+
+                        if (CalcOn) {
+                            journeyDescription += " €?";
+                        }
                         journeyDescription += '<br>' + journey.transit.departure_stop.name + ' to ' + journey.transit.arrival_stop.name + "<br>";
-                        journeyDescription += "<span id = 'not-db'>Not a Dublin Bus Route</span>";
+                        journeyDescription += "<span id = 'not-db'>* Not a Dublin Bus Route</span>";
                         journeyDescription += divider;
                         route_suggestions.innerHTML += journeyDescription;
+
                     } else {
                         journeyDescription = "This route is not served by Dublin Bus.<br>";
                         journeyDescription += divider;
                         route_suggestions.innerHTML += journeyDescription;
                     }
+
                 })
+
+
+
+
                 //Write Total Cost
-                if (CalcOn){ 
-                    route_suggestions.innerHTML += '<p>Total Fare: €' +  total_cost.toFixed(2).toString() + '</p>';
+                if (CalcOn) {
+                    route_suggestions.innerHTML += '<p>Total Fare: €' + total_cost.toFixed(2).toString() + '</p>';
                 }
+
+                return [latest_departure, duration_tracker];
             }
         } else {
             showWarning("No route could be found. Please try again.");
@@ -498,49 +554,123 @@ function getRoute(start, end, time) {
         }
 
 
-        async function displayRoute(journeyPrediction, predictionSpace, numStops, departureStop, arrivalStop, cost) {
+
+
+        async function displayRoute(journeyPrediction, predictionSpace, numStops, departureStop, arrivalStop, departureTime, cost) {
             var pred;
+
 
             if (typeof journeyPrediction == 'string') {
                 journeyPrediction = journeyPrediction.slice(1, -1);
                 var predictionMins = parseInt(journeyPrediction);
+
+                time_tracker = new Date(departureTime.departureTime);
+                time_tracker.setSeconds(0);
+                time_tracker.setSeconds(time_tracker.getSeconds() + (predictionMins * 60));
+                time_tracker.setSeconds(0);
+                latest_departure[predictionSpace] = time_tracker;
                 pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Bustimate" data-placement="auto"></i>';
 
 
+
             } else {
+
+                time_tracker = new Date(departureTime.departureTime);
+                time_tracker.setSeconds(0);
+                time_tracker.setSeconds(time_tracker.getSeconds() + journeyPrediction);
+                time_tracker.setSeconds(0);
+                latest_departure[predictionSpace] = time_tracker;
                 var predictionMins = Math.round(journeyPrediction / 60);
                 pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
+
             }
 
-            if (cost){
+
+            if (cost) {
                 pred += ' €' + cost.toFixed(2).toString();
             }
             document.getElementById(predictionSpace).innerHTML += pred;
             document.getElementById(predictionSpace).innerHTML += '<br>' + departureStop.departureStop + ' to ' + arrivalStop.arrivalStop + "<br>" + divider;
+
         }
+
+
+
+
     })
+
 }
-function fareCalc(age, payment, journey, time){
+
+
+async function displayEstimatedArrival(latest_departure, duration_tracker) {
+    var minutes_to_add = 0;
+    //get latest bus time_tracker (time of bus departure + time of prediction/duration)
+
+    var key;
+    var intKey;
+    var latest = 0;
+
+    for (key in latest_departure) {
+        intKey = parseInt(key);
+        if (intKey > latest) {
+            latest = intKey;
+        }
+    }
+
+
+
+    //find durations after latest departures
+    Object.keys(duration_tracker).forEach(key => {
+        if (key > latest) {
+            minutes_to_add += duration_tracker[key]
+        }
+    });
+
+
+    //add walking durations after latest bus journey
+
+    latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
+    var min;
+    if (latest_departure[latest].getHours() > 11) {
+        min = 'pm';
+    } else {
+        min = 'am';
+    }
+    if (latest_departure[latest].getSeconds() > 30) {
+        var minutes = latest_departure[latest].getMinutes() + 1
+    } else {
+        minutes = latest_departure[latest].getMinutes()
+    }
+    //convert hours from 24 hour to 12 hour clock
+    var hours =  ((latest_departure[latest].getHours() + 11) % 12 + 1);
+
+    route_suggestions.innerHTML += 'Estimated arrival time: ' + hours + ':' + String(minutes).padStart(2, '0') + min;
+    document.getElementById('route_suggestions').style.visibility = "visible";
+
+}
+
+
+function fareCalc(age, payment, journey, time) {
     var ticket
 
     if (journey.transit.line.short_name.includes("X")) {
         ticket = "Xpresso"
-    //Check if 90 or 40E
-    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E"){
+        //Check if 90 or 40E
+    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E") {
         ticket = "90_OR_40E"
-    //If adult check route length
-    } else if (age === "adult"){
-        if (journey.transit.num_stops <= 3){
+        //If adult check route length
+    } else if (age === "adult") {
+        if (journey.transit.num_stops <= 3) {
             ticket = "1-3"
-        } else if (journey.transit.num_stops <= 13){
+        } else if (journey.transit.num_stops <= 13) {
             ticket = "4-13"
         } else {
             ticket = "13<"
         }
 
-    //If child check if it's school hours
+        //If child check if it's school hours
     } else {
-        if (schoolHours(time)){
+        if (schoolHours(time)) {
             ticket = "school"
         } else {
             ticket = "all"
@@ -551,10 +681,10 @@ function fareCalc(age, payment, journey, time){
 }
 
 
-function schoolHours(timeString){
+function schoolHours(timeString) {
     var date = new Date(timeString);
-    
-    switch (date.getDay()){
+
+    switch (date.getDay()) {
         case 0:
             return false;
         case 1:
@@ -562,17 +692,17 @@ function schoolHours(timeString){
         case 3:
         case 4:
         case 5:
-            if (date.getHours() < 19){
+            if (date.getHours() < 19) {
                 return true;
-            } else{
+            } else {
                 return false;
             }
-        default:
-            if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)){
-                return true;
-            } else{
-                return false;
-            }
+            default:
+                if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)) {
+                    return true;
+                } else {
+                    return false;
+                }
     }
 }
 
@@ -829,7 +959,6 @@ function displayInfoWindow(timetable, delays, stop_id) {
             infoWindowContent += "<br><i class='fas fa-bus-alt'></i> " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ") - ";
             if (delays[each] != 0) {
                 arrival_time = factorDelay(arrivals[each].arrival_time, delays[each])
-                console.log(arrival_time);
             } else {
                 arrival_time = arrivals[each].arrival_time;
             }
@@ -1005,7 +1134,7 @@ $('#stops-tab-btn').on('shown.bs.tab', function() {
 
 //Trigger all popovers
 var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
     return new bootstrap.Popover(popoverTriggerEl)
 })
 
