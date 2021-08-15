@@ -29,3 +29,4 @@ class TestModels(TestCase):
 
     def test_favourite_given_name(self):
         self.assertEquals(self.favourite1.favourite_name, "Saved Route")
+
