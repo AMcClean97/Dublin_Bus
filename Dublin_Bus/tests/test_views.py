@@ -326,7 +326,7 @@ class TestViews(TransactionTestCase):
 
         #Check error message
         self.assertEquals(data['success'], False)
-        self.assertEquals(data['result'], "ERROR input keys are not correct.")
+        self.assertEquals(data['result'], "ERROR unable to save new favourite.")
 
         #Check new favourite is not created
         self.assertEqual(favourite.objects.all().count(), 1)

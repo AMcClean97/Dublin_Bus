@@ -42,6 +42,8 @@ let endMarker;
 let current_user = null;
 //Bus fares for calculator
 let fares = false;
+// currentFavourite
+let postedFavourite = false
 
 $.getJSON("./static/Bus/bus_fares.json", function(data) {
     fares = data
@@ -939,7 +941,6 @@ function toggleFavourite() {
             //remove warning
             document.getElementById('warning').style.display = 'none';
             var promise = postData(create_favourite_URL, getRouteData());
-
             if (typeof promise.then === "function") {
                 promise.then(
                     function(value) {
@@ -1001,15 +1002,4 @@ $('#locations-tab-btn').on('shown.bs.tab', function() {
 })
 $('#stops-tab-btn').on('shown.bs.tab', function() {
     checkFavourite();
-})
-
-//Trigger all popovers
-var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-    return new bootstrap.Popover(popoverTriggerEl)
-})
-
-//enable tooltips
-$(function() {
-    $('[data-toggle="tooltip"]').tooltip()
 })

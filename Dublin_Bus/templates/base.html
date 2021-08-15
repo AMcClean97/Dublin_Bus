@@ -54,7 +54,7 @@
     <div class="container-fluid" id="header" >
         <div class="row justify-content-center">
             <div class="col text-start mt-2">
-                <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i></button>
+                <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i><span class="d-none d-md-inline"> Menu</span></button>
             </div>
             <div class="col text-center mt-2">
                 <h2><img src="{% static 'Bus/logo.png' %}" class="img-fluid">Bustimate</h2>
@@ -121,7 +121,13 @@
     <script>
         //Enable tooltips on buttons
         $(function () {
-	    $('[data-bs-toggle="tooltip"]').tooltip()
+	        $('[data-bs-toggle="tooltip"]').tooltip()
+        })
+
+        //Trigger all popovers
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl)
         })
     </script>
 </body>

@@ -78,22 +78,13 @@ def addFavourite(request):
             }
             return JsonResponse(return_info)
         
-        expected_keys = [ 'user', 'origin_name', 'origin_lat', 'origin_lon','destin_name', 'destin_lat', 'destin_lon', 'stops']
-
-        #check if input is in correct format
-        if list(data.keys()) != expected_keys:
-            return_info = {
-                'success' : False,
-                'result' : "ERROR input keys are not correct."
-            }
-        #Check if Favourite with same user and co-ordinates exists
-        elif favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
-            return_info = {
-                'success' : False,
-                'result' : 'ERROR Duplicate favourite already exists.'
-            }
-        else:
-            try:
+        try:
+            if favourite.objects.filter(user_id = data['user'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon']).exists():
+                return_info = {
+                    'success' : False,
+                    'result' : 'ERROR Duplicate favourite already exists.'
+                }
+            else:
                 new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
                 new_favourite.save()
                 favourite_dict = model_to_dict(new_favourite)
@@ -102,15 +93,13 @@ def addFavourite(request):
                     'result' : "Favourite added.",
                     'favourite' : favourite_dict
                 }
-                return JsonResponse(return_info)
-            except:
-                return_info = {
-                    'success' : False,
-                    'result' : "ERROR unable to save new favourite."
-                }
-                return JsonResponse(return_info)
-        
+        except:
+            return_info = {
+                'success' : False,
+                'result' : "ERROR unable to save new favourite."
+            }
         return JsonResponse(return_info)
+        
     else:
         return redirect('index')
 

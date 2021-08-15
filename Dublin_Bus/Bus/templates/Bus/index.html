@@ -133,7 +133,6 @@
 <script>
 	//Process bus stops
 	var stops = JSON.parse('{{ bus_stops }}'.replaceAll(/&quot;/g,'"'));
-
 	//Process Favourite list
 	var favourites = JSON.parse('{{ favourites }}'.replaceAll(/&quot;/g,'"'));
 	for(var i = 0; i < favourites.length; i++){
@@ -168,6 +167,7 @@
 {% if journey %}
 {% if journey.stops == 1 %}
 <script>
+	postedFavourite = true
 	changeTabs('stops-tab');
 	inputFirstStop.value = '{{ journey.origin_name }}'.replaceAll("&#x27;","'");
 	inputLastStop.value = '{{ journey.destin_name }}'.replaceAll("&#x27;","'");
@@ -175,7 +175,7 @@
 </script>
 {% else %}
 <script>
-
+	postedFavourite = true
 	function loadFavourite() {
 		inputOrigin.value = '{{ journey.origin_name }}'.replaceAll("&#x27;","'");
 		inputDestination.value = '{{ journey.destin_name }}'.replaceAll("&#x27;","'");
@@ -217,6 +217,9 @@
 	//Add Stop Markers
 	window.onpageshow = function () {
 		addMarkers(stops);
+		if (postedFavourite){
+			submitRoute()
+		}
 	};
 </script>
 
