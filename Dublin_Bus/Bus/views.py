@@ -17,12 +17,11 @@ from django.db.models import Max
 def index(request):
     favourites_json = serializers.serialize("json", favourite.objects.filter(user_id= request.user.id))
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
-    #last_time_json = serializers.serialize("json", WeatherPrediction.objects.aggregate(Max('dt')))
-    ans = WeatherPrediction.objects.aggregate(Max('dt'))
+    lastDate = WeatherPrediction.objects.aggregate(Max('dt'))
     context = {
         'bus_stops': bus_stops_json,
         'favourites' : favourites_json,
-        'last_time' : ans['dt__max'],#json.dumps(WeatherPrediction.objects.aggregate(Max('dt'))),
+        'last_time' : lastDate['dt__max'],
         'MAP_API_KEY': settings.MAP_API_KEY
     }
     if request.method == 'POST':

@@ -126,5 +126,5 @@ class WeatherPrediction(models.Model):
     weather_icon = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'weather_predictions'

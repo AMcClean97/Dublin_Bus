@@ -11,9 +11,10 @@ import json
 
 User = auth.get_user_model()
 
-class TestUsers(TestCase):
+class TestViews(TransactionTestCase):
 
     def setUp(self):
+        #Set up User
         demo_user = User(username='myname', email='example@gmail.com')
         demo_user.is_staff = True
         demo_user.is_superuser = True
@@ -21,9 +22,24 @@ class TestUsers(TestCase):
         demo_user.set_password(self.demo_passwd)
         demo_user.save()
         self.demo_user  = demo_user
+
+        #create favourite
+        demo_favourite = favourite(user_id = self.demo_user.pk,
+            origin_name= 'Shankill, Dublin, Ireland',
+            origin_lat = 53.2332663, 
+            origin_lon = -6.1237578, 
+            destin_name = 'East Wall, Dublin, Ireland', 
+            destin_lat = 53.3543216, 
+            destin_lon = -6.2341133,
+            stops = 0
+            )
+
+        demo_favourite.save()
+        self.demo_favourite = demo_favourite
         return super().setUp()
 
-    #Check that the demo user exists and was created correctly
+    """========================= Testing existence of new demo objects ========================="""
+
     def test_demo_user_exists(self):
         self.assertEqual(User.objects.all().count(), 1)
         self.assertTrue(self.demo_user.check_password(self.demo_passwd))
@@ -32,36 +48,63 @@ class TestUsers(TestCase):
         self.assertEqual(self.demo_user.username, 'myname')
         self.assertEqual(self.demo_user.email, 'example@gmail.com')
 
-    #GET when not logged in
+    # Check demo_favourite was created
+    def test_demo_favourite(self):
+        self.assertEqual(favourite.objects.all().count(), 1)
+        self.assertEqual(self.demo_favourite.user, self.demo_user)
+        self.assertEqual(self.demo_favourite.origin_name, 'Shankill, Dublin, Ireland')
+        self.assertEqual(self.demo_favourite.origin_lat, 53.2332663)
+        self.assertEqual(self.demo_favourite.origin_lon, -6.1237578)
+        self.assertEqual(self.demo_favourite.destin_name, 'East Wall, Dublin, Ireland')
+        self.assertEqual(self.demo_favourite.destin_lat, 53.3543216)
+        self.assertEqual(self.demo_favourite.destin_lon, -6.2341133)
+        self.assertEqual(self.demo_favourite.stops, 0)
+
+    """========================= Testing index view ========================="""
+
+    def test_index_GET(self):
+        response = self.client.get(reverse('index'))
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'Bus/index.html')
+
+    def test_index_POST(self):
+        response = self.client.post(reverse('index'))
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'Bus/index.html')
+
+    """========================= Testing twitter view ========================="""
+
+    def test_twitter_GET(self):
+        response = self.client.get(reverse('twitter'))
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'Bus/twitter.html')
+
+    """========================= Testing fetch_arrivals view ========================="""
+
+    def test_arrivalTimes_GET(self):
+        response = self.client.get(reverse('arrivaltimes'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('index'))
+
+
+    """========================= Testing send_to_model view ========================="""
+
+    def test_model_GET(self):
+        response = self.client.get(reverse('model'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('index'))
+
+    """========================= Testing registerPage view ========================="""
 
     def test_register_GET(self):
         response = self.client.get(reverse('register'))
 
         self.assertEquals(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/register.html')
-
-    def test_login_GET(self):
-        response = self.client.get(reverse('login'))
-
-        self.assertEquals(response.status_code, 200)
-        self.assertTemplateUsed(response, 'users/login.html')
-
-    def test_logout_GET(self):
-        response = self.client.get(reverse('logout'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('login'))
-
-    #GET when logged in
-
-    def test_login_loggedin_GET(self):
-        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
-        response = self.client.get(reverse('login'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('index'))
 
     def test_register_loggedin_GET(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
@@ -70,19 +113,6 @@ class TestUsers(TestCase):
 
         self.assertEquals(response.status_code, 200)
         self.assertEquals(redirect_path, reverse('index'))
-
-    def test_logout(self):
-        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
-        response = self.client.get(reverse('logout'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('login'))
-
-        #check user is now logged out
-        user = auth.get_user(self.client)
-        assert not user.is_authenticated
-
 
     #Check if a new user can be registered
     def test_register_user(self):
@@ -108,7 +138,7 @@ class TestUsers(TestCase):
         self.assertEqual(str(messages[0]), 'Account created for ' + new_user['username'] + '.')
 
     #Check invalid user inputs fails to register new user
-    def test_failed_register(self):
+    def test_register_fail(self):
         invalid_user = {
             'username' : 'myname',
             'email' : 'example@gmail.com',
@@ -129,7 +159,22 @@ class TestUsers(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(len(messages) > 0)
 
-    #Check that demo user can login
+    """========================= Testing loginPage view ========================="""
+
+    def test_login_GET(self):
+        response = self.client.get(reverse('login'))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login.html')
+
+    def test_login_loggedin_GET(self):
+        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
+        response = self.client.get(reverse('login'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('index'))
+
     def test_login_user(self):
         login_details = {
             "username" : self.demo_user.username,
@@ -167,46 +212,29 @@ class TestUsers(TestCase):
         user = auth.get_user(self.client)
         assert not user.is_authenticated
 
-class TestFavourites(TransactionTestCase):
 
-    def setUp(self):
-        #Set up User
-        demo_user = User(username='myname', email='example@gmail.com')
-        demo_user.is_staff = True
-        demo_user.is_superuser = True
-        self.demo_passwd = 'password'
-        demo_user.set_password(self.demo_passwd)
-        demo_user.save()
-        self.demo_user  = demo_user
+    """========================= Testing logoutUser view ========================="""
 
-        #create favourite
-        demo_favourite = favourite(user_id = self.demo_user.pk,
-            origin_name= 'Shankill, Dublin, Ireland',
-            origin_lat = 53.2332663, 
-            origin_lon = -6.1237578, 
-            destin_name = 'East Wall, Dublin, Ireland', 
-            destin_lat = 53.3543216, 
-            destin_lon = -6.2341133,
-            stops = 0
-            )
+    def test_logout_GET(self):
+        response = self.client.get(reverse('logout'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
 
-        demo_favourite.save()
-        self.demo_favourite = demo_favourite
-        return super(TestFavourites, self).setUp()
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('login'))
 
-    # Check demo_favourite was created
-    def test_demo_favourite(self):
-        self.assertEqual(favourite.objects.all().count(), 1)
-        self.assertEqual(self.demo_favourite.user, self.demo_user)
-        self.assertEqual(self.demo_favourite.origin_name, 'Shankill, Dublin, Ireland')
-        self.assertEqual(self.demo_favourite.origin_lat, 53.2332663)
-        self.assertEqual(self.demo_favourite.origin_lon, -6.1237578)
-        self.assertEqual(self.demo_favourite.destin_name, 'East Wall, Dublin, Ireland')
-        self.assertEqual(self.demo_favourite.destin_lat, 53.3543216)
-        self.assertEqual(self.demo_favourite.destin_lon, -6.2341133)
-        self.assertEqual(self.demo_favourite.stops, 0)
+    def test_logout(self):
+        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
+        response = self.client.get(reverse('logout'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
 
-    #Not logged in GET
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('login'))
+
+        #check user is now logged out
+        user = auth.get_user(self.client)
+        assert not user.is_authenticated
+
+    """========================= Testing favourites view ========================="""
 
     def test_favourites_GET(self):
         response = self.client.get(reverse('favourites'), follow=True)
@@ -215,29 +243,6 @@ class TestFavourites(TransactionTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertEquals(redirect_path, reverse('login'))
 
-    def test_addFavourite_GET(self):
-        response = self.client.get(reverse('addFavourite'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('login'))
-
-    def test_removeFavourite_GET(self):
-        response = self.client.get(reverse('removeFavourite'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('login'))
-
-    def test_renameFavourite_GET(self):
-        response = self.client.get(reverse('renameFavourite'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('login'))
-
-    # Logged in Get
-
     def test_favourites_loggedin_GET(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
         response = self.client.get(reverse('favourites'))
@@ -245,25 +250,18 @@ class TestFavourites(TransactionTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/favourites.html')
 
-    def test_addFavourite_loggedin_GET(self):
-        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
+    """========================= Testing addFavourites view ========================="""
+
+    def test_addFavourite_GET(self):
         response = self.client.get(reverse('addFavourite'), follow=True)
         redirect_path = response.request.get("PATH_INFO")
 
         self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('index'))
+        self.assertEquals(redirect_path, reverse('login'))
 
-    def test_removeFavourite_loggedin_GET(self):
+    def test_addFavourite_loggedin_GET(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
-        response = self.client.get(reverse('removeFavourite'), follow=True)
-        redirect_path = response.request.get("PATH_INFO")
-
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(redirect_path, reverse('index'))
-
-    def test_renameFavourite_loggedin_GET(self):
-        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
-        response = self.client.get(reverse('renameFavourite'), follow=True)
+        response = self.client.get(reverse('addFavourite'), follow=True)
         redirect_path = response.request.get("PATH_INFO")
 
         self.assertEquals(response.status_code, 200)
@@ -294,8 +292,6 @@ class TestFavourites(TransactionTestCase):
 
         #Check new favourite is created
         self.assertEqual(favourite.objects.all().count(), 2)
-
-    ### Adding a Favourite -- ERROR handling ###
 
     def test_addFavourite_nonexistent_user(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
@@ -379,6 +375,23 @@ class TestFavourites(TransactionTestCase):
         #Check new favourite is not created
         self.assertEqual(favourite.objects.all().count(), 1)
 
+    """========================= Testing removeFavourites view ========================="""
+
+    def test_removeFavourite_GET(self):
+        response = self.client.get(reverse('removeFavourite'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('login'))
+
+    def test_removeFavourite_loggedin_GET(self):
+        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
+        response = self.client.get(reverse('removeFavourite'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('index'))
+
     def test_removeFavourite(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
         data = { 'id' : self.demo_favourite.pk }
@@ -400,7 +413,6 @@ class TestFavourites(TransactionTestCase):
         self.assertEquals(data['result'], "ERROR could not delete.")
         self.assertEqual(favourite.objects.all().count(), 1)
 
-
     def test_removeFavourite_wrongFormat(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
         data = { 'testkey' : "testvalue" }
@@ -410,6 +422,27 @@ class TestFavourites(TransactionTestCase):
         self.assertEquals(data['success'], False)
         self.assertEquals(data['result'], "ERROR could not delete.")
         self.assertEqual(favourite.objects.all().count(), 1)
+
+    """========================= Testing renameFavourites view ========================="""
+
+    #Not logged in GET
+    def test_renameFavourite_GET(self):
+        response = self.client.get(reverse('renameFavourite'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('login'))
+
+    # Logged in Get
+
+    def test_renameFavourite_loggedin_GET(self):
+        self.client.login(username= self.demo_user.username, password=self.demo_passwd)
+        response = self.client.get(reverse('renameFavourite'), follow=True)
+        redirect_path = response.request.get("PATH_INFO")
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(redirect_path, reverse('index'))
+
 
     def test_renameFavourite(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
@@ -435,7 +468,6 @@ class TestFavourites(TransactionTestCase):
 
         self.assertEquals(data['success'], False)
         self.assertEquals(data['result'], "ERROR could not rename.")
-        self.assertEquals(self.demo_favourite.favourite_name, 'Saved Route')
 
     def test_renameFavourite_wrongFormat(self):
         self.client.login(username= self.demo_user.username, password=self.demo_passwd)
@@ -445,35 +477,3 @@ class TestFavourites(TransactionTestCase):
 
         self.assertEquals(data['success'], False)
         self.assertEquals(data['result'], "ERROR could not rename.")
-        self.assertEquals(self.demo_favourite.favourite_name, 'Saved Route')
-
-    
-
-
-
-
-
-class TestViews(TestCase):
-
-    def test_index_GET(self):
-        response = self.client.get(reverse('index'))
-        self.assertEquals(response.status_code, 200)
-        self.assertTemplateUsed(response, 'Bus/index.html')
-
-
-    def test_twitter_GET(self):
-        response = self.client.get(reverse('twitter'))
-        self.assertEquals(response.status_code, 200)
-        self.assertTemplateUsed(response, 'Bus/twitter.html')
-
-    #Test The redirects 
-
-    def test_arrivalTimes_GET(self):
-        response = self.client.get(reverse('arrivaltimes'))
-        self.assertEquals(response.status_code, 302)
-        self.assertRedirects(response, reverse('index'))
-
-    def test_model_GET(self):
-        response = self.client.get(reverse('model'))
-        self.assertEquals(response.status_code, 302)
-        self.assertRedirects(response, reverse('index'))

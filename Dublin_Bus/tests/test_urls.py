@@ -3,7 +3,7 @@ from django.urls import reverse, resolve
 from Bus.views import index, fetch_arrivals, send_to_model, twitter
 from users.views import loginPage, registerPage, logoutUser, favourites, addFavourite, removeFavourite, renameFavourite
 
-"""
+
 #Test that basic URLS are functioning properly
 class TestUrls(SimpleTestCase):
     
@@ -73,4 +73,3 @@ class TestUrls(SimpleTestCase):
         self.assertEquals(url, '/users/favourites/rename')
         self.assertEquals(resolve(url).func, renameFavourite)
 
-"""
