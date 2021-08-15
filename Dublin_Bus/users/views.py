@@ -85,6 +85,9 @@ def addFavourite(request):
                     'result' : 'ERROR Duplicate favourite already exists.'
                 }
             else:
+                data['origin_name'] = data['origin_name'].replace('"', '\'')
+                data['destin_name'] = data['destin_name'].replace('"', '\'')
+
                 new_favourite = favourite(user_id = data['user'], origin_name= data['origin_name'], origin_lat = data['origin_lat'], origin_lon = data['origin_lon'], destin_name = data['destin_name'], destin_lat = data['destin_lat'], destin_lon = data['destin_lon'], stops = data['stops'])
                 new_favourite.save()
                 favourite_dict = model_to_dict(new_favourite)
@@ -129,7 +132,7 @@ def renameFavourite(request):
         try:
             data = json.loads(request.body)
             renamed_favourite = favourite.objects.get(pk=data['id'])
-            renamed_favourite.favourite_name = data['new_name']
+            renamed_favourite.favourite_name = data['new_name'].replace('"', '')
             renamed_favourite.save(update_fields=['favourite_name'])
             return_info = {
                 'success' : True,
