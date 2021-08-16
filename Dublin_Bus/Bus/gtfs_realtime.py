@@ -3,8 +3,6 @@ import requests
 from django.conf import settings
 
 
-
-
 def is_trip_affected(tripid, stopid):
     """when a user clicks on a marker, sends 3 next timetabled arrivals according to GTFS and returns any delays
     reported by GTFS -R """

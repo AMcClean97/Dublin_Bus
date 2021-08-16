@@ -15,13 +15,13 @@ from django.db.models import Max
 
 # Create your views here.
 def index(request):
-    favourites_json = serializers.serialize("json", favourite.objects.filter(user_id= request.user.id))
+    favourites_json = serializers.serialize("json", favourite.objects.filter(user_id=request.user.id))
     bus_stops_json = serializers.serialize("json", Stop.objects.all())
     lastDate = WeatherPrediction.objects.aggregate(Max('dt'))
     context = {
         'bus_stops': bus_stops_json,
-        'favourites' : favourites_json,
-        'last_time' : lastDate['dt__max'],
+        'favourites': favourites_json,
+        'last_time': lastDate['dt__max'],
         'MAP_API_KEY': settings.MAP_API_KEY
     }
     if request.method == 'POST':
@@ -30,8 +30,9 @@ def index(request):
             context['journey'] = favourite.objects.get(id=favourite_id)
         except:
             pass
-   # update_real_time_json()
+    # update_real_time_json()
     return render(request, 'Bus/index.html', context)
+
 
 # handle request for stop_data
 def fetch_arrivals(request):
@@ -43,7 +44,8 @@ def fetch_arrivals(request):
         return redirect('index')
 
 
-# handle parameters for predictions, returns whole journey prediction, currently hardcoded to use model for route 145_102 for all routes
+# handle parameters for predictions, returns whole journey prediction, currently hardcoded to use model for route
+# 145_102 for all routes
 def send_to_model(request):
     if request.method == "POST":
         model_params = json.loads(request.body)
@@ -83,9 +85,11 @@ def get_arrivals(stop_pk):
     # This can probably be neater?
     # NEED TO ACCOUNT FOR TIMES PAST MIDNIGHT?
     # MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
-    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now, arrival_time__lt=two_hours_from_now)
+    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now,
+                                              arrival_time__lt=two_hours_from_now)
     calendar_date_query = CalendarDate.objects.only('service_id').filter(date=today_str)
-    calendar_query = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1}).exclude(
+    calendar_query = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(
+        **{today: 1}).exclude(
         service_id__in=calendar_date_query)
     trip_query = Trip.objects.filter(stoptime__in=list(stop_time_query), service_id__in=list(calendar_query))
     stop_time = stop_time_query.filter(trip_id__in=list(trip_query)).order_by('arrival_time')
@@ -96,7 +100,7 @@ def get_arrivals(stop_pk):
         upper_range = len(trip)
     else:
         upper_range = 3
-    for i in range (0, upper_range):
+    for i in range(0, upper_range):
         delay = is_trip_affected(trip[i]['trip_id'], stop_pk)
         delays.append(delay)
 

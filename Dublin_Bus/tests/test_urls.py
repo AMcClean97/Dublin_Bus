@@ -4,9 +4,9 @@ from Bus.views import index, fetch_arrivals, send_to_model, twitter
 from users.views import loginPage, registerPage, logoutUser, favourites, addFavourite, removeFavourite, renameFavourite
 
 
-#Test that basic URLS are functioning properly
+# Test that basic URLS are functioning properly
 class TestUrls(SimpleTestCase):
-    
+
     # Test Homepage/Map URL
     def test_index(self):
         url = reverse('index')
@@ -54,7 +54,7 @@ class TestUrls(SimpleTestCase):
         url = reverse('favourites')
         self.assertEquals(url, '/users/favourites')
         self.assertEquals(resolve(url).func, favourites)
-    
+
     # Test Add Favourite URL
     def test_add_favourite(self):
         url = reverse('addFavourite')
@@ -72,4 +72,3 @@ class TestUrls(SimpleTestCase):
         url = reverse('renameFavourite')
         self.assertEquals(url, '/users/favourites/rename')
         self.assertEquals(resolve(url).func, renameFavourite)
-
