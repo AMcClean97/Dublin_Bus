@@ -98,6 +98,8 @@ class TestViews(TransactionTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertEquals(redirect_path, reverse('index'))
 
+
+
     """========================= Testing registerPage view ========================="""
 
     def test_register_GET(self):

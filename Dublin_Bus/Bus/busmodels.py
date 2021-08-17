@@ -2,19 +2,24 @@ import pickle
 import pandas as pd
 import xgboost
 import sklearn
-from .models import CurrentWeather, Stop
-from datetime import datetime, date
+from .models import CurrentWeather, Stop, WeatherPrediction
+from datetime import datetime, date, timezone
 import holidays
 import numpy as np
 import json
 import os.path
+from dateparser import parse
+import pytz
 
 
 def get_current_weather():
-    """ retrieves current weather info
-        formats for model and returns dataframe"""
+    """ retrieves current weather info"""
     current_weather = CurrentWeather.objects.first()
-    data = [[current_weather.temp, current_weather.wind_speed, current_weather.weather_main, current_weather.humidity]]
+    return create_weather_df(current_weather)
+
+def create_weather_df(weather_object):
+    """ creates dataframe from weather object """
+    data = [[weather_object.temp, weather_object.wind_speed, weather_object.weather_main, weather_object.humidity]]
     df = pd.DataFrame(data, columns=['temp', 'wind_speed', 'weather_main', 'humidity'])
     df['weather_main_precipitation'] = df['weather_main'].apply(
         lambda x: 1 if x in ['Rain', 'Drizzle', 'Snow'] else 0)
@@ -23,27 +28,34 @@ def get_current_weather():
 
 
 def get_future_weather(departure_time):
-    """ retrieves future weather info
-        formats for model and returns dataframe"""
+    """ retrieves future weather info"""
+    timestamp_obj = departure_time.timestamp()
 
+    # get nearest matching entry by timestamp, defaulting to nearest timestamp hour behind
+    try:
+        future_weather = WeatherPrediction.objects.filter(dt__lt=timestamp_obj).order_by('-dt')[0]
+        return create_weather_df(future_weather)
+    except IndexError as e:
+        print(e)
+
+def encode_time_features(departure_time):
+    # get time in seconds
+    midnight = departure_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    time_in_seconds = (departure_time - midnight).seconds
+
+    # get day of week, monday=0, sunday=6
+    day_of_week = departure_time.date().weekday()
+    date = departure_time.date().strftime('%Y-%m-%d')
+    hour = departure_time.hour
+
+    data = [[time_in_seconds, day_of_week, date, hour]]
+    return data
 
 def encode_features(departure_time):
     """encodes actualtime_dep, weekday, term, holiday & rush hour features for the model
     returns a dataframe"""
-    # get actualtime_dep in seconds
-    split_date = departure_time.split('T')
-    time = split_date[1][:8]
-    time_in_seconds = (int(str(time[0:2])) * 60 * 60) + (int(str(time[3:5])) * 60) + (int(str(time[6:8])))
 
-    # parse as datetime object to get weekday and additional features
-    string_date = ' '.join(split_date)[:19]
-    datetime_obj = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
-    # get day of week, monday=0, sunday=6
-    day_of_week = datetime_obj.date().weekday()
-    date = datetime_obj.date().strftime('%Y-%m-%d')
-    hour = datetime_obj.hour
-
-    data = [[time_in_seconds, day_of_week, date, hour]]
+    data = encode_time_features(departure_time)
     df = pd.DataFrame(data, columns=['actualtime_dep', 'weekday', 'date', 'hour'])
 
     df = term_flag(df)
@@ -85,7 +97,7 @@ def holiday_flag(df):
 
 def rush_hour_flag(df):
     """adds rush hour flag if time of departure is during rush hour"""
-    rush_hours = [7, 8, 9, 16, 17, 18]
+    rush_hours = [7, 8, 16, 17, 18]
     weekdays = [1, 2, 3, 4, 5]
 
     conditions = [
@@ -97,45 +109,58 @@ def rush_hour_flag(df):
 
     return df
 
+def read_json(filename):
+        with open(filename) as f:
+            historical_averages = json.load(f)
+        return historical_averages
+
+def check_file_exists(filename):
+    if os.path.exists(filename):
+        historical_averages = read_json(filename)
+        return historical_averages
+    else:
+        return None
+
+
 
 def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng, rush_hour=False):
     """import json file with historical averages for relevant line """
-    if os.path.exists('json/avg' + route + '.json'):
-        with open('json/avg' + route + '.json') as f:
-            historical_averages = json.load(f)
+    filename = 'json/avg' + route + '.json'
+    historical_averages = check_file_exists(filename)
+    if historical_averages is not None:
+        stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
+        if len(stop_num_list) == 0:
+            return None
 
-            stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
-            if len(stop_num_list) == 0:
-                return None
+            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
+        for i in range(0, len(stop_num_list)):
+            for j in range(0, len(historical_averages)):
+                if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
+                    # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
+                    if rush_hour:
+                        try:
+                            proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
+                        except (IndexError, TypeError) as e:
+                            return None
+                    else:
+                        try:
+                            proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
+                        except (IndexError, TypeError) as e:
+                            return None
+                    return proportion_total / 100
 
-            # NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
-            for i in range(0, len(stop_num_list)):
-                for j in range(0, len(historical_averages)):
-                    if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
-                        # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
-                        if rush_hour:
-                            try:
-                                proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in
-                                                        range(j + 1, j + num_stops + 1)])
-                            except (IndexError, TypeError):
-                                return None
-                        else:
-                            try:
-                                proportion_total = sum(
-                                    [historical_averages[k]['mean_tt%'] for k in range(j + 1, j + num_stops + 1)])
-                            except (IndexError, TypeError):
-                                return None
-                        return proportion_total / 100
     else:
-        # calculate proportion of route by number of stops, read in routes csv
-        df = pd.read_csv('df_routes.csv')
-
-        # retrieve records for a particular line
-        df = df.loc[(df['routeid'] == route)]
-
-        total_stops = (len(df))
-        proportion_total = num_stops / total_stops
+        proportion_total = get_percentage_of_route_by_stops(route, num_stops)
+        # calculate proportion of route by number of stops instead
         return proportion_total
+
+def get_percentage_of_route_by_stops(route, num_stops):
+    df = pd.read_csv('df_routes.csv')
+    # retrieve records for a particular line
+    df = df.loc[(df['routeid'] == route)]
+    total_stops = (len(df))
+    proportion_total = num_stops / total_stops
+    return proportion_total
 
 
 def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
@@ -143,10 +168,9 @@ def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
 
     called if matching by name doesn't work. If integer flag=True, returns integer otherwise returns string
 """
-    # truncate lat & lng to 3 decimal places for matching (Google and GTFS data don't give the exact same lat/lng
-    # for stops, but are typically the same within 3 decimal places
-    stop_lat = float(int(stop_lat * (10 ** 3)) / 10 ** 3)
-    stop_lng = float(int(stop_lng * (10 ** 3)) / 10 ** 3)
+    #truncate lat & lng to 3 decimal places for matching (Google and GTFS data don't give the exact same lat/lng for stops, but are typically the same within 3 decimal places
+    stop_lat = float(int(stop_lat * (10**3))/10**3)
+    stop_lng = float(int(stop_lng * (10**3))/10**3)
     stop_query = Stop.objects.filter(stop_lat__startswith=stop_lat, stop_lon__startswith=stop_lng).values('stop_name')
 
     stop_num_list = []
@@ -194,14 +218,14 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
     potential_departure_stops = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop, True)
     potential_arrival_stops = get_stop_num(arr_stop_lat, arr_stop_lng, arrival_stop, True)
 
+
     # SAVE CSV AGAIN WITHOUT INDEX, read in routes CSV
     df = pd.read_csv('df_routes.csv')
 
     # retrieve records for a particular line
     df = df.loc[(df['lineid'] == line)]
 
-    # This finds the route by checking which subroute for a line contains both the departure and arrival stops given
-    # by Google Need to test this to ensure there aren't lines where both routes share 2 stops?
+    #This finds the route by checking which subroute for a line contains both the departure and arrival stops given by Google
     filter1 = df['stoppointid'].isin(potential_departure_stops)
     filter2 = df['stoppointid'].isin(potential_arrival_stops)
     df = df[filter1 | filter2]
@@ -214,6 +238,30 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
         return route
 
 
+def change_timezone(departure_time):
+    """time sent from frontend is UTC, change timezone to Dublin"""
+    dublin = pytz.timezone("Europe/Dublin")
+    dublin_time = parse(departure_time)
+    departure_time = dublin_time.astimezone(dublin)
+    return departure_time
+
+def open_model_and_predict(route, df_all):
+    # load the model that corresponds to the route
+    f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
+    model = pickle.load(f)
+    # make predictions
+    predicted_tt = model.predict(df_all)
+    return predicted_tt
+
+def is_rush_hour_or_not(route, details, df_all):
+    if df_all['is_rush_hour'].iat[0]:
+        proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
+                                                      details['dep_stop_lat'], details['dep_stop_lng'], rush_hour=True)
+    else:
+        proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
+                                                      details['dep_stop_lat'], details['dep_stop_lng'])
+    return proportion_of_route
+
 def get_prediction(details):
     """takes journey planner input / Google response and returns predicted travel time """
     # find out which route, and therefore which model is required
@@ -225,25 +273,24 @@ def get_prediction(details):
         predicted_tt = details['google_pred']
 
     else:
+        # change timezone from UTC to Irish
+        departure_time = change_timezone(details['departure_time'])
         # encode features for our model
-        departure_time = details['departure_time']
         df_bus = encode_features(departure_time)
-        df_weather = get_current_weather()
+
+        # if departure date and hour is the same, we get the current weather, else we get weather forecast for that time
+        now = datetime.now()
+        if departure_time.date() == now.date() and departure_time.hour == now.hour:
+            df_weather = get_current_weather()
+
+        else:
+            df_weather = get_future_weather(departure_time)
+
         df_all = pd.concat([df_bus, df_weather], axis=1)
 
-        # load the model that corresponds to the route
-        f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
-        model = pickle.load(f)
+        predicted_tt = open_model_and_predict(route, df_all)
 
-        # make predictions
-        predicted_tt = model.predict(df_all)
-        if df_all['is_rush_hour'].item():
-            proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
-                                                          details['dep_stop_lat'], details['dep_stop_lng'],
-                                                          rush_hour=True)
-        else:
-            proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
-                                                          details['dep_stop_lat'], details['dep_stop_lng'])
+        proportion_of_route = is_rush_hour_or_not(route, details, df_all)
 
         if proportion_of_route is None:
             # In case proportion_of_route_fails, i.e. if the arrival or departure stop was not part of the route in 2018

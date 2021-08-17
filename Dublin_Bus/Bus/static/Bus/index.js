@@ -44,6 +44,13 @@ let current_user = null;
 let fares = false;
 // currentFavourite
 let postedFavourite = false
+//stores bus departure time and travel time values for estimate arrival time
+let time_tracker;
+let duration_tracker = {};
+let latest_departure = {};
+let no_route = false;
+
+
 
 $.getJSON("./static/Bus/bus_fares.json", function(data) {
     fares = data
@@ -339,11 +346,12 @@ function getStopData(name, stop_list) {
 };
 
 //Displays route and time estimates
-function getRoute(start, end, time) {
+async function getRoute(start, end, time) {
     //Clear Previous Route
     directionsRenderer.set('directions', null);
     directionsRenderer.setMap(null);
     document.getElementById('route_suggestions').innerHTML = "";
+    document.getElementById('route_suggestions').style.visibility = "hidden";
 
 
 
@@ -389,36 +397,50 @@ function getRoute(start, end, time) {
 
 
     //make request and render route on map
-    directionsService.route(request, function(response, status) {
+    directionsService.route(request, async function(response, status) {
         if (status == "OK") {
 
-            //set custom markers
-            startMarker.setPosition(start);
-            startMarker.setIcon(startIcon);
-            startMarker.setMap(map);
-            startMarker.setVisible(true);
-            endMarker.setPosition(end);
-            endMarker.setIcon(endIcon);
-            endMarker.setMap(map);
-            endMarker.setVisible(true);
 
-
-            directionsRenderer.setDirections(response);
-            directionsRenderer.setMap(map);
-            infoWindow.close();
-
-            var journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
-            console.log(journey);
-
+            var entire_journey = response.routes[0].legs[0].steps; //journey is held in leg[0]
+            console.log(entire_journey);
             var route_suggestions = document.getElementById('route_suggestions');
             var divider = "<hr class='divider'>"
             //this variable is used to create ids for each step in a journey
             var i = 0;
-            processJourney(journey);
+            // used to store values for estimated arrival time
+            latest_departure = {};
+            duration_tracker = {};
+
+
+
+
+
+            async function asyncForEach(array, callback) {
+                for (let i = 0; i < array.length; i++) {
+                if (no_route == true) {
+                journeyDescription = "This route is not served by Dublin Bus.<br>";
+                journeyDescription += divider;
+                route_suggestions.innerHTML = journeyDescription;
+                console.error("Doesn't Exist!");
+                break;
+                }
+                else {
+                    await callback(array[i], i, array);
+                }}
+
+
+            }
+
+
+            await processJourney(entire_journey).then((travel_time_values) =>
+                displayEstimatedArrival(travel_time_values[0], travel_time_values[1], no_route));
+
+
+
 
             //extract useful journey info from response and post to journey planner
-            async function processJourney(journey) {
-                journey.forEach(async (journey) => {
+            async function processJourney(entire_journey) {
+                await asyncForEach(entire_journey, async (journey) => {
                     //increments id for each step of journey
                     i++;
                     //assigns id to p element
@@ -426,10 +448,11 @@ function getRoute(start, end, time) {
 
 
                     if (journey.travel_mode == "TRANSIT" && journey.transit.line.agencies[0].name == "Dublin Bus") {
-                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
+                        journeyDescription = "<img src='../static/Bus/logo-smaller.png' class='img-fluid><i class='fas fa-bus-alt'></i> " + journey.transit.line.short_name + '   |    ';
+                        journeyDescription += "<i class='fas fa-clock'></i> " + journey.transit.departure_time.text + '    |    ';
 
                         var routeDetails = {};
-                        routeDetails['departure_time'] = journey.transit.departure_time.value;
+                        routeDetails['departure_time'] = journey.transit.departure_time.value.toISOString();
                         routeDetails['line'] = journey.transit.line.short_name;
                         routeDetails['departure_stop'] = journey.transit.departure_stop.name;
                         routeDetails['arrival_stop'] = journey.transit.arrival_stop.name;
@@ -445,6 +468,8 @@ function getRoute(start, end, time) {
                         var numStops = routeDetails['num_stops'];
                         var arrivalStop = routeDetails['arrival_stop'];
                         var departureStop = routeDetails['departure_stop'];
+                        var departureTime = journey.transit.departure_time.value;
+
 
                         if (CalcOn){
                             var cost = fareCalc(age, payment, journey, time);
@@ -462,8 +487,11 @@ function getRoute(start, end, time) {
                                 departureStop: departureStop
                             }, {
                                 arrivalStop: arrivalStop
-                            }, cost)
-                        );
+                            }, {
+                                departureTime: departureTime
+                            }, cost));
+
+
 
                     } else if (journey.travel_mode == "WALKING") {
                         journeyDescription = "<i class='fas fa-walking'></i> " + journey.distance.text + "/" + journey.duration.text + "<br>"
@@ -471,28 +499,45 @@ function getRoute(start, end, time) {
                         journeyDescription += divider;
                         route_suggestions.innerHTML += journeyDescription;
 
+                        duration_tracker[i] = Math.round(journey.duration.value / 60);
+
+
                     } else if (journey.travel_mode == "TRANSIT" && journey.transit.line.vehicle.type == "BUS") {
                         if (!journey.transit.line.short_name) {
                             var name = journey.transit.line.name;
                         } else {
                             var name = journey.transit.line.short_name;
                         }
-                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + name + "   |   " + journey.transit.num_stops + ' stops/' + journey.duration.text + ' <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
-                        if (CalcOn){ journeyDescription += " €?";}
+                        journeyDescription = "<i class='fas fa-bus-alt'></i> " + name + "   |   ";
+                        journeyDescription += "<i class='fas fa-clock'></i> " + journey.transit.departure_time.text + '    |    ';
+                        journeyDescription += journey.transit.num_stops + ' stops/' + journey.duration.text + ' <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
+                        time_tracker = new Date(journey.transit.departure_time.value);
+                        time_tracker.setSeconds(0);
+                        time_tracker.setSeconds(time_tracker.getSeconds() + journey.duration.value);
+                        time_tracker.setSeconds(0);
+                        latest_departure[i] = time_tracker;
+
+
+
+
+                        if (CalcOn) {
+                            journeyDescription += " €?";
+                        }
                         journeyDescription += '<br>' + journey.transit.departure_stop.name + ' to ' + journey.transit.arrival_stop.name + "<br>";
-                        journeyDescription += "<span id = 'not-db'>Not a Dublin Bus Route</span>";
+                        journeyDescription += "<span id = 'not-db'>* Not a Dublin Bus Route</span>";
                         journeyDescription += divider;
                         route_suggestions.innerHTML += journeyDescription;
                     } else {
-                        journeyDescription = "This route is not served by Dublin Bus.<br>";
-                        journeyDescription += divider;
-                        route_suggestions.innerHTML += journeyDescription;
+                        no_route = true;
+
                     }
                 })
                 //Write Total Cost
-                if (CalcOn){ 
-                    route_suggestions.innerHTML += '<p>Total Fare: €' +  total_cost.toFixed(2).toString() + '</p>';
+                if (CalcOn) {
+                    route_suggestions.innerHTML += '<p>Total Fare: €' + total_cost.toFixed(2).toString() + '</p>';
                 }
+
+                return [latest_departure, duration_tracker];
             }
         } else {
             showWarning("No route could be found. Please try again.");
@@ -500,19 +545,48 @@ function getRoute(start, end, time) {
         }
 
 
-        async function displayRoute(journeyPrediction, predictionSpace, numStops, departureStop, arrivalStop, cost) {
+
+
+        async function displayRoute(journeyPrediction, predictionSpace, numStops, departureStop, arrivalStop, departureTime, cost) {
             var pred;
 
             if (typeof journeyPrediction == 'string') {
                 journeyPrediction = journeyPrediction.slice(1, -1);
                 var predictionMins = parseInt(journeyPrediction);
+
+                time_tracker = new Date(departureTime.departureTime);
+                time_tracker.setSeconds(0);
+                time_tracker.setSeconds(time_tracker.getSeconds() + (predictionMins * 60));
+                time_tracker.setSeconds(0);
+                latest_departure[predictionSpace] = time_tracker;
                 pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Bustimate" data-placement="auto"></i>';
 
 
             } else {
+
+                time_tracker = new Date(departureTime.departureTime);
+                time_tracker.setSeconds(0);
+                time_tracker.setSeconds(time_tracker.getSeconds() + journeyPrediction);
+                time_tracker.setSeconds(0);
+                latest_departure[predictionSpace] = time_tracker;
                 var predictionMins = Math.round(journeyPrediction / 60);
                 pred = numStops.numStops + ' stops/' + predictionMins.toString() + ' mins <i class="fas fa-info-circle d-none d-sm-inline" data-toggle="tooltip" title="Prediction generated by Google" data-placement="auto"></i>';
             }
+
+            //set custom markers
+                startMarker.setPosition(start);
+                startMarker.setIcon(startIcon);
+                startMarker.setMap(map);
+                startMarker.setVisible(true);
+                endMarker.setPosition(end);
+                endMarker.setIcon(endIcon);
+                endMarker.setMap(map);
+                endMarker.setVisible(true);
+
+
+                directionsRenderer.setDirections(response);
+                directionsRenderer.setMap(map);
+                infoWindow.close();
 
             if (cost){
                 pred += ' €' + cost.toFixed(2).toString();
@@ -522,7 +596,60 @@ function getRoute(start, end, time) {
         }
     })
 }
-function fareCalc(age, payment, journey, time){
+
+
+async function displayEstimatedArrival(latest_departure, duration_tracker, no_route) {
+    if (no_route) {
+    document.getElementById('route_suggestions').style.visibility = "visible";
+    } else {
+    var minutes_to_add = 0;
+    //get latest bus time_tracker (time of bus departure + time of prediction/duration)
+
+    var key;
+    var intKey;
+    var latest = 0;
+
+    for (key in latest_departure) {
+        intKey = parseInt(key);
+        if (intKey > latest) {
+            latest = intKey;
+        }
+    }
+
+
+
+    //find durations after latest departures
+    Object.keys(duration_tracker).forEach(key => {
+        if (key > latest) {
+            minutes_to_add += duration_tracker[key]
+        }
+    });
+
+
+    //add walking durations after latest bus journey
+
+    latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
+    var min;
+    if (latest_departure[latest].getHours() > 11) {
+        min = 'pm';
+    } else {
+        min = 'am';
+    }
+    if (latest_departure[latest].getSeconds() > 30) {
+        var minutes = latest_departure[latest].getMinutes() + 1
+    } else {
+        minutes = latest_departure[latest].getMinutes()
+    }
+    //convert hours from 24 hour to 12 hour clock
+    var hours =  ((latest_departure[latest].getHours() + 11) % 12 + 1);
+
+    route_suggestions.innerHTML += 'Estimated arrival time: ' + hours + ':' + String(minutes).padStart(2, '0') + min;
+    document.getElementById('route_suggestions').style.visibility = "visible";
+
+}
+}
+
+function fareCalc(age, payment, journey, time) {
     var ticket
 
     if (journey.transit.line.short_name.includes("X")) {
@@ -581,7 +708,7 @@ function schoolHours(timeString){
 
 //Triggered by pressing submit button. Gets route and current time and sends it to getRoute
 function submitRoute() {
-
+    no_route =  false;
     //get rid of warning
     document.getElementById('warning').style.display = 'none';
 
@@ -831,7 +958,6 @@ function displayInfoWindow(timetable, delays, stop_id) {
             infoWindowContent += "<br><i class='fas fa-bus-alt'></i> " + arrivals[each].trip_id.route_id.route_short_name + " (to " + arrivals[each].stop_headsign + ") - ";
             if (delays[each] != 0) {
                 arrival_time = factorDelay(arrivals[each].arrival_time, delays[each])
-                console.log(arrival_time);
             } else {
                 arrival_time = arrivals[each].arrival_time;
             }
@@ -868,6 +994,7 @@ function resetJourneyPlanner() {
     directionsRenderer.setMap(null);
     endMarker.setVisible(false);
     startMarker.setVisible(false);
+    no_route = false;
 
     //Delete Warning
     document.getElementById('warning').style.display = 'none';

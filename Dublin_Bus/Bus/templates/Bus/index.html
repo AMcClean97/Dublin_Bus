@@ -5,6 +5,7 @@
 {% block head %}
 {% load static %}
 <link href="{% static '/Bus/index.css' %}" rel="stylesheet">
+
 {% endblock %}
 {% block content %}
 
@@ -99,6 +100,9 @@
 											<input class="form-check-input" type="radio" name="payment" id="payment-cash" value="cash">
 											<label class="form-check-label" for="payment-cash">No</label>
 										</div>
+										<div class=" text-center">
+										<button id="showFare" class="btn btn-secondary" onclick="submitRoute()">Get fare</button>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -118,7 +122,9 @@
 							<div id="warning" class="alert alert-warning" role="alert"></div>
 
 						</div>
-						<div class="col-12 col-md-8" id="route_suggestions"></div>
+						<div class="col-12 col-md-8" id="route_suggestions"> </div>
+						</div>
+							</div>
 					</div>
 				</div>
 			</div>
