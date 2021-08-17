@@ -434,8 +434,9 @@ async function getRoute(start, end, time) {
                         journeyDescription += divider;
                         route_suggestions.innerHTML = journeyDescription;
                         console.error("Doesn't Exist!");
+                        directionsRenderer.set('directions', null);
+                        directionsRenderer.setMap(null);
                         console.log(no_route);
-                        resetJourneyPlanner();
                         break;
                     } else {
                         await callback(array[i], i, array);
@@ -516,7 +517,7 @@ async function getRoute(start, end, time) {
                         duration_tracker[i] = Math.round(journey.duration.value / 60);
 
 
-                    } else if (journey.travel_mode == "TRANSIT" && journey.transit.line.vehicle.type == "BUS") {
+                    } else if (journey.travel_mode == "TRANSIT" && journey.transit.line.vehicle.type == "BUS" || journey.travel_mode == "TRANSIT" && journey.transit.line.vehicle.type == "INTERCITY_BUS") {
                         if (!journey.transit.line.short_name) {
                             var name = journey.transit.line.name;
                         } else {
