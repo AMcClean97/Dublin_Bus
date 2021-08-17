@@ -5,7 +5,7 @@ from django.core import serializers
 import json
 from .models import Stop, WeatherPrediction
 from .busmodels import get_prediction
-from .gtfsrealtime import is_trip_affected, get_arrivals
+from .gtfsrealtime import get_arrivals
 from users.models import favourite
 from django.conf import settings
 from django.db.models import Max
