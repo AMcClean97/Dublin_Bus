@@ -1,7 +1,5 @@
 'use strict'; //to enable the use of let
 let map;
-//TODO customise bus stop icon
-//TODO group markers when map zoomed out
 let infoWindow;
 let directionsService;
 let directionsRenderer;
@@ -284,11 +282,11 @@ function getRouteData(warning = true) {
                 showWarning("Please input a valid last stop.")
             };
             return false;
-        } else if (route['origin_name'] == route['destin_name']){
+        } else if (route['origin_name'] == route['destin_name']) {
             if (warning) {
                 showWarning("First and last stops are identical.")
             };
-            return false;            
+            return false;
         }
 
         route['origin_lat'] = originLatLon['lat'];
@@ -300,7 +298,7 @@ function getRouteData(warning = true) {
     return route
 }
 
-function formatTime(time){
+function formatTime(time) {
     var date = time.getDate();
     var month = time.getMonth() + 1;
     var year = time.getFullYear();
@@ -375,21 +373,21 @@ async function getRoute(start, end, time) {
 
     //Check if fare Calculator is on and get data if it is
     var CalcOn = (fare_suggestions.style.display === "block")
-    if (CalcOn){
-        if (!fares){
+    if (CalcOn) {
+        if (!fares) {
             showWarning("Unable to access fare data")
-            return;  
+            return;
         }
 
         var age = $('input[name="age"]:checked').val();
         var payment = $('input[name="payment"]:checked').val();
 
-        if (!age){
+        if (!age) {
             showWarning("Enter Ticket Type.")
             return;
-        } else if (!payment){
+        } else if (!payment) {
             showWarning("Do you have a leap card?")
-            return;                
+            return;
         }
 
         var total_cost = 0;
@@ -414,19 +412,18 @@ async function getRoute(start, end, time) {
 
 
 
-
             async function asyncForEach(array, callback) {
                 for (let i = 0; i < array.length; i++) {
-                if (no_route == true) {
-                journeyDescription = "This route is not served by Dublin Bus.<br>";
-                journeyDescription += divider;
-                route_suggestions.innerHTML = journeyDescription;
-                console.error("Doesn't Exist!");
-                break;
+                    if (no_route == true) {
+                        journeyDescription = "This route is not served by Dublin Bus.<br>";
+                        journeyDescription += divider;
+                        route_suggestions.innerHTML = journeyDescription;
+                        console.error("Doesn't Exist!");
+                        break;
+                    } else {
+                        await callback(array[i], i, array);
+                    }
                 }
-                else {
-                    await callback(array[i], i, array);
-                }}
 
 
             }
@@ -471,7 +468,7 @@ async function getRoute(start, end, time) {
                         var departureTime = journey.transit.departure_time.value;
 
 
-                        if (CalcOn){
+                        if (CalcOn) {
                             var cost = fareCalc(age, payment, journey, time);
                             total_cost += cost;
                         } else {
@@ -574,21 +571,21 @@ async function getRoute(start, end, time) {
             }
 
             //set custom markers
-                startMarker.setPosition(start);
-                startMarker.setIcon(startIcon);
-                startMarker.setMap(map);
-                startMarker.setVisible(true);
-                endMarker.setPosition(end);
-                endMarker.setIcon(endIcon);
-                endMarker.setMap(map);
-                endMarker.setVisible(true);
+            startMarker.setPosition(start);
+            startMarker.setIcon(startIcon);
+            startMarker.setMap(map);
+            startMarker.setVisible(true);
+            endMarker.setPosition(end);
+            endMarker.setIcon(endIcon);
+            endMarker.setMap(map);
+            endMarker.setVisible(true);
 
 
-                directionsRenderer.setDirections(response);
-                directionsRenderer.setMap(map);
-                infoWindow.close();
+            directionsRenderer.setDirections(response);
+            directionsRenderer.setMap(map);
+            infoWindow.close();
 
-            if (cost){
+            if (cost) {
                 pred += ' €' + cost.toFixed(2).toString();
             }
             document.getElementById(predictionSpace).innerHTML += pred;
@@ -600,53 +597,53 @@ async function getRoute(start, end, time) {
 
 async function displayEstimatedArrival(latest_departure, duration_tracker, no_route) {
     if (no_route) {
-    document.getElementById('route_suggestions').style.visibility = "visible";
+        document.getElementById('route_suggestions').style.visibility = "visible";
     } else {
-    var minutes_to_add = 0;
-    //get latest bus time_tracker (time of bus departure + time of prediction/duration)
+        var minutes_to_add = 0;
+        //get latest bus time_tracker (time of bus departure + time of prediction/duration)
 
-    var key;
-    var intKey;
-    var latest = 0;
+        var key;
+        var intKey;
+        var latest = 0;
 
-    for (key in latest_departure) {
-        intKey = parseInt(key);
-        if (intKey > latest) {
-            latest = intKey;
+        for (key in latest_departure) {
+            intKey = parseInt(key);
+            if (intKey > latest) {
+                latest = intKey;
+            }
         }
-    }
 
 
 
-    //find durations after latest departures
-    Object.keys(duration_tracker).forEach(key => {
-        if (key > latest) {
-            minutes_to_add += duration_tracker[key]
+        //find durations after latest departures
+        Object.keys(duration_tracker).forEach(key => {
+            if (key > latest) {
+                minutes_to_add += duration_tracker[key]
+            }
+        });
+
+
+        //add walking durations after latest bus journey
+
+        latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
+        var min;
+        if (latest_departure[latest].getHours() > 11) {
+            min = 'pm';
+        } else {
+            min = 'am';
         }
-    });
+        if (latest_departure[latest].getSeconds() > 30) {
+            var minutes = latest_departure[latest].getMinutes() + 1
+        } else {
+            minutes = latest_departure[latest].getMinutes()
+        }
+        //convert hours from 24 hour to 12 hour clock
+        var hours = ((latest_departure[latest].getHours() + 11) % 12 + 1);
 
+        route_suggestions.innerHTML += 'Estimated arrival time: ' + hours + ':' + String(minutes).padStart(2, '0') + min;
+        document.getElementById('route_suggestions').style.visibility = "visible";
 
-    //add walking durations after latest bus journey
-
-    latest_departure[latest].setMinutes(latest_departure[latest].getMinutes() + minutes_to_add);
-    var min;
-    if (latest_departure[latest].getHours() > 11) {
-        min = 'pm';
-    } else {
-        min = 'am';
     }
-    if (latest_departure[latest].getSeconds() > 30) {
-        var minutes = latest_departure[latest].getMinutes() + 1
-    } else {
-        minutes = latest_departure[latest].getMinutes()
-    }
-    //convert hours from 24 hour to 12 hour clock
-    var hours =  ((latest_departure[latest].getHours() + 11) % 12 + 1);
-
-    route_suggestions.innerHTML += 'Estimated arrival time: ' + hours + ':' + String(minutes).padStart(2, '0') + min;
-    document.getElementById('route_suggestions').style.visibility = "visible";
-
-}
 }
 
 function fareCalc(age, payment, journey, time) {
@@ -654,22 +651,22 @@ function fareCalc(age, payment, journey, time) {
 
     if (journey.transit.line.short_name.includes("X")) {
         ticket = "Xpresso"
-    //Check if 90 or 40E
-    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E"){
+        //Check if 90 or 40E
+    } else if (journey.transit.line.short_name === "90" || journey.transit.line.short_name === "40E") {
         ticket = "90_OR_40E"
-    //If adult check route length
-    } else if (age === "adult"){
-        if (journey.transit.num_stops <= 3){
+        //If adult check route length
+    } else if (age === "adult") {
+        if (journey.transit.num_stops <= 3) {
             ticket = "1-3"
-        } else if (journey.transit.num_stops <= 13){
+        } else if (journey.transit.num_stops <= 13) {
             ticket = "4-13"
         } else {
             ticket = "13<"
         }
 
-    //If child check if it's school hours
+        //If child check if it's school hours
     } else {
-        if (schoolHours(time)){
+        if (schoolHours(time)) {
             ticket = "school"
         } else {
             ticket = "all"
@@ -680,10 +677,10 @@ function fareCalc(age, payment, journey, time) {
 }
 
 
-function schoolHours(timeString){
+function schoolHours(timeString) {
     var date = new Date(timeString);
-    
-    switch (date.getDay()){
+
+    switch (date.getDay()) {
         case 0:
             return false;
         case 1:
@@ -691,24 +688,24 @@ function schoolHours(timeString){
         case 3:
         case 4:
         case 5:
-            if (date.getHours() < 19){
+            if (date.getHours() < 19) {
                 return true;
-            } else{
+            } else {
                 return false;
             }
-        default:
-            if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)){
-                return true;
-            } else{
-                return false;
-            }
+            default:
+                if (date.getHours() < 13 || (date.getHours() == 13 && date.getMinutes() < 30)) {
+                    return true;
+                } else {
+                    return false;
+                }
     }
 }
 
 
 //Triggered by pressing submit button. Gets route and current time and sends it to getRoute
 function submitRoute() {
-    no_route =  false;
+    no_route = false;
     //get rid of warning
     document.getElementById('warning').style.display = 'none';
 
