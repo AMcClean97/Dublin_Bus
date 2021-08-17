@@ -4,10 +4,12 @@ from django.conf import settings
 from .serializers import StopTimeSerializer
 from .models import Stop, Trip, Calendar, Route, StopTime, CalendarDate
 
+
 def read_real_time():
     with open('json/real_time_data.json') as json_file:
         data = json.load(json_file)
     return data
+
 
 def is_trip_affected(tripid, stopid):
     """when a user clicks on a marker, sends 3 next timetabled arrivals according to GTFS and returns any delays
@@ -59,9 +61,11 @@ def get_arrivals(stop_pk):
     # This can probably be neater?
     # NEED TO ACCOUNT FOR TIMES PAST MIDNIGHT?
     # MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
-    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now, arrival_time__lt=two_hours_from_now)
+    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now,
+                                              arrival_time__lt=two_hours_from_now)
     calendar_date_query = CalendarDate.objects.only('service_id').filter(date=today_str)
-    calendar_query = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(**{today: 1}).exclude(
+    calendar_query = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(
+        **{today: 1}).exclude(
         service_id__in=calendar_date_query)
     trip_query = Trip.objects.filter(stoptime__in=list(stop_time_query), service_id__in=list(calendar_query))
     stop_time = stop_time_query.filter(trip_id__in=list(trip_query)).order_by('arrival_time')
@@ -72,7 +76,7 @@ def get_arrivals(stop_pk):
         upper_range = len(trip)
     else:
         upper_range = 3
-    for i in range (0, upper_range):
+    for i in range(0, upper_range):
         delay = is_trip_affected(trip[i]['trip_id'], stop_pk)
         delays.append(delay)
 

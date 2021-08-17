@@ -17,6 +17,7 @@ def get_current_weather():
     current_weather = CurrentWeather.objects.first()
     return create_weather_df(current_weather)
 
+
 def create_weather_df(weather_object):
     """ creates dataframe from weather object """
     data = [[weather_object.temp, weather_object.wind_speed, weather_object.weather_main, weather_object.humidity]]
@@ -38,6 +39,7 @@ def get_future_weather(departure_time):
     except IndexError as e:
         print(e)
 
+
 def encode_time_features(departure_time):
     # get time in seconds
     midnight = departure_time.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -50,6 +52,7 @@ def encode_time_features(departure_time):
 
     data = [[time_in_seconds, day_of_week, date, hour]]
     return data
+
 
 def encode_features(departure_time):
     """encodes actualtime_dep, weekday, term, holiday & rush hour features for the model
@@ -109,10 +112,12 @@ def rush_hour_flag(df):
 
     return df
 
+
 def read_json(filename):
-        with open(filename) as f:
-            historical_averages = json.load(f)
-        return historical_averages
+    with open(filename) as f:
+        historical_averages = json.load(f)
+    return historical_averages
+
 
 def check_file_exists(filename):
     if os.path.exists(filename):
@@ -120,7 +125,6 @@ def check_file_exists(filename):
         return historical_averages
     else:
         return None
-
 
 
 def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng, rush_hour=False):
@@ -132,20 +136,22 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
         if len(stop_num_list) == 0:
             return None
 
-            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
+            # NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
         for i in range(0, len(stop_num_list)):
             for j in range(0, len(historical_averages)):
                 if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
                     # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
                     if rush_hour:
                         try:
-                            proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
-                        except (IndexError, TypeError) as e:
+                            proportion_total = sum(
+                                [historical_averages[k]['mean_tt_rush_hour%'] for k in range(j + 1, j + num_stops + 1)])
+                        except (IndexError, TypeError):
                             return None
                     else:
                         try:
-                            proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
-                        except (IndexError, TypeError) as e:
+                            proportion_total = sum(
+                                [historical_averages[k]['mean_tt%'] for k in range(j + 1, j + num_stops + 1)])
+                        except (IndexError, TypeError):
                             return None
                     return proportion_total / 100
 
@@ -153,6 +159,7 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
         proportion_total = get_percentage_of_route_by_stops(route, num_stops)
         # calculate proportion of route by number of stops instead
         return proportion_total
+
 
 def get_percentage_of_route_by_stops(route, num_stops):
     df = pd.read_csv('df_routes.csv')
@@ -168,9 +175,10 @@ def get_stop_num_lat_lng(stop_lat, stop_lng, integer=False):
 
     called if matching by name doesn't work. If integer flag=True, returns integer otherwise returns string
 """
-    #truncate lat & lng to 3 decimal places for matching (Google and GTFS data don't give the exact same lat/lng for stops, but are typically the same within 3 decimal places
-    stop_lat = float(int(stop_lat * (10**3))/10**3)
-    stop_lng = float(int(stop_lng * (10**3))/10**3)
+    # truncate lat & lng to 3 decimal places for matching (Google and GTFS data don't give the exact same lat/lng for
+    # stops, but are typically the same within 3 decimal places
+    stop_lat = float(int(stop_lat * (10 ** 3)) / 10 ** 3)
+    stop_lng = float(int(stop_lng * (10 ** 3)) / 10 ** 3)
     stop_query = Stop.objects.filter(stop_lat__startswith=stop_lat, stop_lon__startswith=stop_lng).values('stop_name')
 
     stop_num_list = []
@@ -218,14 +226,14 @@ def find_route(arr_stop_lat, arr_stop_lng, dep_stop_lat, dep_stop_lng, departure
     potential_departure_stops = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop, True)
     potential_arrival_stops = get_stop_num(arr_stop_lat, arr_stop_lng, arrival_stop, True)
 
-
     # SAVE CSV AGAIN WITHOUT INDEX, read in routes CSV
     df = pd.read_csv('df_routes.csv')
 
     # retrieve records for a particular line
     df = df.loc[(df['lineid'] == line)]
 
-    #This finds the route by checking which subroute for a line contains both the departure and arrival stops given by Google
+    # This finds the route by checking which subroute for a line contains both the departure and arrival stops given
+    # by Google
     filter1 = df['stoppointid'].isin(potential_departure_stops)
     filter2 = df['stoppointid'].isin(potential_arrival_stops)
     df = df[filter1 | filter2]
@@ -245,6 +253,7 @@ def change_timezone(departure_time):
     departure_time = dublin_time.astimezone(dublin)
     return departure_time
 
+
 def open_model_and_predict(route, df_all):
     # load the model that corresponds to the route
     f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
@@ -252,6 +261,7 @@ def open_model_and_predict(route, df_all):
     # make predictions
     predicted_tt = model.predict(df_all)
     return predicted_tt
+
 
 def is_rush_hour_or_not(route, details, df_all):
     if df_all['is_rush_hour'].iat[0]:
@@ -261,6 +271,7 @@ def is_rush_hour_or_not(route, details, df_all):
         proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
                                                       details['dep_stop_lat'], details['dep_stop_lng'])
     return proportion_of_route
+
 
 def get_prediction(details):
     """takes journey planner input / Google response and returns predicted travel time """

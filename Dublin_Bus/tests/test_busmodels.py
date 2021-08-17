@@ -1,5 +1,7 @@
 from django.test import TestCase
-from Bus.busmodels import get_current_weather, create_weather_df, get_future_weather, encode_time_features, encode_features, get_stop_num, get_stop_num_lat_lng, find_route, read_json, get_proportion_of_route, get_percentage_of_route_by_stops, get_prediction
+from Bus.busmodels import get_current_weather, create_weather_df, get_future_weather, encode_time_features, \
+    encode_features, get_stop_num, get_stop_num_lat_lng, find_route, read_json, get_proportion_of_route, \
+    get_percentage_of_route_by_stops, get_prediction
 from Bus.models import CurrentWeather, WeatherPrediction, Stop
 from datetime import datetime
 from pandas.testing import assert_frame_equal
@@ -10,17 +12,19 @@ import json
 
 class TestBusmodels(TestCase):
 
-
-
     def setUp(self):
-        curr_weather_obj = CurrentWeather(dt=1629104293, temp=15.89, feels_like=15.7, temp_min=12.6, temp_max=19.73, humidity=83, wind_speed=1.34, weather_main="Haze", weather_description="haze", weather_icon="50n")
+        curr_weather_obj = CurrentWeather(dt=1629104293, temp=15.89, feels_like=15.7, temp_min=12.6, temp_max=19.73,
+                                          humidity=83, wind_speed=1.34, weather_main="Haze", weather_description="haze",
+                                          weather_icon="50n")
         curr_weather_obj.save()
-        future_weather_obj = WeatherPrediction(dt=1629104294, temp=16.89, feels_like=16.7, temp_min=6.6, temp_max=25.73, humidity=65, wind_speed=1.23, weather_main="Rain", weather_description="light rain", weather_icon="10d")
+        future_weather_obj = WeatherPrediction(dt=1629104294, temp=16.89, feels_like=16.7, temp_min=6.6, temp_max=25.73,
+                                               humidity=65, wind_speed=1.23, weather_main="Rain",
+                                               weather_description="light rain", weather_icon="10d")
         future_weather_obj.save()
         stop = Stop(stop_id='8220DB000004', stop_name='Parnell Square West, stop 2', stop_lat=53.3522443611407,
                     stop_lon=-6.263723218918821)
         stop2 = Stop(stop_id='8220DB000757', stop_name='Donnybrook Village, stop 757', stop_lat=53.324081337159,
-                    stop_lon=-6.239586509859331)
+                     stop_lon=-6.239586509859331)
         stop.save()
         stop2.save()
         self.curr_weather_obj = curr_weather_obj
@@ -30,6 +34,7 @@ class TestBusmodels(TestCase):
         return super().setUp()
 
     """========================= Testing functions that encode df for model ========================="""
+
     def test_create_weather_df(self):
         df = create_weather_df(self.curr_weather_obj)
         df_future = create_weather_df(self.future_weather_obj)
@@ -43,11 +48,13 @@ class TestBusmodels(TestCase):
     def test_encode_features(self):
         new_year = datetime(2021, 1, 1, 0, 1, 5)
         df = encode_features(new_year)
-        test_data = {'actualtime_dep': 65, 'is_term': 0, 'is_holiday': 1, 'is_rush_hour': 0, 'weekday_1': 0, 'weekday_2': 0, 'weekday_3': 0, 'weekday_4': 1, 'weekday_5': 0, 'weekday_6': 0}
+        test_data = {'actualtime_dep': 65, 'is_term': 0, 'is_holiday': 1, 'is_rush_hour': 0, 'weekday_1': 0,
+                     'weekday_2': 0, 'weekday_3': 0, 'weekday_4': 1, 'weekday_5': 0, 'weekday_6': 0}
         test_df = pd.DataFrame([test_data])
         assert_frame_equal(df, test_df)
 
     """========================= Testing get_stop_num & get_stop_num_lat_lng ========================="""
+
     def test_get_stop_num(self):
         result_int_false = get_stop_num(self.stop.stop_lat, self.stop.stop_lon, self.stop.stop_name, integer=False)
         result_int_true = get_stop_num(self.stop.stop_lat, self.stop.stop_lon, self.stop.stop_name, integer=True)
@@ -69,14 +76,18 @@ class TestBusmodels(TestCase):
             self.assertIsInstance(res_int_true[0], int)
 
     """========================= Testing find_route ========================="""
+
     def test_find_route(self):
-        res = find_route(self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_lat, self.stop2.stop_lon, self.stop2.stop_name, self.stop.stop_name, '46A')
+        res = find_route(self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_lat, self.stop2.stop_lon,
+                         self.stop2.stop_name, self.stop.stop_name, '46A')
         self.assertNotEqual(res, None)
         self.assertEqual(res, '46A_67')
 
     """========================= Testing read_json ========================="""
+
     def test_read_json(self):
-        data = [{"stoppointid":226,"mean_tt_rush_hour%":0.0,"progrnumber":1,"mean_tt%":0.0},{"stoppointid":228,"mean_tt_rush_hour%":1.2144524647,"progrnumber":2,"mean_tt%":1.3419639823}]
+        data = [{"stoppointid": 226, "mean_tt_rush_hour%": 0.0, "progrnumber": 1, "mean_tt%": 0.0},
+                {"stoppointid": 228, "mean_tt_rush_hour%": 1.2144524647, "progrnumber": 2, "mean_tt%": 1.3419639823}]
         read_data = json.dumps(data)
         mock_open = mock.mock_open(read_data=read_data)
         with mock.patch('builtins.open', mock_open):
@@ -84,21 +95,25 @@ class TestBusmodels(TestCase):
         self.assertEqual(data, result)
 
     """========================= Testing proportion_of_route ========================="""
+
     def test_get_proportion_of_route_no_ave(self):
         mock_target = 'Bus.busmodels.get_percentage_of_route_by_stops'
 
         with mock.patch(mock_target, return_value=30):
-            ##test if we have no averages file will it deafult to get_proportion_of_route_by_stops?
+            # test if we have no averages file will it deafult to get_proportion_of_route_by_stops?
             res_non_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon)
             res_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon, True)
             self.assertEqual(res_non_rush_hour, 30)
             self.assertEqual(res_rush_hour, 30)
 
     def test_get_proportion_of_route_with_ave(self):
-        #test for when we do have historical averages
-        #mock historical averages and patch check file exists
+        # test for when we do have historical averages
+        # mock historical averages and patch check file exists
         mock_target = 'Bus.busmodels.check_file_exists'
-        data = [{"stoppointid":381,"mean_tt_rush_hour%":0.0,"progrnumber":1,"mean_tt%":0.0},{"stoppointid":382,"mean_tt_rush_hour%":2,"progrnumber":2,"mean_tt%":1.5},{"stoppointid":3,"mean_tt_rush_hour%":2,"progrnumber":3,"mean_tt%":1.5},{"stoppointid":4,"mean_tt_rush_hour%":2,"progrnumber":4,"mean_tt%":1.5}]
+        data = [{"stoppointid": 381, "mean_tt_rush_hour%": 0.0, "progrnumber": 1, "mean_tt%": 0.0},
+                {"stoppointid": 382, "mean_tt_rush_hour%": 2, "progrnumber": 2, "mean_tt%": 1.5},
+                {"stoppointid": 3, "mean_tt_rush_hour%": 2, "progrnumber": 3, "mean_tt%": 1.5},
+                {"stoppointid": 4, "mean_tt_rush_hour%": 2, "progrnumber": 4, "mean_tt%": 1.5}]
         stop_num_mock_target = 'Bus.busmodels.get_stop_num'
         with mock.patch(mock_target, return_value=data):
             with mock.patch(stop_num_mock_target, return_value=[381]):
@@ -112,9 +127,12 @@ class TestBusmodels(TestCase):
                 """========================= Testing get_prediction ========================="""
 
     def test_get_prediction_failure(self):
-        #test it returns Google prediction in case of failure
+        # test it returns Google prediction in case of failure
         mock_target = 'Bus.busmodels.find_route'
-        mock_API_response = {'departure_time': '2021-08-17T12:28:28.000Z', 'line': '27', 'departure_stop': 'Eden Quay, stop 298', 'arrival_stop': 'Portland Row', 'num_stops': 3, 'dep_stop_lat': 53.3481866, 'dep_stop_lng': -6.2564106, 'arr_stop_lat': 53.353535, 'arr_stop_lng': -6.248092, 'google_pred': 228}
+        mock_API_response = {'departure_time': '2021-08-17T12:28:28.000Z', 'line': '27',
+                             'departure_stop': 'Eden Quay, stop 298', 'arrival_stop': 'Portland Row', 'num_stops': 3,
+                             'dep_stop_lat': 53.3481866, 'dep_stop_lng': -6.2564106, 'arr_stop_lat': 53.353535,
+                             'arr_stop_lng': -6.248092, 'google_pred': 228}
 
         with mock.patch(mock_target, return_value=None):
             res = get_prediction(mock_API_response)
@@ -130,22 +148,11 @@ class TestBusmodels(TestCase):
                         with mock.patch('Bus.busmodels.get_future_weather', return_value=df2):
                             with mock.patch('Bus.busmodels.open_model_and_predict', return_value=120):
                                 with mock.patch('Bus.busmodels.is_rush_hour_or_not', return_value=.50):
-                                    res = get_prediction({'departure_time': '2021-08-17T12:28:28.000Z', 'line': '27', 'departure_stop': 'Eden Quay, stop 298', 'arrival_stop': 'Portland Row', 'num_stops': 3, 'dep_stop_lat': 53.3481866, 'dep_stop_lng': -6.2564106, 'arr_stop_lat': 53.353535, 'arr_stop_lng': -6.248092, 'google_pred': 228})
+                                    res = get_prediction({'departure_time': '2021-08-17T12:28:28.000Z', 'line': '27',
+                                                          'departure_stop': 'Eden Quay, stop 298',
+                                                          'arrival_stop': 'Portland Row', 'num_stops': 3,
+                                                          'dep_stop_lat': 53.3481866, 'dep_stop_lng': -6.2564106,
+                                                          'arr_stop_lat': 53.353535, 'arr_stop_lng': -6.248092,
+                                                          'google_pred': 228})
                                     expected_res = json.dumps(str(1.0))
                                     self.assertEqual(res, expected_res)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
