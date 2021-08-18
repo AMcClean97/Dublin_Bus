@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-
+from Bus.models import Stop
 from users.models import favourite
 from django.urls import reverse
 from django.contrib import auth
@@ -90,8 +90,15 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             idExists(self, str(self.demo_favourite.pk))
         )
 
-    """
+
     def test_favourite_go_bus(self):
+
+        stop1 = Stop(stop_id="8220DB000003", stop_name="Dorset Street Lower, stop 14", stop_lat=53.358531237878196, stop_lon = -6.2627765057086595)
+        stop2 = Stop(stop_id="8220DB000014", stop_name="Parnell Square West, stop 3", stop_lat=53.352308551434895, stop_lon = -6.26381074216821)
+        
+        stop1.save()
+        stop2.save()
+        
         bus_favourite = favourite(user_id = self.demo_user.pk,
             origin_name= 'Dorset Street Lower, stop 14',
             origin_lat = 53.358531237878196, 
@@ -115,9 +122,7 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
 
 
         self.browser.find_element_by_id('goButton' + str(bus_favourite.pk)).click()
-        time.sleep(20)
 
-        self.browser.find_element_by_id('goButton' + str(bus_favourite.pk)).click()
         self.assertEquals(
             self.browser.current_url,
             self.index_url
@@ -140,7 +145,7 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             self.browser.find_element_by_id('inputLastStop').get_attribute("value"),
             bus_favourite.destin_name
         )
-"""
+
 def idExists(self, id):
     try:
         self.browser.find_element_by_id(id)
