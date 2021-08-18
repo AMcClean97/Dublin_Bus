@@ -48,10 +48,10 @@
                                 {% csrf_token %}
                                 <div class="row">
                                     <div class="col text-start">
-                                        <button type="submit" name="favourite_id" value="{{ favourite.id }}" class="btn btn-success" data-bs-toggle="tooltip" data-bs-placement="right" title data-bs-original-title="Start"><i class="fas fa-walking"></i></button>
+                                        <button id="goButton{{ favourite.id }}" type="submit" name="favourite_id" value="{{ favourite.id }}" class="btn btn-success" data-bs-toggle="tooltip" data-bs-placement="right" title data-bs-original-title="Start"><i class="fas fa-walking"></i></button>
                                     </div>
                                     <div class="col text-end">
-                                        <button type="button" class="btn btn-danger" onclick="removeFavourite({{ favourite.id }})" data-bs-toggle="tooltip" data-bs-placement="left" title data-bs-original-title="Delete"><i class="far fa-trash-alt"></i></button>
+                                        <button id="deleteButton{{ favourite.id }}" type="button" class="btn btn-danger" onclick="removeFavourite({{ favourite.id }})" data-bs-toggle="tooltip" data-bs-placement="left" title data-bs-original-title="Delete"><i class="far fa-trash-alt"></i></button>
                                     </div>
                                 </div>
                             </form>

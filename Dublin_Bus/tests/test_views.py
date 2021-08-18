@@ -22,18 +22,18 @@ class TestViews(TransactionTestCase):
         self.demo_passwd = 'password'
         demo_user.set_password(self.demo_passwd)
         demo_user.save()
-        self.demo_user = demo_user
+        self.demo_user  = demo_user
 
-        # create favourite
-        demo_favourite = favourite(user_id=self.demo_user.pk,
-                                   origin_name='Shankill, Dublin, Ireland',
-                                   origin_lat=53.2332663,
-                                   origin_lon=-6.1237578,
-                                   destin_name='East Wall, Dublin, Ireland',
-                                   destin_lat=53.3543216,
-                                   destin_lon=-6.2341133,
-                                   stops=0
-                                   )
+        #create favourite
+        demo_favourite = favourite(user_id = self.demo_user.pk,
+            origin_name= 'Shankill, Dublin, Ireland',
+            origin_lat = 53.2332663, 
+            origin_lon = -6.1237578, 
+            destin_name = 'East Wall, Dublin, Ireland', 
+            destin_lat = 53.3543216, 
+            destin_lon = -6.2341133,
+            stops = 0
+        )
 
         demo_favourite.save()
         self.demo_favourite = demo_favourite
