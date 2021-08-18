@@ -157,7 +157,6 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                 proportion_total = sum(item['mean_tt_rush_hour%'] for item in historical_averages_slice)
             else:
                 proportion_total = sum(item['mean_tt%'] for item in historical_averages_slice)
-
             return proportion_total / 100
         else:
             # calculate proportion of route by stops instead
@@ -264,6 +263,7 @@ def change_timezone(departure_time):
 
 
 def open_model_and_predict(route, df_all):
+
     # load the model that corresponds to the route
     f = open('predictive_models/' + route + '_XG_model.sav', 'rb')
     model = pickle.load(f)
@@ -307,6 +307,21 @@ def get_prediction(details):
             df_weather = get_future_weather(departure_time)
 
         df_all = pd.concat([df_bus, df_weather], axis=1)
+        cols = ['actualtime_dep',
+                'temp',
+                'wind_speed',
+                'humidity',
+                'weather_main_precipitation',
+                'is_term',
+                'is_holiday',
+                'is_rush_hour',
+                'weekday_1',
+                'weekday_2',
+                'weekday_3',
+                'weekday_4',
+                'weekday_5',
+                'weekday_6']
+        df_all = df_all[cols]
 
         predicted_tt = open_model_and_predict(route, df_all)
 

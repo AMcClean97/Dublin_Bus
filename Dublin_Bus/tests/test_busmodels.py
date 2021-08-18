@@ -141,7 +141,21 @@ class TestBusmodels(TestCase):
             self.assertEqual(res, mock_API_response['google_pred'])
 
     def test_get_prediction(self):
-        df1 = pd.DataFrame()
+        data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        df1 = pd.DataFrame({'actualtime_dep': [1],
+            'temp': [2],
+            'wind_speed': [3],
+            'humidity': [4],
+            'weather_main_precipitation':[5],
+            'is_term':[6],
+            'is_holiday':[7],
+            'is_rush_hour':[8],
+            'weekday_1':[9],
+            'weekday_2':[10],
+            'weekday_3':[11],
+            'weekday_4':[12],
+            'weekday_5':[13],
+            'weekday_6':[14]})
         df2 = pd.DataFrame()
         with mock.patch('Bus.busmodels.find_route', return_value='22'):
             with mock.patch('Bus.busmodels.change_timezone', return_value=datetime.now()):
