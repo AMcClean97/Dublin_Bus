@@ -102,8 +102,3 @@ class FunctionalTests(StaticLiveServerTestCase):
         self.assertFalse(
             self.browser.find_element_by_id('warning').is_displayed()
         )
-
-
-
-
-

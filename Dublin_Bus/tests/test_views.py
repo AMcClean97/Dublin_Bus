@@ -32,7 +32,7 @@ class TestViews(TransactionTestCase):
             destin_lat = 53.3543216, 
             destin_lon = -6.2341133,
             stops = 0
-            )
+        )
 
         demo_favourite.save()
         self.demo_favourite = demo_favourite
