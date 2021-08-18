@@ -55,14 +55,14 @@ def get_arrivals(stop_pk):
     today_date = date.today()
     today_str = today_date.strftime("%Y%m%d")
     now = datetime.now().time()
+    print(now)
     two_hours = datetime.now() + timedelta(hours=2)
     two_hours_from_now = two_hours.time()
 
     # This can probably be neater?
-    # NEED TO ACCOUNT FOR TIMES PAST MIDNIGHT?
     # MySQL doesn't optimise nested queries very well, calling list() on queries forces execution
-    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now,
-                                              arrival_time__lt=two_hours_from_now)
+
+    stop_time_query = StopTime.objects.filter(stop_id=stop_pk, arrival_time__gt=now)
     calendar_date_query = CalendarDate.objects.only('service_id').filter(date=today_str)
     calendar_query = Calendar.objects.filter(start_date__lt=today_str, end_date__gt=today_str).filter(
         **{today: 1}).exclude(
