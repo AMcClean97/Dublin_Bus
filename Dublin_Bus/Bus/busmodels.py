@@ -12,6 +12,7 @@ from dateparser import parse
 import pytz
 
 
+
 def get_current_weather():
     """ retrieves current weather info"""
     current_weather = CurrentWeather.objects.first()
@@ -123,31 +124,42 @@ def check_file_exists(filename):
 
 
 
-def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng, rush_hour=False):
+def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_stop_lng, arrival_stop, arr_stop_lat, arr_stop_lng, rush_hour=False):
     """import json file with historical averages for relevant line """
     filename = 'json/avg' + route + '.json'
     historical_averages = check_file_exists(filename)
     if historical_averages is not None:
-        stop_num_list = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop)
-        if len(stop_num_list) == 0:
-            return None
+        #find departure and arrival stop and slice list of historical averages by stops
+        potential_departure_stops = get_stop_num(dep_stop_lat, dep_stop_lng, departure_stop, True)
+        potential_arrival_stops = get_stop_num(arr_stop_lat, arr_stop_lng, arrival_stop, True)
 
-            ## NOT THE MOST EFFICIENT WAY OF DOING THIS? REFACTOR IF TIME? GOING TO REFACTOR THIS
-        for i in range(0, len(stop_num_list)):
-            for j in range(0, len(historical_averages)):
-                if historical_averages[j]['stoppointid'] == int(stop_num_list[i]):
-                    # MAYBE SLICE THE LIST BASED ON STOPIDS instead???
-                    if rush_hour:
-                        try:
-                            proportion_total = sum([historical_averages[k]['mean_tt_rush_hour%'] for k in range(j+1, j+num_stops+1)])
-                        except (IndexError, TypeError) as e:
-                            return None
-                    else:
-                        try:
-                            proportion_total = sum([historical_averages[k]['mean_tt%'] for k in range(j+1, j+num_stops+1)])
-                        except (IndexError, TypeError) as e:
-                            return None
-                    return proportion_total / 100
+        if len(potential_departure_stops) == 0 or len(potential_arrival_stops) == 0:
+            #calculate proportion of route by number of stops instead
+            proportion_total = get_percentage_of_route_by_stops(route, num_stops)
+            return proportion_total
+        #find index of list for start and end stop
+        for i in range(0, len(potential_departure_stops)):
+            start_index = next((index for (index, d) in enumerate(historical_averages) if d["stoppointid"] == potential_departure_stops[i]), None)
+            if start_index is not None:
+                break
+        for i in range(0, len(potential_arrival_stops)):
+            end_index = next((index for (index, d) in enumerate(historical_averages) if
+                    d["stoppointid"] == potential_arrival_stops[i]), None)
+            if end_index is not None:
+                break
+
+        if start_index is not None and end_index is not None:
+            historical_averages_slice = historical_averages[start_index +1: end_index+1]
+            if rush_hour:
+                proportion_total = sum(item['mean_tt_rush_hour%'] for item in historical_averages_slice)
+            else:
+                proportion_total = sum(item['mean_tt%'] for item in historical_averages_slice)
+
+            return proportion_total / 100
+        else:
+            #calculate proportion of route by stops instead
+            proportion_total = get_percentage_of_route_by_stops(route, num_stops)
+            return proportion_total
 
     else:
         proportion_total = get_percentage_of_route_by_stops(route, num_stops)
@@ -256,10 +268,10 @@ def open_model_and_predict(route, df_all):
 def is_rush_hour_or_not(route, details, df_all):
     if df_all['is_rush_hour'].iat[0]:
         proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
-                                                      details['dep_stop_lat'], details['dep_stop_lng'], rush_hour=True)
+                                                      details['dep_stop_lat'], details['dep_stop_lng'], details['arrival_stop'], details['arr_stop_lat'], details['arr_stop_lng'], rush_hour=True)
     else:
         proportion_of_route = get_proportion_of_route(route, details['departure_stop'], details['num_stops'],
-                                                      details['dep_stop_lat'], details['dep_stop_lng'])
+                                                      details['dep_stop_lat'], details['dep_stop_lng'], details['arrival_stop'], details['arr_stop_lat'], details['arr_stop_lng'])
     return proportion_of_route
 
 def get_prediction(details):
@@ -291,6 +303,7 @@ def get_prediction(details):
         predicted_tt = open_model_and_predict(route, df_all)
 
         proportion_of_route = is_rush_hour_or_not(route, details, df_all)
+
 
         if proportion_of_route is None:
             # In case proportion_of_route_fails, i.e. if the arrival or departure stop was not part of the route in 2018

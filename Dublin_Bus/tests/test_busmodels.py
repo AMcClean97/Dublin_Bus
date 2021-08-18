@@ -89,8 +89,8 @@ class TestBusmodels(TestCase):
 
         with mock.patch(mock_target, return_value=30):
             ##test if we have no averages file will it deafult to get_proportion_of_route_by_stops?
-            res_non_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon)
-            res_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon, True)
+            res_non_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_name, self.stop2.stop_lat, self.stop2.stop_lon)
+            res_rush_hour = get_proportion_of_route('1111', 2, 3, self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_name, self.stop2.stop_lat, self.stop2.stop_lon, True)
             self.assertEqual(res_non_rush_hour, 30)
             self.assertEqual(res_rush_hour, 30)
 
@@ -98,16 +98,18 @@ class TestBusmodels(TestCase):
         #test for when we do have historical averages
         #mock historical averages and patch check file exists
         mock_target = 'Bus.busmodels.check_file_exists'
-        data = [{"stoppointid":381,"mean_tt_rush_hour%":0.0,"progrnumber":1,"mean_tt%":0.0},{"stoppointid":382,"mean_tt_rush_hour%":2,"progrnumber":2,"mean_tt%":1.5},{"stoppointid":3,"mean_tt_rush_hour%":2,"progrnumber":3,"mean_tt%":1.5},{"stoppointid":4,"mean_tt_rush_hour%":2,"progrnumber":4,"mean_tt%":1.5}]
+        data = [{"stoppointid":381,"mean_tt_rush_hour%":0.0,"progrnumber":1,"mean_tt%":0.0},{"stoppointid":382,"mean_tt_rush_hour%":2,"progrnumber":2,"mean_tt%":1.5},{"stoppointid":3,"mean_tt_rush_hour%":2,"progrnumber":3,"mean_tt%":1.5},{"stoppointid":757,"mean_tt_rush_hour%":2,"progrnumber":4,"mean_tt%":1.5}]
         stop_num_mock_target = 'Bus.busmodels.get_stop_num'
+        percentage_by_stops_mock = 'Bus.busmodels.get_percentage_of_route_by_stops'
         with mock.patch(mock_target, return_value=data):
-            with mock.patch(stop_num_mock_target, return_value=[381]):
-                res = get_proportion_of_route('1111', 381, 3, self.stop.stop_lat, self.stop.stop_lon)
-                res_rush_hour = get_proportion_of_route('1111', 381, 3, self.stop.stop_lat, self.stop.stop_lon, True)
-                res_out_of_range = get_proportion_of_route('1111', 381, 4, self.stop.stop_lat, self.stop.stop_lon, True)
-                self.assertEqual(res, 4.5 / 100)
-                self.assertEqual(res_rush_hour, 6 / 100)
-                self.assertEqual(res_out_of_range, None)
+            with mock.patch(stop_num_mock_target, side_effect=[[381], [757], [381], [757], [381], []]):
+                with mock.patch(percentage_by_stops_mock, return_value=None):
+                    res = get_proportion_of_route('1111', self.stop.stop_name, 3, self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_name, self.stop2.stop_lat, self.stop2.stop_lon)
+                    res_rush_hour = get_proportion_of_route('1111', self.stop.stop_name, 3, self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_name, self.stop2.stop_lat, self.stop2.stop_lon, True)
+                    res_out_of_range = get_proportion_of_route('1111', self.stop.stop_name, 4, self.stop.stop_lat, self.stop.stop_lon, self.stop2.stop_name, self.stop2.stop_lat, self.stop2.stop_lon, True)
+                    self.assertEqual(res, 4.5 / 100)
+                    self.assertEqual(res_rush_hour, 6 / 100)
+                    self.assertEqual(res_out_of_range, None)
 
                 """========================= Testing get_prediction ========================="""
 
