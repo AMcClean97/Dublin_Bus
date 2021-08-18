@@ -1,11 +1,11 @@
-#errorBox {
+.errorBox {
     background-color: #dc3545;
     border: none;
     font-weight: bold;
     color: black;
 }
 
-#successBox{
+.successBox{
     background-color: #0dcaf0;
     border: none;
     font-weight: bold;

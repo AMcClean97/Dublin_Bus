@@ -24,12 +24,12 @@
                             <input type="password" name="password" class="form-control" value="" placeholder="Password">
                         </div>
                     </form>
-                    <button type="submit" form="loginForm" class="btn btn-success mb-3">Submit</button>
+                    <button id="submitButton" type="submit" form="loginForm" class="btn btn-success mb-3">Submit</button>
                     {% for message in messages %}
                     {% if message.tags == 'error' %}
-                    <div id="errorBox" class="alert alert-warning mb-3">{{message}}</div>
+                    <div class="errorBox alert alert-warning mb-3">{{message}}</div>
                     {% elif message.tags == 'success' %}
-                    <div id="successBox" class="alert alert-success mb-3">{{message}}</div>
+                    <div class="successBox alert alert-success mb-3">{{message}}</div>
                     {% endif %}
                     {% endfor %}
                     <p>Don't have an account? Create one <a id="link" href="{% url 'register' %}">here</a></p>

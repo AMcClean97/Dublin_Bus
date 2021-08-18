@@ -29,19 +29,19 @@
                         <div class="input-group mb-3">
                             <span class="input-group-text"><i class="fas fa-key"></i></span>
                             {{form.password1}}
-                            <span class="btn btn-secondary" tabindex="0" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-content="<ul id='PasswordRules'><li>Must contain at least 8 characters</li><li>Cannot be entirely numeric</li><li>Cannot be similar to other info</li><li>Cannot be a common password</li></ul>"><i class="fas fa-question"></i></span>
+                            <span id="passwordRulesButton" class="btn btn-secondary" tabindex="0" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-content="<ul id='PasswordRules'><li>Must contain at least 8 characters</li><li>Cannot be entirely numeric</li><li>Cannot be similar to other info</li><li>Cannot be a common password</li></ul>"><i class="fas fa-question"></i></span>
                         </div>
                         <div class="input-group mb-3">
                             <span class="input-group-text"><i class="fas fa-key"></i></span>
                             {{form.password2}}
                         </div>
                     </form>
-                    <button type="submit" form="registerForm" class="btn btn-success mb-3">Create Account</button>
+                    <button id="submitButton" type="submit" form="registerForm" class="btn btn-success mb-3">Create Account</button>
                     {% for message in messages %}
                     {% if message.tags == 'error' %}
-                    <div id="errorBox" class="alert alert-warning mb-3">{{message}}</div>
+                    <div class="errorBox alert alert-warning mb-3">{{message}}</div>
                     {% elif message.tags == 'success' %}
-                    <div id="successBox" class="alert alert-success mb-3">{{message}}</div>
+                    <div class="successBox alert alert-success mb-3">{{message}}</div>
                     {% endif %}
                     {% endfor %}
                     <p>Already have an account? Sign in <a id="link" href="{% url 'login' %}">here</a></p>

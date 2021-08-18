@@ -54,17 +54,17 @@
     <div class="container-fluid" id="header" >
         <div class="row justify-content-center">
             <div class="col text-start mt-2">
-                <button class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i><span class="d-none d-md-inline"> Menu</span></button>
+                <button id="menuButton" class="btn btn-secondary" data-bs-toggle="offcanvas" href="#sidebar" role="button" aria-controls="sidebar"><i class="fas fa-bars"></i><span class="d-none d-md-inline"> Menu</span></button>
             </div>
             <div class="col text-center mt-2">
                 <h2><img src="{% static 'Bus/logo.png' %}" class="img-fluid">Bustimate</h2>
             </div>
             <div class="col text-end mt-2">
                 {% if user.is_authenticated %}
-                <span><a class="btn btn-secondary" href="{% url 'logout' %}"><span class="d-none d-md-inline">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
+                <span><a id="logoutButton" class="btn btn-secondary" href="{% url 'logout' %}"><span id="logoutName"class="d-none d-md-inline">{{request.user}} </span><i class="fas fa-sign-out-alt"></i></a></span>
                 
                 {% else %}
-                <a class ="btn btn-secondary" href="{% url 'login' %}"><span class="d-none d-md-inline">Login </span><i class="fas fa-sign-in-alt"></i></a>
+                <a id="loginButton" class ="btn btn-secondary" href="{% url 'login' %}"><span class="d-none d-md-inline">Login </span><i class="fas fa-sign-in-alt"></i></a>
                 {% endif %}
             </div>
         </div>
@@ -91,22 +91,22 @@
             <!--Navbar-->
             <ul id="navbar" class="list-group list-group-flush">
                 <li class="list-group-item">
-                    <a class= "nav-link hover-shadow" href="{% url 'index' %}"><i class="fas fa-map-marked-alt"></i> Map</a>
+                    <a id = "indexLink" class= "nav-link hover-shadow" href="{% url 'index' %}"><i class="fas fa-map-marked-alt"></i> Map</a>
                 </li>
                 <li class="list-group-item">
-                    <a class= "nav-link hover-shadow" href ="{% url 'favourites' %}"><i class="fas fa-star"></i> Favourites</a>
+                    <a id = "favouritesLink" class= "nav-link hover-shadow" href ="{% url 'favourites' %}"><i class="fas fa-star"></i> Favourites</a>
                 </li>
                 <li class="list-group-item">
-                     <a class= "nav-link hover-shadow" href ="{% url 'twitter' %}"><i class="fa fa-twitter" aria-hidden="true"></i> Twitter </a>
+                     <a id = "twitterLink" class= "nav-link hover-shadow" href ="{% url 'twitter' %}"><i class="fa fa-twitter" aria-hidden="true"></i> Twitter </a>
                 </li>
                 <li class="list-group-item">
                     {% if user.is_authenticated %}
-                    <a class= "nav-link hover-shadow" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a id = "logoutLink" class= "nav-link hover-shadow" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     {% else %}
                     <div class="nav-link px-0">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a class= "nav-link hover-shadow" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                            <li class="breadcrumb-item"><a class= "nav-link hover-shadow" href="{% url 'register' %}"> Register</a></li>
+                            <li class="breadcrumb-item"><a id = "loginLink" class= "nav-link hover-shadow" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                            <li class="breadcrumb-item"><a id = "registerLink" class= "nav-link hover-shadow" href="{% url 'register' %}"> Register</a></li>
                         </ol>
                     </div>
                     {% endif %}
