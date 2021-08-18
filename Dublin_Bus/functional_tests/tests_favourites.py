@@ -71,7 +71,10 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             self.demo_favourite.destin_name
         )
 
-        time.sleep(20)
+        self.assertEquals(
+            self.browser.find_element_by_id('favouriteButton').get_attribute('class'),
+            "btn btn-info"
+        )
         
         #Check that mapmarkers exist
 
@@ -89,6 +92,7 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
         self.assertFalse(
             idExists(self, str(self.demo_favourite.pk))
         )
+
 
 
     def test_favourite_go_bus(self):
@@ -129,11 +133,13 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
         )
 
         self.assertTrue(
-            idExists(self, 'inputFirstStop')
+            self.browser.find_element_by_id('inputFirstStop').is_displayed()
+            #idExists(self, 'inputFirstStop')
         )
 
         self.assertTrue(
-            idExists(self, 'inputLastStop')
+            self.browser.find_element_by_id('inputLastStop').is_displayed()
+            #idExists(self, 'inputLastStop')
         )
 
         self.assertEquals(
@@ -146,9 +152,14 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             bus_favourite.destin_name
         )
 
+        self.assertEquals(
+            self.browser.find_element_by_id('favouriteButton').get_attribute('class'),
+            "btn btn-info"
+        )
+
 def idExists(self, id):
     try:
-        self.browser.find_element_by_id(id)
+        self.find_element_by_id(id)
         return True
-    except NoSuchElementException:
+    except:
         return False

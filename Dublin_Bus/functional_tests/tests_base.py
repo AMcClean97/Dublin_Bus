@@ -13,6 +13,7 @@ from django.contrib import auth
 
 User = auth.get_user_model()
 
+
 class BaseFunctionalTests(StaticLiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Chrome('functional_tests/chromedriver.exe')
@@ -165,7 +166,8 @@ class BaseFunctionalTests(StaticLiveServerTestCase):
             )
 
             self.assertTrue(
-                idExists(self, 'loginButton')
+                self.browser.find_element_by_id('loginButton').is_displayed()
+                #idExists(self, 'loginButton')
             )
 
 
@@ -196,14 +198,7 @@ class BaseFunctionalTests(StaticLiveServerTestCase):
         )
 
         self.assertTrue(
-            idExists(self, 'loginButton')
+            self.browser.find_element_by_id('loginButton').is_displayed()
+            #idExists(self, 'loginButton')
         )
-
-def idExists(self, id):
-    try:
-        self.browser.find_element_by_id(id)
-        return True
-    except NoSuchElementException:
-        return False
-
 

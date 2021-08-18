@@ -46,11 +46,13 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
         )
 
         self.assertTrue(
-            idExists(self, 'logoutButton')
+            self.browser.find_element_by_id('logoutButton').is_displayed()
+            #idExists(self, 'logoutButton')
         )
 
         self.assertTrue(
-            idExists(self, "fareCalculator")
+            self.browser.find_element_by_id("fareCalculator").is_displayed()
+            #idExists(self, "fareCalculator")
         )
 
 
@@ -66,7 +68,8 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
         )
 
         self.assertTrue(
-            classExists(self, "errorBox")
+            self.browser.find_elements_by_class_name("errorBox")[0].is_displayed()
+            #classExists(self, "errorBox")
         )
 
         self.assertEquals(
@@ -94,7 +97,8 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             self.login_url
         )
         self.assertTrue(
-            classExists(self, "successBox")
+            self.browser.find_elements_by_class_name("successBox")[0].is_displayed()
+            #classExists(self, "successBox")
         )
 
         self.assertEquals(
@@ -125,7 +129,8 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
             self.register_url
         )
         self.assertTrue(
-            classExists(self, "errorBox")
+            self.browser.find_elements_by_class_name("errorBox")[0].is_displayed()
+            #classExists(self, "errorBox")
         )
 
         self.assertEqual(User.objects.all().count(), 1)
@@ -145,27 +150,3 @@ class LoginFunctionalTests(StaticLiveServerTestCase):
                 self.browser.find_element_by_id('PasswordRules').text,
                 "Must contain at least 8 characters\nCannot be entirely numeric\nCannot be similar to other info\nCannot be a common password"
             )
-        
-
-        
-    
-
-
-
-
-
-
-
-def classExists(self, cls):
-    try:
-        self.browser.find_elements_by_class_name(cls)
-        return True
-    except NoSuchElementException:
-        return False
-
-def idExists(self, id):
-    try:
-        self.browser.find_element_by_id(id)
-        return True
-    except NoSuchElementException:
-        return False
