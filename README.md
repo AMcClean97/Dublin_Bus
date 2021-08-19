@@ -45,7 +45,7 @@ Users can create accounts with Bustimate and save their frequent routes.
 ### Twitter Feed
 Bustimate's live Twitter feed from Dublin Bus notifies users of service interruptions and delays.
 
-
+![twitter](https://user-images.githubusercontent.com/67108526/130133073-a168a975-23e4-4ed6-afbf-d9b265cbe914.gif)
 
 
 
