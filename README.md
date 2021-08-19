@@ -40,5 +40,12 @@ The index page features a journey planner that allows users to plan their Dublin
 ### Login and Favourites Features
 Users can create accounts with Bustimate and save their frequent routes.
 
+![favorites:login](https://user-images.githubusercontent.com/67108526/130132885-8af7c994-aac5-4cb5-80fa-a40d7e8ae8b2.gif)
+
+### Twitter Feed
+Bustimate's live Twitter feed from Dublin Bus notifies users of service interruptions and delays.
+
+
+
 
 
