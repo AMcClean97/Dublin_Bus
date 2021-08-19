@@ -51,7 +51,7 @@ class TestBusmodels(TestCase):
         test_data = {'actualtime_dep': 65, 'is_term': 0, 'is_holiday': 1, 'is_rush_hour': 0, 'weekday_1': 0,
                      'weekday_2': 0, 'weekday_3': 0, 'weekday_4': 1, 'weekday_5': 0, 'weekday_6': 0}
         test_df = pd.DataFrame([test_data])
-        assert_frame_equal(df, test_df)
+        assert_frame_equal(df, test_df, check_dtype=False)
 
     """========================= Testing get_stop_num & get_stop_num_lat_lng ========================="""
 
