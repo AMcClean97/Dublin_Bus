@@ -446,9 +446,13 @@ async function getRoute(start, end, time) {
 
             }
 
-
+            if (entire_journey.length == 1 && entire_journey[0].travel_mode == "WALKING") {
+                await processJourney(entire_journey);
+                document.getElementById('route_suggestions').style.visibility = "visible";
+            }
+            else {
             await processJourney(entire_journey).then((travel_time_values) =>
-                displayEstimatedArrival(travel_time_values[0], travel_time_values[1], no_route));
+                displayEstimatedArrival(travel_time_values[0], travel_time_values[1], no_route));}
 
 
 

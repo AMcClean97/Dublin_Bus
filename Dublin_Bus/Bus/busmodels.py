@@ -140,19 +140,20 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
             # calculate proportion of route by number of stops instead
             proportion_total = get_percentage_of_route_by_stops(route, num_stops)
             return proportion_total
-        # find index of list for start and end stop
-        for i in range(0, len(potential_departure_stops)):
-            start_index = next((index for (index, d) in enumerate(historical_averages) if d["stoppointid"] == potential_departure_stops[i]), None)
-            if start_index is not None:
-                break
-        for i in range(0, len(potential_arrival_stops)):
-            end_index = next((index for (index, d) in enumerate(historical_averages) if
-                    d["stoppointid"] == potential_arrival_stops[i]), None)
-            if end_index is not None:
-                break
+        else:
+            # find index of list for start and end stop
+            for i in range(0, len(potential_departure_stops)):
+                start_index = next((index for (index, d) in enumerate(historical_averages) if d["stoppointid"] == potential_departure_stops[i]), None)
+                if start_index is not None:
+                    break
+            for i in range(0, len(potential_arrival_stops)):
+                end_index = next((index for (index, d) in enumerate(historical_averages) if
+                        d["stoppointid"] == potential_arrival_stops[i]), None)
+                if end_index is not None:
+                    break
 
         if start_index is not None and end_index is not None:
-            historical_averages_slice = historical_averages[start_index +1: end_index+1]
+            historical_averages_slice = historical_averages[start_index +1: end_index]
             if rush_hour:
                 proportion_total = sum(item['mean_tt_rush_hour%'] for item in historical_averages_slice)
             else:
