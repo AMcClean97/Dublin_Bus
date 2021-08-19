@@ -34,3 +34,11 @@ A MySQL database, hosted on the same virtual machine is used to store Django mod
 ### Index Page
 The index page features a journey planner that allows users to plan their Dublin Bus journey, including estimated travel time and arrival time as well as a fare calculator.
 
+![index](https://user-images.githubusercontent.com/67108526/130132743-2f58ec97-5516-4773-8c90-4d785b12d8e0.gif)
+
+
+### Login and Favourites Features
+Users can create accounts with Bustimate and save their frequent routes.
+
+
+
