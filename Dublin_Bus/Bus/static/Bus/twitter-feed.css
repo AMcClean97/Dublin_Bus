@@ -1,0 +1,21 @@
+ /* adapted from https://www.solodev.com/blog/web-design/styling-your-websites-twitter-feed.stml */
+
+.twitter-timeline {
+  	max-width: 100%;
+}
+
+#twittericon {
+  	font-size: 25px;
+  	color: #FFFFFF;
+}
+
+.card-header {
+  	background-color: #1da1f2 !important;
+	font-size: 25px;
+	color: #FFFFFF;
+	font-family: 'Open Sans', sans-serif;
+}
+
+.card {
+	z-index: 1;
+}

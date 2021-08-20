@@ -1,0 +1,85 @@
+#map {
+    position: relative;
+    height: 50vh;
+    margin-left:auto;
+    margin-right:auto;
+    width: 100%;
+    object-fit: cover;
+
+}
+
+#info_window {
+    color: #05386B;
+}
+
+#journey_planner {
+    padding: 5px;
+}
+
+.small-route-suggestions {
+    font-size: 12px;
+}
+
+#route_suggestions {
+    padding: 10px;
+    text-align: left;
+}
+
+
+
+.fa-walking, .fa-info-circle, .fa-bus-alt, .fa-clock{
+    color: #FFAE42;
+}
+
+.divider {
+    border: 3px solid white;
+}
+
+
+.content-row{
+    height: 300px;
+}
+
+#journeyPlannerTabs .nav-link {
+    color: white;
+}
+#journeyPlannerTabs .active {
+    color: #313638;
+}
+
+#warning {
+    background-color: #dc3545;
+    border: none;
+    display: none;
+    font-weight: bold;
+    color: black;
+}
+
+#not-db {
+    color: #FFAE42;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+#laoder {
+    display: none;
+}
+
+#fare_suggestions {
+    background-color: #FFAE42;
+    color: black;
+}
+
+.input-group.mb-3 {
+    display: inline-block;
+    text-align:left;
+}
+
+#info {
+    color: black;
+    text-decoration: none;
+}
+
+.pac-container {
+    z-index: 2;
+}
