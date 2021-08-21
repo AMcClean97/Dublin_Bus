@@ -153,7 +153,7 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
                     break
 
         if start_index is not None and end_index is not None:
-            historical_averages_slice = historical_averages[start_index +1: end_index]
+            historical_averages_slice = historical_averages[start_index +1: end_index+1]
             if rush_hour:
                 proportion_total = sum(item['mean_tt_rush_hour%'] for item in historical_averages_slice)
             else:
@@ -174,7 +174,7 @@ def get_percentage_of_route_by_stops(route, num_stops):
     df = pd.read_csv('df_routes.csv')
     # retrieve records for a particular line
     df = df.loc[(df['routeid'] == route)]
-    total_stops = (len(df))
+    total_stops = max(df['progrnumber'])
     proportion_total = num_stops / total_stops
     return proportion_total
 
