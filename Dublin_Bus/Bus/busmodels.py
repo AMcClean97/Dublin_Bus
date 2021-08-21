@@ -154,6 +154,7 @@ def get_proportion_of_route(route, departure_stop, num_stops, dep_stop_lat, dep_
 
         if start_index is not None and end_index is not None:
             historical_averages_slice = historical_averages[start_index +1: end_index+1]
+            print(route)
             if rush_hour:
                 proportion_total = sum(item['mean_tt_rush_hour%'] for item in historical_averages_slice)
             else:
